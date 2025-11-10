@@ -1,0 +1,6 @@
+- Next.js 在首次启动时对 tsconfig.json 进行了自动调整：
+  - 新增 compilerOptions.esModuleInterop: true
+  - 新增 compilerOptions.resolveJsonModule: true
+  - 新增 compilerOptions.isolatedModules: true
+  - 新增 compilerOptions.plugins: [{ name: 'next' }]
+  - 更新 include: 增加 .next/types/**/*.ts

@@ -22,17 +22,22 @@ export async function POST(req: NextRequest) {
     const type = engine === 'flowchart' ? 'mermaid' : engine;
     const base = (process.env.KROKI_BASE_URL || 'https://kroki.io').replace(/\/$/, '');
     const url = `${base}/${type}/${format}`;
+    const accept = format === 'svg' ? 'image/svg+xml' : format === 'png' ? 'image/png' : 'application/pdf';
 
     const krokiResp = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Accept': accept,
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0 Safari/537.36 GraphViewer/0.1'
+      },
       body: code,
       // cache: 'no-store' // not supported on all runtimes
     });
 
     if (!krokiResp.ok) {
       const text = await krokiResp.text().catch(() => '');
-      return NextResponse.json({ error: 'Kroki render error', details: text }, { status: 502 });
+      return NextResponse.json({ error: 'Kroki render error', status: krokiResp.status, krokiUrl: url, details: text.slice(0, 2000) }, { status: 502 });
     }
 
     const arrayBuffer = await krokiResp.arrayBuffer();

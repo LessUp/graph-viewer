@@ -1,0 +1,1 @@
+- 新增前端兜底渲染：当 Kroki 不可用时，mermaid/flowchart 在 svg 格式下使用 mermaid 本地渲染生成 SVG，并支持前端直接下载

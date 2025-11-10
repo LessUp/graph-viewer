@@ -29,6 +29,23 @@ export default function Page() {
     setError('');
   }, [engine]);
 
+  async function renderMermaidLocally(input: string): Promise<boolean> {
+    try {
+      const mermaid = (await import('mermaid')).default as any;
+      mermaid.initialize({ startOnLoad: false });
+      const id = `mmd-${Date.now()}`;
+      const result = await mermaid.render(id, input);
+      if (result?.svg) {
+        setContentType('image/svg+xml');
+        setSvg(result.svg as string);
+        return true;
+      }
+    } catch (err) {
+      // ignore and let caller handle
+    }
+    return false;
+  }
+
   async function renderDiagram() {
     setLoading(true);
     setError('');
@@ -49,6 +66,12 @@ export default function Page() {
       if (data.svg) setSvg(data.svg);
       if (data.base64) setBase64(data.base64);
     } catch (e: any) {
+      if ((engine === 'mermaid' || engine === 'flowchart') && format === 'svg') {
+        const ok = await renderMermaidLocally(code);
+        if (ok) {
+          return; // fallback success
+        }
+      }
       setError(e?.message || 'Error');
     } finally {
       setLoading(false);
@@ -58,6 +81,18 @@ export default function Page() {
   async function downloadDiagram() {
     setError('');
     try {
+      if ((engine === 'mermaid' || engine === 'flowchart') && format === 'svg' && svg) {
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `diagram.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return;
+      }
       const res = await fetch('/api/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
