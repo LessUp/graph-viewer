@@ -1,0 +1,1 @@
+- 后端 /api/render 支持通过环境变量 KROKI_BASE_URL 指向自建 Kroki 服务（默认 https://kroki.io）
