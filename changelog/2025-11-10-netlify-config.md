@@ -1,0 +1,2 @@
+- 新增 Netlify 部署配置：netlify.toml（启用 @netlify/plugin-nextjs，Node 18）
+- 计划使用 Netlify CLI 进行部署（若托管平台 API 出现异常则走 CLI 流程）

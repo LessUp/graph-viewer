@@ -1,0 +1,5 @@
+- 部署：使用 Netlify CLI 创建与部署站点
+  - 站点名称：lessup-graphviewer-20251110
+  - 生产地址：https://lessup-graphviewer-20251110.netlify.app
+  - 构建：Next.js 14 App Router + @netlify/plugin-nextjs，Node 18
+  - 备注：如需接入自建 Kroki，可在 Netlify 环境变量中设置 KROKI_BASE_URL
