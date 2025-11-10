@@ -3,9 +3,17 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 html, body, #__next {
   height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(125, 211, 252, 0.25), transparent 55%),
+    radial-gradient(circle at 80% 10%, rgba(196, 181, 253, 0.2), transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(94, 234, 212, 0.18), transparent 55%),
+    #f8fafc;
 }
