@@ -1,0 +1,1 @@
+- 新增“复制分享链接”功能：将当前 engine/format/code 写入 URL 查询参数（engine/format/code），支持通过链接直接恢复同一图形配置

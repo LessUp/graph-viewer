@@ -1,0 +1,1 @@
+- 新增前端本地状态持久化：使用 localStorage 记住最近一次的渲染配置（engine/format/code），页面刷新或重新打开时自动恢复
