@@ -25,6 +25,8 @@ const FORMAT_LABELS: Record<Format, string> = {
   pdf: 'PDF',
 };
 
+const LOCAL_STORAGE_KEY = 'graphviewer:state:v1';
+
 let mermaidPromise: Promise<any> | null = null;
 let graphvizPromise: Promise<any> | null = null;
 
@@ -79,11 +81,52 @@ export default function Page() {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    setCode(SAMPLES[engine]);
-    setSvg('');
-    setBase64('');
-    setError('');
-  }, [engine]);
+    if (typeof window === 'undefined') return;
+    try {
+      const engines: Engine[] = ['mermaid', 'plantuml', 'graphviz', 'flowchart'];
+      const formats: Format[] = ['svg', 'png', 'pdf'];
+
+      const params = new URLSearchParams(window.location.search);
+      const qsEngine = params.get('engine') as Engine | null;
+      const qsFormat = params.get('format') as Format | null;
+      const qsCode = params.get('code');
+      let appliedFromQuery = false;
+      if (qsEngine && engines.includes(qsEngine)) {
+        setEngine(qsEngine);
+        appliedFromQuery = true;
+      }
+      if (qsFormat && formats.includes(qsFormat)) {
+        setFormat(qsFormat);
+        appliedFromQuery = true;
+      }
+      if (qsCode !== null) {
+        setCode(qsCode);
+        appliedFromQuery = true;
+      }
+      if (appliedFromQuery) return;
+
+      const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { engine?: Engine; format?: Format; code?: string };
+      if (parsed.engine && engines.includes(parsed.engine)) {
+        setEngine(parsed.engine);
+      }
+      if (parsed.format && formats.includes(parsed.format)) {
+        setFormat(parsed.format);
+      }
+      if (typeof parsed.code === 'string') {
+        setCode(parsed.code);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const payload = JSON.stringify({ engine, format, code });
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, payload);
+    } catch {}
+  }, [engine, format, code]);
 
   useEffect(() => {
     if (engine === 'mermaid' || engine === 'flowchart') {
@@ -105,6 +148,12 @@ export default function Page() {
     }
     return Boolean(base64);
   }, [format, svg, base64]);
+
+  const codeStats = useMemo(() => {
+    const lines = code.split('\n').length;
+    const chars = code.length;
+    return { lines, chars };
+  }, [code]);
 
   async function renderMermaidLocally(input: string): Promise<boolean> {
     try {
@@ -167,7 +216,10 @@ export default function Page() {
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error || 'Render failed');
+        const base = j?.error || '渲染失败';
+        const statusText = j?.status ? `（HTTP ${j.status}）` : '';
+        const detailsText = j?.details ? `：${String(j.details).slice(0, 120)}` : '';
+        throw new Error(base + statusText + detailsText);
       }
       const data = await res.json();
       setContentType(data.contentType || '');
@@ -181,7 +233,7 @@ export default function Page() {
         }
       }
       if (e?.name !== 'AbortError') {
-        setError(e?.message || 'Error');
+        setError(e?.message || '渲染失败');
       }
     } finally {
       setLoading(false);
@@ -216,7 +268,9 @@ export default function Page() {
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error || 'Download failed');
+        const base = j?.error || '下载失败';
+        const statusText = j?.status ? `（HTTP ${j.status}）` : '';
+        throw new Error(base + statusText);
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -229,8 +283,29 @@ export default function Page() {
       URL.revokeObjectURL(url);
     } catch (e: any) {
       if (e?.name !== 'AbortError') {
-        setError(e?.message || 'Error');
+        setError(e?.message || '下载失败');
       }
+    }
+  }
+
+  async function copyShareLink() {
+    setError('');
+    try {
+      if (typeof window === 'undefined') return;
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+      params.set('engine', engine);
+      params.set('format', format);
+      params.set('code', code);
+      url.search = params.toString();
+      const finalUrl = url.toString();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(finalUrl);
+      } else {
+        window.prompt('请手动复制以下链接', finalUrl);
+      }
+    } catch (e: any) {
+      setError(e?.message || '复制分享链接失败');
     }
   }
 
@@ -331,6 +406,14 @@ export default function Page() {
             >
               下载文件
             </button>
+            <button
+              type="button"
+              onClick={copyShareLink}
+              disabled={!code.trim()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-sky-400 hover:text-sky-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              复制分享链接
+            </button>
             {canUseLocalRender && (
               <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
@@ -356,6 +439,9 @@ export default function Page() {
               className="min-h-[22rem] w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/60 p-4 font-mono text-sm leading-6 text-slate-800 shadow-inner focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
               aria-label="图形代码编辑器"
             />
+            <p className="text-xs text-slate-400">
+              当前代码：{codeStats.lines} 行 · {codeStats.chars} 字符
+            </p>
             <p className="text-xs text-slate-500">
               支持 Mermaid、Flowchart.js、PlantUML 与 Graphviz 语法。切换渲染引擎即可查看对应示例。
             </p>
@@ -373,9 +459,14 @@ export default function Page() {
               <h2 className="text-lg font-semibold text-slate-900">实时预览</h2>
               <p className="text-sm text-slate-500">根据所选格式展示输出效果。</p>
             </div>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-              当前格式：{FORMAT_LABELS[format]}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                当前引擎：{ENGINE_LABELS[engine]}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                当前格式：{FORMAT_LABELS[format]}
+              </span>
+            </div>
           </div>
           <div className="relative flex min-h-[22rem] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-200 bg-white">
             {loading && (
