@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type Engine = 'mermaid' | 'plantuml' | 'graphviz' | 'flowchart';
 type Format = 'svg' | 'png' | 'pdf';
@@ -26,6 +26,7 @@ const FORMAT_LABELS: Record<Format, string> = {
 };
 
 let mermaidPromise: Promise<any> | null = null;
+let graphvizPromise: Promise<any> | null = null;
 
 async function loadMermaid() {
   if (!mermaidPromise) {
@@ -45,6 +46,27 @@ async function loadMermaid() {
   return mermaidPromise;
 }
 
+  async function loadGraphviz() {
+    if (!graphvizPromise) {
+    graphvizPromise = import('@hpcc-js/wasm')
+      .then(async (module) => {
+        const g = (module as any).graphviz ?? module;
+        if (g?.wasmFolder) {
+          g.wasmFolder('https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist');
+        }
+        if (g?.load) {
+          await g.load();
+        }
+        return g;
+      })
+      .catch((error) => {
+        graphvizPromise = null;
+        throw error;
+      });
+    }
+    return graphvizPromise;
+  }
+
 export default function Page() {
   const [engine, setEngine] = useState<Engine>('mermaid');
   const [format, setFormat] = useState<Format>('svg');
@@ -54,6 +76,7 @@ export default function Page() {
   const [contentType, setContentType] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setCode(SAMPLES[engine]);
@@ -66,10 +89,13 @@ export default function Page() {
     if (engine === 'mermaid' || engine === 'flowchart') {
       loadMermaid().catch(() => undefined);
     }
+    if (engine === 'graphviz') {
+      loadGraphviz().catch(() => undefined);
+    }
   }, [engine]);
 
   const canUseLocalRender = useMemo(
-    () => (engine === 'mermaid' || engine === 'flowchart') && format === 'svg',
+    () => ((engine === 'mermaid' || engine === 'flowchart' || engine === 'graphviz') && format === 'svg'),
     [engine, format],
   );
 
@@ -98,14 +124,36 @@ export default function Page() {
     return false;
   }
 
+  async function renderGraphvizLocally(input: string): Promise<boolean> {
+    try {
+      const gv = await loadGraphviz();
+      if (!gv?.layout) return false;
+      const svgText = await gv.layout(input, 'svg', 'dot');
+      if (svgText) {
+        setContentType('image/svg+xml');
+        setSvg(svgText as string);
+        setBase64('');
+        return true;
+      }
+    } catch (err) {
+      // ignore and let caller handle
+    }
+    return false;
+  }
+
   async function renderDiagram() {
     setLoading(true);
     setError('');
     setSvg('');
     setBase64('');
     try {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+      abortRef.current = new AbortController();
+      const { signal } = abortRef.current;
       if (canUseLocalRender) {
-        const ok = await renderMermaidLocally(code);
+        const ok = engine === 'graphviz' ? await renderGraphvizLocally(code) : await renderMermaidLocally(code);
         if (ok) {
           return;
         }
@@ -115,6 +163,7 @@ export default function Page() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ engine, format, code }),
+        signal,
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
@@ -126,12 +175,14 @@ export default function Page() {
       if (data.base64) setBase64(data.base64);
     } catch (e: any) {
       if (canUseLocalRender) {
-        const ok = await renderMermaidLocally(code);
+        const ok = engine === 'graphviz' ? await renderGraphvizLocally(code) : await renderMermaidLocally(code);
         if (ok) {
           return;
         }
       }
-      setError(e?.message || 'Error');
+      if (e?.name !== 'AbortError') {
+        setError(e?.message || 'Error');
+      }
     } finally {
       setLoading(false);
     }
@@ -152,10 +203,16 @@ export default function Page() {
         URL.revokeObjectURL(url);
         return;
       }
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+      abortRef.current = new AbortController();
+      const { signal } = abortRef.current;
       const res = await fetch('/api/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ engine, format, code, binary: true }),
+        signal,
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
@@ -171,9 +228,19 @@ export default function Page() {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (e: any) {
-      setError(e?.message || 'Error');
+      if (e?.name !== 'AbortError') {
+        setError(e?.message || 'Error');
+      }
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, []);
 
   return (
     <main className="relative isolate mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 md:px-8 lg:gap-12 lg:py-16">
