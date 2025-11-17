@@ -86,26 +86,32 @@ export async function POST(req: NextRequest) {
     const contentType =
       krokiResp.headers.get('content-type') ||
       (format === 'svg' ? 'image/svg+xml' : format === 'png' ? 'image/png' : 'application/pdf');
-
-    if (binary) {
-      return new NextResponse(Buffer.from(arrayBuffer), {
-        status: 200,
-        headers: {
-          'Content-Type': contentType,
-          'Content-Disposition': `attachment; filename=diagram.${format}`,
-        },
-      });
-    }
+    const buffer = Buffer.from(arrayBuffer);
+    const cacheEntry: CacheEntry = { expires: Date.now() + CACHE_TTL_MS, contentType };
 
     if (format === 'svg') {
-      const svgText = new TextDecoder().decode(arrayBuffer);
-      cache.set(k, { expires: Date.now() + CACHE_TTL_MS, contentType, svg: svgText });
-      return NextResponse.json({ contentType, svg: svgText });
+      const svgText = new TextDecoder().decode(buffer);
+      cacheEntry.svg = svgText;
+      cache.set(k, cacheEntry);
+      if (!binary) {
+        return NextResponse.json({ contentType, svg: svgText });
+      }
     } else {
-      const base64 = Buffer.from(arrayBuffer).toString('base64');
-      cache.set(k, { expires: Date.now() + CACHE_TTL_MS, contentType, base64 });
-      return NextResponse.json({ contentType, base64 });
+      const base64 = buffer.toString('base64');
+      cacheEntry.base64 = base64;
+      cache.set(k, cacheEntry);
+      if (!binary) {
+        return NextResponse.json({ contentType, base64 });
+      }
     }
+
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename=diagram.${format}`,
+      },
+    });
   } catch (e: any) {
     return NextResponse.json({ error: 'Server error', message: e?.message || '' }, { status: 500 });
   }

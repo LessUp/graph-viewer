@@ -1,0 +1,1 @@
+- 修复 /api/render 在 binary 下载时未写入缓存的问题，确保 SVG/PNG/PDF 下载与前端预览共用同一缓存以减少 Kroki 请求
