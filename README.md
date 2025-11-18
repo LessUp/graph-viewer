@@ -35,6 +35,21 @@
 - 健康检查端点：`/api/healthz`（app/api/healthz/route.ts）
 - 渲染 API：`/api/render`（app/api/render/route.ts）
 - 客户端渲染入口：`app/page.tsx`
+ - 架构总览：
+   - 前端：`app/page.tsx` + `components/*` + `hooks/*`，负责编辑、预览与状态持久化。
+   - 后端：`/api/render` 作为 Kroki 代理与缓存层，`/api/healthz` 用于健康检查。
+   - 配置：`lib/diagramConfig.ts` 统一维护引擎/格式，`lib/diagramSamples.ts` 存放示例代码。
+
+## 安全说明
+- 本地渲染：
+  - Mermaid 使用 `securityLevel: 'strict'` 初始化，仅在浏览器内渲染 SVG，不向服务端发送代码。
+  - Graphviz WASM 在浏览器侧执行，依赖 `@hpcc-js/wasm` 官方实现。
+- 远程渲染：
+  - `/api/render` 会将图形代码转发到 `KROKI_BASE_URL` 指定的 Kroki 实例（默认 `https://kroki.io`），并在内存中短期缓存结果；缓存仅用于性能优化，不做持久化存储。
+  - 服务端日志不会记录原始代码内容，仅记录引擎、格式、长度和错误状态等摘要信息，用于排查故障。
+- 使用建议：
+  - 在涉及敏感业务逻辑或机密信息时，优先使用本地渲染（Mermaid / Graphviz），或配置自建 Kroki 实例替代公共服务。
+  - 如需更严格的安全隔离，可在反向代理或前置网关层增加额外访问控制和日志策略。
 
 ## 测试与基准
 - 冒烟测试：`npm run test:smoke`（默认访问 `http://localhost:3000`）
