@@ -54,3 +54,14 @@ services:
       - "3001:3000"
     profiles:
       - test
+
+  kroki:
+    image: yuzutech/kroki
+    container_name: kroki
+    restart: unless-stopped
+    environment:
+      - KROKI_MAX_URI_LENGTH=8192
+    ports:
+      - "8000:8000"
+    profiles:
+      - kroki
