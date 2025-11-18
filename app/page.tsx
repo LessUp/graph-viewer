@@ -309,6 +309,31 @@ export default function Page() {
     }
   }
 
+  async function copyCode() {
+    setError('');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        window.prompt('请手动复制以下代码', code);
+      }
+    } catch (e: any) {
+      setError(e?.message || '复制代码失败');
+    }
+  }
+
+  function clearCode() {
+    setCode('');
+    setSvg('');
+    setBase64('');
+  }
+
+  function formatCode() {
+    if (!code) return;
+    const formatted = code.replace(/\t/g, '  ');
+    setCode(formatted);
+  }
+
   useEffect(() => {
     return () => {
       if (abortRef.current) {
@@ -424,13 +449,39 @@ export default function Page() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium text-slate-700">图形代码</span>
-              <button
-                type="button"
-                onClick={() => setCode(SAMPLES[engine])}
-                className="text-xs font-medium text-sky-600 transition hover:text-sky-500"
-              >
-                恢复示例
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCode(SAMPLES[engine])}
+                  className="text-xs font-medium text-sky-600 transition hover:text-sky-500"
+                >
+                  恢复示例
+                </button>
+                <button
+                  type="button"
+                  onClick={copyCode}
+                  disabled={!code.trim()}
+                  className="text-xs font-medium text-slate-500 transition hover:text-slate-700 disabled:opacity-40"
+                >
+                  复制代码
+                </button>
+                <button
+                  type="button"
+                  onClick={clearCode}
+                  disabled={!code}
+                  className="text-xs font-medium text-rose-500 transition hover:text-rose-600 disabled:opacity-40"
+                >
+                  清空代码
+                </button>
+                <button
+                  type="button"
+                  onClick={formatCode}
+                  disabled={!code}
+                  className="text-xs font-medium text-slate-500 transition hover:text-slate-700 disabled:opacity-40"
+                >
+                  格式化缩进
+                </button>
+              </div>
             </div>
             <textarea
               value={code}
