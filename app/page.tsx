@@ -1,6 +1,7 @@
  'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { compressToEncodedURIComponent } from 'lz-string';
 import { EditorPanel } from '@/components/EditorPanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { useDiagramState } from '@/hooks/useDiagramState';
@@ -66,7 +67,24 @@ export default function Page() {
       const params = url.searchParams;
       params.set('engine', engine);
       params.set('format', format);
-      params.set('code', code);
+      if (code.trim()) {
+        let value = code;
+        try {
+          const encoded = compressToEncodedURIComponent(code);
+          if (encoded) {
+            value = encoded;
+            params.set('encoded', '1');
+          } else {
+            params.delete('encoded');
+          }
+        } catch {
+          params.delete('encoded');
+        }
+        params.set('code', value);
+      } else {
+        params.delete('code');
+        params.delete('encoded');
+      }
       url.search = params.toString();
       const finalUrl = url.toString();
       if (navigator.clipboard && navigator.clipboard.writeText) {
