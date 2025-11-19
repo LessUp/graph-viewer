@@ -32,6 +32,7 @@ type DiagramStateControls = {
   createDiagram: () => void;
   renameDiagram: (id: string, name: string) => void;
   deleteDiagram: (id: string) => void;
+  importWorkspace: (payload: { diagrams: DiagramDoc[]; currentId?: string }) => void;
 };
 
 function generateDiagramId(): string {
@@ -246,6 +247,21 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     });
   };
 
+  const importWorkspace = (payload: { diagrams: DiagramDoc[]; currentId?: string }) => {
+    const list = Array.isArray(payload?.diagrams) ? payload.diagrams : [];
+    if (!list.length) return;
+
+    setDiagrams(list);
+    const hasCurrent =
+      payload.currentId && list.some((d: DiagramDoc) => d.id === payload.currentId);
+    const nextId = hasCurrent ? (payload.currentId as string) : list[0].id;
+    const nextDoc = list.find((d: DiagramDoc) => d.id === nextId) ?? list[0];
+    setCurrentId(nextDoc.id);
+    setEngine(nextDoc.engine);
+    setFormat(nextDoc.format);
+    setCode(nextDoc.code);
+  };
+
   const deleteDiagram = (id: string) => {
     if (!id) return;
     setDiagrams((prev: DiagramDoc[]) => {
@@ -301,6 +317,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     setCurrentId: handleSetCurrentId,
     createDiagram,
     renameDiagram,
-     deleteDiagram,
+    deleteDiagram,
+    importWorkspace,
   };
 }

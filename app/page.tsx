@@ -24,6 +24,7 @@ export default function Page() {
     createDiagram,
     renameDiagram,
     deleteDiagram,
+    importWorkspace,
   } = useDiagramState(SAMPLES['mermaid']);
 
   const {
@@ -43,8 +44,15 @@ export default function Page() {
 
   const [livePreview, setLivePreview] = useState(false);
   const debounceRef = useRef<number | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const combinedError = error || linkError;
+
+  const sortedDiagrams = [...diagrams].sort((a, b) => {
+    const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+    const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+    return tb - ta;
+  });
 
   useEffect(() => {
     if (!livePreview) {
@@ -175,6 +183,56 @@ export default function Page() {
     }
   }
 
+  function handleExportWorkspace() {
+    try {
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        currentId,
+        diagrams,
+      };
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `graphviewer-workspace-${ts}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      setError(e?.message || '导出项目集失败');
+    }
+  }
+
+  function handleImportWorkspaceClick() {
+    if (importInputRef.current) {
+      importInputRef.current.value = '';
+      importInputRef.current.click();
+    }
+  }
+
+  async function handleImportWorkspaceChange(event: any) {
+    try {
+      const file: File | undefined = event?.target?.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      const data = JSON.parse(text) as { diagrams?: any; currentId?: string };
+      if (!Array.isArray(data.diagrams) || data.diagrams.length === 0) {
+        throw new Error('导入的文件中不包含有效的图列表。');
+      }
+      importWorkspace({ diagrams: data.diagrams, currentId: data.currentId });
+    } catch (e: any) {
+      setError(e?.message || '导入项目集失败');
+    } finally {
+      if (event?.target) {
+        event.target.value = '';
+      }
+    }
+  }
+
   return (
     <main className="relative isolate mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 md:px-8 lg:gap-12 lg:py-16">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -214,7 +272,7 @@ export default function Page() {
       <section className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex max-w-full flex-wrap items-center gap-2 overflow-x-auto">
-            {diagrams.map((d) => {
+            {sortedDiagrams.map((d) => {
               const isActive = d.id === currentId;
               return (
                 <button
@@ -261,13 +319,36 @@ export default function Page() {
               <span className="text-xs text-slate-400">暂无图形，点击右侧按钮新建。</span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={handleCreateDiagram}
-            className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
-          >
-            新建图
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportWorkspace}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-sky-400 hover:text-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+            >
+              导出项目集
+            </button>
+            <button
+              type="button"
+              onClick={handleImportWorkspaceClick}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-sky-400 hover:text-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+            >
+              导入项目集
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleImportWorkspaceChange}
+            />
+            <button
+              type="button"
+              onClick={handleCreateDiagram}
+              className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+            >
+              新建图
+            </button>
+          </div>
         </div>
       </section>
 
