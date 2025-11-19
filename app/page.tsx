@@ -1,5 +1,6 @@
  'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { EditorPanel } from '@/components/EditorPanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { useDiagramState } from '@/hooks/useDiagramState';
@@ -23,6 +24,39 @@ export default function Page() {
     setError,
     resetOutput,
   } = useDiagramRender(engine, format, code);
+
+  const [livePreview, setLivePreview] = useState(false);
+  const debounceRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!livePreview) {
+      if (debounceRef.current !== null) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      return;
+    }
+
+    if (!code.trim()) {
+      resetOutput();
+      return;
+    }
+
+    if (debounceRef.current !== null) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      void renderDiagram();
+    }, 800);
+
+    return () => {
+      if (debounceRef.current !== null) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+    };
+  }, [livePreview, engine, format, code, renderDiagram, resetOutput]);
 
   async function handleCopyShareLink() {
     clearError();
@@ -114,6 +148,8 @@ export default function Page() {
           loading={loading}
           error={error}
           canUseLocalRender={canUseLocalRender}
+          livePreviewEnabled={livePreview}
+          onLivePreviewChange={setLivePreview}
           onEngineChange={setEngine}
           onFormatChange={setFormat}
           onCodeChange={setCode}

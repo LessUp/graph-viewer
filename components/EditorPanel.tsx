@@ -13,6 +13,8 @@ export type EditorPanelProps = {
   loading: boolean;
   error: string;
   canUseLocalRender: boolean;
+  livePreviewEnabled: boolean;
+  onLivePreviewChange: (enabled: boolean) => void;
   onEngineChange: (engine: Engine) => void;
   onFormatChange: (format: Format) => void;
   onCodeChange: (code: string) => void;
@@ -33,6 +35,8 @@ export function EditorPanel(props: EditorPanelProps) {
     loading,
     error,
     canUseLocalRender,
+    livePreviewEnabled,
+    onLivePreviewChange,
     onEngineChange,
     onFormatChange,
     onCodeChange,
@@ -107,6 +111,15 @@ export function EditorPanel(props: EditorPanelProps) {
         >
           复制分享链接
         </button>
+        <label className="flex items-center gap-1 text-xs text-slate-600">
+          <input
+            type="checkbox"
+            checked={livePreviewEnabled}
+            onChange={(e) => onLivePreviewChange(e.target.checked)}
+            className="h-3.5 w-3.5 rounded border-slate-300 text-sky-600 focus:ring-sky-200"
+          />
+          实时预览（防抖）
+        </label>
         {canUseLocalRender && (
           <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
             <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
