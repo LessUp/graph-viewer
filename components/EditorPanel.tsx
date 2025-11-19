@@ -1,6 +1,9 @@
+'use client';
+
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { ENGINE_LABELS, FORMAT_LABELS } from '@/lib/diagramConfig';
 import { SAMPLES } from '@/lib/diagramSamples';
+import { CodeEditor } from '@/components/CodeEditor';
 
 export type EditorPanelProps = {
   engine: Engine;
@@ -148,13 +151,18 @@ export function EditorPanel(props: EditorPanelProps) {
             </button>
           </div>
         </div>
-        <textarea
-          value={code}
-          onChange={(e) => onCodeChange(e.target.value)}
-          spellCheck={false}
-          className="min-h-[22rem] w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/60 p-4 font-mono text-sm leading-6 text-slate-800 shadow-inner focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
-          aria-label="图形代码编辑器"
-        />
+        <div className="min-h-[22rem] w-full">
+          <CodeEditor
+            value={code}
+            onChange={onCodeChange}
+            disabled={loading}
+            onCtrlEnter={() => {
+              if (!loading && code.trim()) {
+                void onRender();
+              }
+            }}
+          />
+        </div>
         <p className="text-xs text-slate-400">
           当前代码：{codeStats.lines} 行 · {codeStats.chars} 字符
         </p>
