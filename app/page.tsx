@@ -23,6 +23,7 @@ export default function Page() {
     setCurrentId,
     createDiagram,
     renameDiagram,
+    deleteDiagram,
   } = useDiagramState(SAMPLES['mermaid']);
 
   const {
@@ -155,6 +156,14 @@ export default function Page() {
     renameDiagram(id, trimmed);
   }
 
+  function handleDeleteDiagram(id: string, name: string) {
+    if (typeof window === 'undefined') return;
+    const label = name && name.trim().length > 0 ? name.trim() : '未命名图';
+    const ok = window.confirm(`确定要删除图「${label}」吗？此操作不可撤销。`);
+    if (!ok) return;
+    deleteDiagram(id);
+  }
+
   function formatUpdatedAt(value: string) {
     if (!value) return '';
     try {
@@ -223,7 +232,7 @@ export default function Page() {
                     <span className="truncate font-semibold text-[0.78rem]">{d.name}</span>
                     <button
                       type="button"
-                      onClick={(event) => {
+                      onClick={(event: any) => {
                         event.stopPropagation();
                         handleRenameDiagram(d.id, d.name);
                       }}
@@ -235,6 +244,16 @@ export default function Page() {
                   <span className="mt-0.5 line-clamp-1 text-[0.7rem] text-slate-400">
                     {formatUpdatedAt(d.updatedAt)}
                   </span>
+                  <button
+                    type="button"
+                    onClick={(event: any) => {
+                      event.stopPropagation();
+                      handleDeleteDiagram(d.id, d.name);
+                    }}
+                    className="mt-1 inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[0.7rem] font-medium text-rose-500 hover:bg-rose-100"
+                  >
+                    删除
+                  </button>
                 </button>
               );
             })}

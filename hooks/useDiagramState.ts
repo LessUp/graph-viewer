@@ -31,6 +31,7 @@ type DiagramStateControls = {
   setCurrentId: (id: string) => void;
   createDiagram: () => void;
   renameDiagram: (id: string, name: string) => void;
+  deleteDiagram: (id: string) => void;
 };
 
 function generateDiagramId(): string {
@@ -245,6 +246,47 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     });
   };
 
+  const deleteDiagram = (id: string) => {
+    if (!id) return;
+    setDiagrams((prev: DiagramDoc[]) => {
+      const idx = prev.findIndex((d: DiagramDoc) => d.id === id);
+      if (idx === -1) return prev;
+      const next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+
+      // If deleting a non-current diagram, just return the new list.
+      if (id !== currentId) {
+        return next;
+      }
+
+      // Deleted the current diagram.
+      if (next.length === 0) {
+        const newId = generateDiagramId();
+        const now = new Date().toISOString();
+        const doc: DiagramDoc = {
+          id: newId,
+          name: '未命名图 1',
+          engine: 'mermaid',
+          format: 'svg',
+          code: '',
+          updatedAt: now,
+        };
+        setEngine('mermaid');
+        setFormat('svg');
+        setCode('');
+        setCurrentId(newId);
+        return [doc];
+      }
+
+      const fallbackIndex = idx - 1 >= 0 ? idx - 1 : 0;
+      const fallback = next[fallbackIndex];
+      setCurrentId(fallback.id);
+      setEngine(fallback.engine);
+      setFormat(fallback.format);
+      setCode(fallback.code);
+      return next;
+    });
+  };
+
   return {
     engine,
     format,
@@ -259,5 +301,6 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     setCurrentId: handleSetCurrentId,
     createDiagram,
     renameDiagram,
+     deleteDiagram,
   };
 }
