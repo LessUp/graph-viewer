@@ -10,6 +10,7 @@ type DiagramState = {
   format: Format;
   code: string;
   codeStats: { lines: number; chars: number };
+  linkError: string;
 };
 
 type DiagramStateControls = {
@@ -22,6 +23,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
   const [engine, setEngine] = useState<Engine>('mermaid');
   const [format, setFormat] = useState<Format>('svg');
   const [code, setCode] = useState<string>(initialCode);
+  const [linkError, setLinkError] = useState<string>('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -33,13 +35,23 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       const qsEncoded = params.get('encoded');
       let appliedFromQuery = false;
 
-      if (qsEngine && isEngine(qsEngine)) {
-        setEngine(qsEngine);
-        appliedFromQuery = true;
+      if (qsEngine) {
+        if (isEngine(qsEngine)) {
+          setEngine(qsEngine);
+          appliedFromQuery = true;
+        } else {
+          setLinkError('分享链接中的引擎参数无效，已使用默认引擎。');
+        }
       }
-      if (qsFormat && isFormat(qsFormat)) {
-        setFormat(qsFormat);
-        appliedFromQuery = true;
+      if (qsFormat) {
+        if (isFormat(qsFormat)) {
+          setFormat(qsFormat);
+          appliedFromQuery = true;
+        } else {
+          setLinkError((prev: string) =>
+            prev || '分享链接中的格式参数无效，已使用默认格式。',
+          );
+        }
       }
       if (qsCode !== null) {
         if (qsEncoded === '1') {
@@ -48,9 +60,15 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
             const decompressed = decompressFromEncodedURIComponent(qsCode);
             if (typeof decompressed === 'string' && decompressed.length > 0) {
               codeFromQuery = decompressed;
+            } else {
+              setLinkError((prev: string) =>
+                prev || '分享链接中的代码解压后为空，已使用原始内容。',
+              );
             }
           } catch {
-            // ignore and fall back to raw code
+            setLinkError((prev: string) =>
+              prev || '分享链接中的代码解压失败，已使用原始内容。',
+            );
           }
           setCode(codeFromQuery);
         } else {
@@ -98,6 +116,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     format,
     code,
     codeStats,
+    linkError,
     setEngine,
     setFormat,
     setCode,
