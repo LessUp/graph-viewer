@@ -9,7 +9,7 @@ import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { SAMPLES } from '@/lib/diagramSamples';
 
 export default function Page() {
-  const { engine, format, code, codeStats, setEngine, setFormat, setCode } = useDiagramState(SAMPLES['mermaid']);
+  const { engine, format, code, codeStats, linkError, setEngine, setFormat, setCode } = useDiagramState(SAMPLES['mermaid']);
 
   const {
     svg,
@@ -28,6 +28,8 @@ export default function Page() {
 
   const [livePreview, setLivePreview] = useState(false);
   const debounceRef = useRef<number | null>(null);
+
+  const combinedError = error || linkError;
 
   useEffect(() => {
     if (!livePreview) {
@@ -164,7 +166,7 @@ export default function Page() {
           code={code}
           codeStats={codeStats}
           loading={loading}
-          error={error}
+          error={combinedError}
           canUseLocalRender={canUseLocalRender}
           livePreviewEnabled={livePreview}
           onLivePreviewChange={setLivePreview}
