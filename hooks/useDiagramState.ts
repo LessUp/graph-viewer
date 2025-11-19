@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { decompressFromEncodedURIComponent } from 'lz-string';
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { isEngine, isFormat } from '@/lib/diagramConfig';
 
@@ -29,6 +30,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       const qsEngine = params.get('engine');
       const qsFormat = params.get('format');
       const qsCode = params.get('code');
+      const qsEncoded = params.get('encoded');
       let appliedFromQuery = false;
 
       if (qsEngine && isEngine(qsEngine)) {
@@ -40,7 +42,20 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
         appliedFromQuery = true;
       }
       if (qsCode !== null) {
-        setCode(qsCode);
+        if (qsEncoded === '1') {
+          let codeFromQuery = qsCode;
+          try {
+            const decompressed = decompressFromEncodedURIComponent(qsCode);
+            if (typeof decompressed === 'string' && decompressed.length > 0) {
+              codeFromQuery = decompressed;
+            }
+          } catch {
+            // ignore and fall back to raw code
+          }
+          setCode(codeFromQuery);
+        } else {
+          setCode(qsCode);
+        }
         appliedFromQuery = true;
       }
       if (appliedFromQuery) return;
