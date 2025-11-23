@@ -1,4 +1,5 @@
- 'use client';
+
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { compressToEncodedURIComponent } from 'lz-string';
@@ -27,6 +28,14 @@ export default function Page() {
     importWorkspace,
   } = useDiagramState(SAMPLES['mermaid']);
 
+  // 强制使用 SVG 格式以获得最佳体验，除非特定需求
+  // 在新设计中，我们主要依赖前端导出，所以渲染格式首选 SVG
+  useEffect(() => {
+    if (format !== 'svg') {
+      setFormat('svg');
+    }
+  }, [format, setFormat]);
+
   const {
     svg,
     base64,
@@ -36,11 +45,10 @@ export default function Page() {
     canUseLocalRender,
     showPreview,
     renderDiagram,
-    downloadDiagram,
     clearError,
     setError,
     resetOutput,
-  } = useDiagramRender(engine, format, code);
+  } = useDiagramRender(engine, 'svg', code); // 强制传入 'svg' 给 render hook
 
   const [livePreview, setLivePreview] = useState(false);
   const debounceRef = useRef<number | null>(null);
@@ -82,7 +90,7 @@ export default function Page() {
         debounceRef.current = null;
       }
     };
-  }, [livePreview, engine, format, code, renderDiagram, resetOutput]);
+  }, [livePreview, engine, code, renderDiagram, resetOutput]); // removed format dependency
 
   async function handleCopyShareLink() {
     clearError();
@@ -91,7 +99,8 @@ export default function Page() {
       const url = new URL(window.location.href);
       const params = url.searchParams;
       params.set('engine', engine);
-      params.set('format', format);
+      // 默认为 svg，链接里可以不带，或者带上也行
+      params.set('format', 'svg');
       if (code.trim()) {
         let value = code;
         try {
@@ -172,17 +181,6 @@ export default function Page() {
     deleteDiagram(id);
   }
 
-  function formatUpdatedAt(value: string) {
-    if (!value) return '';
-    try {
-      const d = new Date(value);
-      if (Number.isNaN(d.getTime())) return value;
-      return d.toLocaleString();
-    } catch {
-      return value;
-    }
-  }
-
   function handleExportWorkspace() {
     try {
       const payload = {
@@ -234,156 +232,129 @@ export default function Page() {
   }
 
   return (
-    <main className="relative isolate mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 md:px-8 lg:gap-12 lg:py-16">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-1/2 top-[-20%] h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-sky-400/25 blur-3xl" />
-        <div className="absolute right-[-10%] top-[35%] h-[28rem] w-[28rem] rounded-full bg-indigo-300/20 blur-3xl" />
+    <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1600px] flex-col gap-6 px-4 py-6 md:px-6 lg:gap-8 lg:py-8">
+      {/* Background decoration */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-30">
+        <div className="absolute left-1/2 top-[-10%] h-[40rem] w-[40rem] -translate-x-1/2 rounded-full bg-sky-200 blur-[100px]" />
+        <div className="absolute right-[-5%] top-[20%] h-[30rem] w-[30rem] rounded-full bg-indigo-200 blur-[100px]" />
       </div>
 
-      <section className="relative overflow-hidden rounded-3xl bg-slate-950 px-6 py-10 text-white shadow-2xl ring-1 ring-white/10 md:px-10">
-        <div className="absolute right-6 top-6 hidden h-28 w-28 rotate-12 rounded-full bg-sky-400/20 blur-2xl md:block" />
-        <div className="absolute -left-10 bottom-0 hidden h-32 w-32 -rotate-12 rounded-full bg-violet-500/20 blur-2xl md:block" />
-        <div className="relative z-10 space-y-6">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-100">
-            即时渲染 · 多格式输出
-          </span>
-          <div className="space-y-4">
-            <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
-              图形语法一站式可视化工具
-            </h1>
-            <p className="max-w-3xl text-sm text-slate-200 md:text-base">
-              通过 Mermaid、PlantUML、Graphviz 等语法快速生成图表。输入代码即可实时预览，轻松导出高质量的 SVG、PNG 或 PDF 文件。
-            </p>
+      {/* Header Section */}
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-900/95 px-6 py-5 text-white shadow-xl ring-1 ring-white/10 backdrop-blur">
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500 shadow-lg">
+            <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
           </div>
-          <ul className="flex flex-wrap gap-3 text-sm text-slate-200">
-            <li className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-              <span className="inline-flex h-2 w-2 rounded-full bg-sky-300" />本地极速渲染
-            </li>
-            <li className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-300" />响应式界面体验
-            </li>
-            <li className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-              <span className="inline-flex h-2 w-2 rounded-full bg-amber-300" />多格式文件导出
-            </li>
-          </ul>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">GraphViewer</h1>
+            <p className="text-xs text-slate-400">Mermaid · PlantUML · Graphviz 可视化工具</p>
+          </div>
         </div>
-      </section>
+        <div className="flex items-center gap-3">
+          <button
+             onClick={handleImportWorkspaceClick}
+             className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition"
+          >
+            导入项目
+          </button>
+          <button
+             onClick={handleExportWorkspace}
+             className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition"
+          >
+            导出项目
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleImportWorkspaceChange}
+          />
+        </div>
+      </header>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex max-w-full flex-wrap items-center gap-2 overflow-x-auto">
-            {sortedDiagrams.map((d) => {
-              const isActive = d.id === currentId;
-              return (
-                <button
+      {/* Workspace Section */}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:h-[calc(100vh-180px)]">
+        {/* Left Sidebar: Diagrams List & Editor */}
+        <div className="flex w-full flex-col gap-4 lg:w-[420px] lg:h-full lg:shrink-0">
+          {/* Diagram List */}
+          <div className="flex-shrink-0 rounded-xl border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur">
+            <div className="mb-2 flex items-center justify-between px-1">
+              <span className="text-xs font-semibold text-slate-500">我的图表 ({diagrams.length})</span>
+              <button
+                onClick={handleCreateDiagram}
+                className="flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                新建
+              </button>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-y-auto lg:max-h-[120px]">
+              {sortedDiagrams.map((d) => (
+                <div
                   key={d.id}
-                  type="button"
                   onClick={() => handleSelectDiagram(d.id)}
-                  className={
-                    'flex min-w-[8rem] flex-col items-start gap-0.5 rounded-xl border px-3 py-2 text-left text-xs transition ' +
-                    (isActive
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:text-sky-700')
-                  }
+                  className={`group flex shrink-0 cursor-pointer items-center justify-between rounded-lg border px-3 py-2 transition-all ${
+                    d.id === currentId
+                      ? 'border-sky-500 bg-sky-50 text-sky-700'
+                      : 'border-slate-100 bg-white text-slate-600 hover:border-sky-200 hover:text-sky-600'
+                  }`}
                 >
-                  <span className="flex w-full items-center justify-between gap-2">
-                    <span className="truncate font-semibold text-[0.78rem]">{d.name}</span>
-                    <button
-                      type="button"
-                      onClick={(event: any) => {
-                        event.stopPropagation();
-                        handleRenameDiagram(d.id, d.name);
-                      }}
-                      className="text-[0.7rem] text-slate-400 hover:text-slate-700"
-                    >
-                      重命名
-                    </button>
-                  </span>
-                  <span className="mt-0.5 line-clamp-1 text-[0.7rem] text-slate-400">
-                    {formatUpdatedAt(d.updatedAt)}
-                  </span>
+                  <span className="truncate text-xs font-medium">{d.name}</span>
                   <button
-                    type="button"
-                    onClick={(event: any) => {
-                      event.stopPropagation();
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleDeleteDiagram(d.id, d.name);
                     }}
-                    className="mt-1 inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[0.7rem] font-medium text-rose-500 hover:bg-rose-100"
+                    className="hidden text-slate-400 hover:text-rose-500 group-hover:block"
                   >
-                    删除
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
-                </button>
-              );
-            })}
-            {diagrams.length === 0 && (
-              <span className="text-xs text-slate-400">暂无图形，点击右侧按钮新建。</span>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportWorkspace}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-sky-400 hover:text-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
-            >
-              导出项目集
-            </button>
-            <button
-              type="button"
-              onClick={handleImportWorkspaceClick}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-sky-400 hover:text-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
-            >
-              导入项目集
-            </button>
-            <input
-              ref={importInputRef}
-              type="file"
-              accept="application/json,.json"
-              className="hidden"
-              onChange={handleImportWorkspaceChange}
+
+          {/* Editor */}
+          <div className="flex-1 min-h-[400px] lg:min-h-0">
+            <EditorPanel
+              engine={engine}
+              code={code}
+              codeStats={codeStats}
+              loading={loading}
+              error={combinedError}
+              canUseLocalRender={canUseLocalRender}
+              livePreviewEnabled={livePreview}
+              onLivePreviewChange={setLivePreview}
+              onEngineChange={setEngine}
+              onCodeChange={setCode}
+              onRender={renderDiagram}
+              onCopyShareLink={handleCopyShareLink}
+              onCopyCode={handleCopyCode}
+              onClearCode={handleClearCode}
+              onFormatCode={handleFormatCode}
             />
-            <button
-              type="button"
-              onClick={handleCreateDiagram}
-              className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
-            >
-              新建图
-            </button>
           </div>
         </div>
-      </section>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-        <EditorPanel
-          engine={engine}
-          format={format}
-          code={code}
-          codeStats={codeStats}
-          loading={loading}
-          error={combinedError}
-          canUseLocalRender={canUseLocalRender}
-          livePreviewEnabled={livePreview}
-          onLivePreviewChange={setLivePreview}
-          onEngineChange={setEngine}
-          onFormatChange={setFormat}
-          onCodeChange={setCode}
-          onRender={renderDiagram}
-          onDownload={downloadDiagram}
-          onCopyShareLink={handleCopyShareLink}
-          onCopyCode={handleCopyCode}
-          onClearCode={handleClearCode}
-          onFormatCode={handleFormatCode}
-        />
-
-        <PreviewPanel
-          engine={engine}
-          format={format}
-          svg={svg}
-          base64={base64}
-          contentType={contentType}
-          loading={loading}
-        />
+        {/* Right Content: Preview */}
+        <div className="flex-1 h-[500px] lg:h-full">
+          <PreviewPanel
+            svg={svg}
+            base64={base64}
+            contentType={contentType}
+            loading={loading}
+            showPreview={showPreview}
+            format={'svg'} // Force SVG for preview logic
+          />
+        </div>
       </div>
     </main>
   );
 }
-

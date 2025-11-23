@@ -1,188 +1,170 @@
-"use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import type { Engine, Format } from '@/lib/diagramConfig';
-import { ENGINE_LABELS, FORMAT_LABELS } from '@/lib/diagramConfig';
+'use client';
 
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 3;
-const ZOOM_STEP = 0.2;
+import { useEffect, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
+import { PreviewToolbar } from '@/components/PreviewToolbar';
 
 export type PreviewPanelProps = {
-  engine: Engine;
-  format: Format;
   svg: string;
   base64: string;
   contentType: string;
   loading: boolean;
+  showPreview: boolean;
+  format: string;
 };
 
 export function PreviewPanel(props: PreviewPanelProps) {
-  const { engine, format, svg, base64, contentType, loading } = props;
+  const { svg, base64, contentType, loading, showPreview, format } = props;
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const panStateRef = useRef<{
-    x: number;
-    y: number;
-    scrollLeft: number;
-    scrollTop: number;
-  } | null>(null);
+  const lastMousePos = useRef({ x: 0, y: 0 });
 
-  const showPreview = (() => {
-    if (format === 'svg') return Boolean(svg);
-    return Boolean(base64);
-  })();
-
+  // 当预览内容消失时重置视图
   useEffect(() => {
-    setZoom(1);
-  }, [format, svg]);
+    if (!showPreview) {
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+    }
+  }, [showPreview]);
 
-  function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
-    if (!event.ctrlKey) return;
-    event.preventDefault();
-    const delta = event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
-    setZoom((prev) => {
-      const next = prev + delta;
-      if (next < MIN_ZOOM) return MIN_ZOOM;
-      if (next > MAX_ZOOM) return MAX_ZOOM;
-      return next;
-    });
-  }
+  // 滚轮缩放
+  const handleWheel = (e: WheelEvent) => {
+    // 如果按住 Ctrl/Meta 键，或者只是普通的滚轮行为（为了方便，我们允许直接滚轮缩放）
+    // 这里为了避免与页面滚动冲突，我们还是建议配合 Ctrl，或者在全屏模式下直接缩放
+    // 但为了体验，如果是在这个区域内，我们可以拦截
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      setZoom((z) => {
+        const newZoom = z * delta;
+        return Math.min(Math.max(newZoom, 0.1), 10);
+      });
+    }
+  };
 
-  function handleMouseDown(event: React.MouseEvent<HTMLDivElement>) {
-    if (event.button !== 0) return;
-    if (!scrollContainerRef.current) return;
-    setIsPanning(true);
-    panStateRef.current = {
-      x: event.clientX,
-      y: event.clientY,
-      scrollLeft: scrollContainerRef.current.scrollLeft,
-      scrollTop: scrollContainerRef.current.scrollTop,
-    };
-    event.preventDefault();
-  }
+  // 开始平移
+  const handleMouseDown = (e: MouseEvent) => {
+    // 中键 或者 按住空格+左键 (这里简化为直接左键拖拽，如果不是在选中文本的话)
+    // 为了避免冲突，我们设定：
+    // 1. 中键拖拽
+    // 2. 左键拖拽（如果是在空白处）
+    // 这里简单起见，允许左键直接拖拽，因为 SVG 通常不需要选中文本
+    if (e.button === 0 || e.button === 1) {
+      e.preventDefault();
+      setIsPanning(true);
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+    }
+  };
 
-  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    if (!isPanning || !scrollContainerRef.current || !panStateRef.current) return;
-    event.preventDefault();
-    const dx = event.clientX - panStateRef.current.x;
-    const dy = event.clientY - panStateRef.current.y;
-    scrollContainerRef.current.scrollLeft = panStateRef.current.scrollLeft - dx;
-    scrollContainerRef.current.scrollTop = panStateRef.current.scrollTop - dy;
-  }
+  // 移动中
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isPanning) return;
+    e.preventDefault();
+    const dx = e.clientX - lastMousePos.current.x;
+    const dy = e.clientY - lastMousePos.current.y;
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
+    setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+  };
 
-  function endPan() {
+  // 结束平移
+  const endPan = () => {
     setIsPanning(false);
-    panStateRef.current = null;
-  }
+  };
+
+  const handleZoomIn = () => setZoom((z) => Math.min(z * 1.25, 10));
+  const handleZoomOut = () => setZoom((z) => Math.max(z / 1.25, 0.1));
+  const handleResetZoom = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  // 只有 SVG 格式支持前端导出和无限缩放
+  const exportableSvg = format === 'svg' ? svg : null;
 
   return (
-    <div className="space-y-6 rounded-2xl border border-white/60 bg-white/90 p-6 shadow-xl backdrop-blur md:p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900">实时预览</h2>
-          <p className="text-sm text-slate-500">根据所选格式展示输出效果。</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-            当前引擎：{ENGINE_LABELS[engine]}
-          </span>
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-            当前格式：{FORMAT_LABELS[format]}
-          </span>
-        </div>
-      </div>
-      <div className="relative flex min-h-[22rem] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-200 bg-white">
-        {format === 'svg' && svg && (
-          <div className="pointer-events-auto absolute right-4 top-4 z-20 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs text-slate-600 shadow">
-            <button
-              type="button"
-              className="rounded-full px-2 py-0.5 hover:bg-slate-100"
-              onClick={() =>
-                setZoom((prev) => (prev - ZOOM_STEP < MIN_ZOOM ? MIN_ZOOM : prev - ZOOM_STEP))
-              }
-            >
-              -
-            </button>
-            <button
-              type="button"
-              className="rounded-full px-2 py-0.5 hover:bg-slate-100"
-              onClick={() => setZoom(1)}
-            >
-              100%
-            </button>
-            <button
-              type="button"
-              className="rounded-full px-2 py-0.5 hover:bg-slate-100"
-              onClick={() =>
-                setZoom((prev) => (prev + ZOOM_STEP > MAX_ZOOM ? MAX_ZOOM : prev + ZOOM_STEP))
-              }
-            >
-              +
-            </button>
-            <span className="px-1 tabular-nums">{Math.round(zoom * 100)}%</span>
-          </div>
-        )}
-        {loading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-            <svg className="h-9 w-9 animate-spin text-sky-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <div className="relative flex h-full min-h-[500px] w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/50 shadow-inner">
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity">
+          <div className="flex flex-col items-center gap-3 rounded-xl bg-white px-8 py-6 shadow-xl ring-1 ring-slate-900/5">
+            <svg className="h-8 w-8 animate-spin text-sky-500" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
+            <span className="text-sm font-medium text-slate-600">渲染中...</span>
           </div>
-        )}
-        {!showPreview && !loading && (
-          <div className="flex flex-col items-center gap-2 text-sm text-slate-400">
-            <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-              <path d="M10 12h4" />
-              <path d="M10 15h6" />
+        </div>
+      )}
+
+      {/* Toolbar */}
+      {showPreview && (
+        <PreviewToolbar
+          scale={zoom}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetZoom={handleResetZoom}
+          svgContent={exportableSvg}
+        />
+      )}
+
+      {/* Empty State */}
+      {!showPreview && !loading && (
+        <div className="flex h-full flex-col items-center justify-center gap-4 text-slate-400">
+          <div className="rounded-full bg-slate-100 p-6 shadow-sm">
+            <svg className="h-12 w-12 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            暂无预览，请输入代码后点击渲染。
           </div>
-        )}
-        {format === 'svg' && svg && (
-          <div
-            ref={scrollContainerRef}
-            className={`relative h-full w-full overflow-auto bg-white p-4 ${
-              isPanning ? 'cursor-grabbing' : 'cursor-grab'
-            }`}
-            aria-label="SVG 预览"
-            onWheel={handleWheel}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={endPan}
-            onMouseLeave={endPan}
-          >
+          <p className="text-sm font-medium">暂无预览，请输入代码后点击渲染</p>
+        </div>
+      )}
+
+      {/* Content Area */}
+      <div
+        ref={scrollContainerRef}
+        className={`relative h-full w-full overflow-hidden ${isPanning ? 'cursor-grabbing' : 'cursor-grab'} ${!showPreview ? 'pointer-events-none' : ''}`}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={endPan}
+        onMouseLeave={endPan}
+      >
+        <div
+          className="flex h-full w-full items-center justify-center p-8 transition-transform duration-75 ease-out"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: 'center',
+          }}
+        >
+          {format === 'svg' && svg && (
             <div
-              className="inline-block"
-              style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
               dangerouslySetInnerHTML={{ __html: svg }}
+              className="diagram-container pointer-events-none" // 禁止内部 SVG 的交互，由外层容器接管
             />
-          </div>
-        )}
-        {format === 'png' && base64 && (
-          <div className="relative h-full w-full overflow-auto p-4" aria-label="PNG 预览">
+          )}
+          
+          {format === 'png' && base64 && (
             <img
               src={`data:${contentType};base64,${base64}`}
               alt="diagram preview"
-              className="mx-auto max-h-[30rem] w-auto max-w-full rounded-xl shadow"
+              className="max-h-full max-w-full shadow-lg ring-1 ring-slate-900/5"
+              draggable={false}
             />
-          </div>
-        )}
-        {format === 'pdf' && base64 && (
-          <iframe
-            title="diagram preview"
-            src={`data:application/pdf;base64,${base64}`}
-            className="h-[28rem] w-full rounded-xl border border-slate-200"
-          />
-        )}
+          )}
+          
+          {format === 'pdf' && base64 && (
+            <iframe
+              title="diagram preview"
+              src={`data:application/pdf;base64,${base64}`}
+              className="h-full w-full rounded border border-slate-200 shadow-sm"
+            />
+          )}
+        </div>
       </div>
-      <p className="text-xs text-slate-500">SVG 支持无限缩放，PNG 适合嵌入文档，PDF 便于打印与分享。</p>
     </div>
   );
 }
-
-export default PreviewPanel;
