@@ -1,12 +1,13 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { exportSvg, exportPng, copyPngToClipboard } from '@/lib/exportUtils';
+import { exportSvg, exportPng, copyPngToClipboard, copySvgToClipboard, exportImage, EXPORT_PRESETS, type ExportPreset } from '@/lib/exportUtils';
 
 interface PreviewToolbarProps {
   scale: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetZoom: () => void;
+  onFitToScreen?: () => void;
   svgContent: string | null;
   filename?: string;
 }
