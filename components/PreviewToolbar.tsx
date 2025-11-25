@@ -1,14 +1,16 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { exportSvg, exportPng, copyPngToClipboard, copySvgToClipboard, exportImage, EXPORT_PRESETS, type ExportPreset } from '@/lib/exportUtils';
+import { exportSvg, exportPng, copyPngToClipboard, copySvgToClipboard, exportHtml, exportMarkdown, exportSourceCode } from '@/lib/exportUtils';
 
 interface PreviewToolbarProps {
   scale: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetZoom: () => void;
-  onFitToScreen?: () => void;
+  onFullscreen?: () => void;
   svgContent: string | null;
+  code?: string;
+  engine?: string;
   filename?: string;
 }
 
@@ -17,7 +19,10 @@ export function PreviewToolbar({
   onZoomIn,
   onZoomOut,
   onResetZoom,
+  onFullscreen,
   svgContent,
+  code = '',
+  engine = 'mermaid',
   filename = 'diagram',
 }: PreviewToolbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,19 +46,26 @@ export function PreviewToolbar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleExport = async (type: 'svg' | 'png' | 'copy', pngScale = 2) => {
-    if (!svgContent) return;
+  const handleExport = async (type: 'svg' | 'png' | 'copy' | 'html' | 'md' | 'source', pngScale = 2) => {
+    if (!svgContent && type !== 'md' && type !== 'source') return;
+    if (!code && (type === 'md' || type === 'source')) return;
     setIsExporting(true);
-    setIsMenuOpen(false); // Close menu immediately
+    setIsMenuOpen(false);
 
     try {
       if (type === 'svg') {
-        exportSvg(svgContent, filename);
+        exportSvg(svgContent!, filename);
       } else if (type === 'png') {
-        await exportPng(svgContent, filename, pngScale);
+        await exportPng(svgContent!, filename, pngScale);
       } else if (type === 'copy') {
-        await copyPngToClipboard(svgContent, pngScale);
+        await copyPngToClipboard(svgContent!, pngScale);
         showCopySuccess();
+      } else if (type === 'html') {
+        exportHtml(svgContent!, filename, filename);
+      } else if (type === 'md') {
+        exportMarkdown(code, engine, filename);
+      } else if (type === 'source') {
+        exportSourceCode(code, engine, filename);
       }
     } catch (e) {
       console.error('Export failed', e);
@@ -103,6 +115,17 @@ export function PreviewToolbar({
             <path d="M3 3v5h5"></path>
           </svg>
         </button>
+        {onFullscreen && (
+          <button
+            onClick={onFullscreen}
+            className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            title="全屏查看"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Copy Success Toast */}
@@ -141,37 +164,65 @@ export function PreviewToolbar({
 
         {/* Dropdown */}
         {isMenuOpen && (
-          <div className="absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-slate-100 bg-white p-1 shadow-xl ring-1 ring-slate-200 focus:outline-none">
-            <div className="px-2 py-1.5 text-xs font-semibold text-slate-400">下载文件</div>
+          <div className="absolute right-0 top-full mt-2 w-52 origin-top-right rounded-xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-slate-200 focus:outline-none">
+            {/* 图片格式 */}
+            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">图片格式</div>
             <button
               onClick={() => handleExport('svg')}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
               <span className="flex h-5 w-5 items-center justify-center rounded bg-orange-100 text-[0.6rem] font-bold text-orange-600">S</span>
               SVG 矢量图
             </button>
             <button
               onClick={() => handleExport('png', 2)}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
               <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-100 text-[0.6rem] font-bold text-emerald-600">P</span>
-              PNG 图片 (高清 2x)
+              PNG 高清 (2x)
             </button>
             <button
               onClick={() => handleExport('png', 4)}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
               <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-100 text-[0.6rem] font-bold text-emerald-600">P</span>
-              PNG 图片 (超清 4x)
+              PNG 超清 (4x)
             </button>
             
-            <div className="my-1 h-px bg-slate-100" />
+            <div className="my-1.5 h-px bg-slate-100" />
             
+            {/* 文档格式 */}
+            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">文档格式</div>
+            <button
+              onClick={() => handleExport('html')}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-100 text-[0.6rem] font-bold text-blue-600">H</span>
+              HTML 网页
+            </button>
+            <button
+              onClick={() => handleExport('md')}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-violet-100 text-[0.6rem] font-bold text-violet-600">M</span>
+              Markdown 文档
+            </button>
+            <button
+              onClick={() => handleExport('source')}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-slate-100 text-[0.6rem] font-bold text-slate-600">C</span>
+              源代码文件
+            </button>
+            
+            <div className="my-1.5 h-px bg-slate-100" />
+            
+            {/* 复制 */}
             <button
               onClick={() => handleExport('copy')}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="h-5 w-5 p-0.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>

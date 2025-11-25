@@ -11,12 +11,16 @@ export type PreviewPanelProps = {
   loading: boolean;
   showPreview: boolean;
   format: string;
+  code?: string;
+  engine?: string;
 };
 
 export function PreviewPanel(props: PreviewPanelProps) {
-  const { svg, base64, contentType, loading, showPreview, format } = props;
+  const { svg, base64, contentType, loading, showPreview, format, code = '', engine = 'mermaid' } = props;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -82,11 +86,40 @@ export function PreviewPanel(props: PreviewPanelProps) {
     setPan({ x: 0, y: 0 });
   };
 
+  // 全屏功能
+  const handleFullscreen = async () => {
+    if (!containerRef.current) return;
+    
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (e) {
+      console.error('Fullscreen error:', e);
+    }
+  };
+
+  // 监听全屏变化
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   // 只有 SVG 格式支持前端导出和无限缩放
   const exportableSvg = format === 'svg' ? svg : null;
 
   return (
-    <div className="relative flex h-full min-h-[500px] w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div 
+      ref={containerRef}
+      className={`relative flex h-full min-h-[500px] w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm ${isFullscreen ? 'rounded-none border-0' : ''}`}
+    >
       {/* 背景网格 */}
       <div 
         className="absolute inset-0 opacity-[0.03]"
@@ -119,8 +152,24 @@ export function PreviewPanel(props: PreviewPanelProps) {
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onResetZoom={handleResetZoom}
+          onFullscreen={handleFullscreen}
           svgContent={exportableSvg}
+          code={code}
+          engine={engine}
         />
+      )}
+
+      {/* 全屏退出按钮 */}
+      {isFullscreen && (
+        <button
+          onClick={handleFullscreen}
+          className="absolute left-4 top-4 z-30 flex items-center gap-2 rounded-lg bg-slate-800/80 px-3 py-2 text-xs font-medium text-white backdrop-blur hover:bg-slate-700 transition"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          退出全屏 (ESC)
+        </button>
       )}
 
       {/* Empty State */}
