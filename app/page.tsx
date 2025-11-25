@@ -232,39 +232,54 @@ export default function Page() {
   }
 
   return (
-    <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1600px] flex-col gap-6 px-4 py-6 md:px-6 lg:gap-8 lg:py-8">
-      {/* Background decoration */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-30">
-        <div className="absolute left-1/2 top-[-10%] h-[40rem] w-[40rem] -translate-x-1/2 rounded-full bg-sky-200 blur-[100px]" />
-        <div className="absolute right-[-5%] top-[20%] h-[30rem] w-[30rem] rounded-full bg-indigo-200 blur-[100px]" />
-      </div>
-
+    <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1800px] flex-col gap-5 px-4 py-5 md:px-6 lg:gap-6 lg:py-6">
       {/* Header Section */}
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-900/95 px-6 py-5 text-white shadow-xl ring-1 ring-white/10 backdrop-blur">
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-6 py-4 text-white shadow-xl ring-1 ring-white/10">
         <div className="flex items-center gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500 shadow-lg">
-            <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-            </svg>
+          <div className="relative">
+            <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-sky-400 to-violet-500 opacity-75 blur"></div>
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 shadow-lg">
+              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+            </div>
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">GraphViewer</h1>
-            <p className="text-xs text-slate-400">Mermaid · PlantUML · Graphviz 可视化工具</p>
+            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+              GraphViewer
+            </h1>
+            <p className="text-[11px] text-slate-400 font-medium">Mermaid · PlantUML · Graphviz · Flowchart</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
              onClick={handleImportWorkspaceClick}
-             className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition"
+             className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white hover:bg-white/20 transition-all hover:scale-105"
           >
-            导入项目
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            导入
           </button>
           <button
              onClick={handleExportWorkspace}
-             className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition"
+             className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white hover:bg-white/20 transition-all hover:scale-105"
           >
-            导出项目
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            导出
           </button>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center rounded-lg bg-white/10 p-2 text-white hover:bg-white/20 transition-all hover:scale-105"
+          >
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+              <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+            </svg>
+          </a>
           <input
             ref={importInputRef}
             type="file"
@@ -276,41 +291,52 @@ export default function Page() {
       </header>
 
       {/* Workspace Section */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:h-[calc(100vh-180px)]">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:h-[calc(100vh-140px)]">
         {/* Left Sidebar: Diagrams List & Editor */}
-        <div className="flex w-full flex-col gap-4 lg:w-[420px] lg:h-full lg:shrink-0">
+        <div className="flex w-full flex-col gap-4 lg:w-[460px] lg:h-full lg:shrink-0">
           {/* Diagram List */}
-          <div className="flex-shrink-0 rounded-xl border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur">
-            <div className="mb-2 flex items-center justify-between px-1">
-              <span className="text-xs font-semibold text-slate-500">我的图表 ({diagrams.length})</span>
+          <div className="flex-shrink-0 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100">
+                  <svg className="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <span className="text-sm font-semibold text-slate-700">我的图表</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">{diagrams.length}</span>
+              </div>
               <button
                 onClick={handleCreateDiagram}
-                className="flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
+                className="flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition"
               >
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 新建
               </button>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-y-auto lg:max-h-[120px]">
+            <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-y-auto lg:max-h-[100px]">
               {sortedDiagrams.map((d) => (
                 <div
                   key={d.id}
                   onClick={() => handleSelectDiagram(d.id)}
-                  className={`group flex shrink-0 cursor-pointer items-center justify-between rounded-lg border px-3 py-2 transition-all ${
+                  className={`group flex shrink-0 cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 transition-all ${
                     d.id === currentId
-                      ? 'border-sky-500 bg-sky-50 text-sky-700'
-                      : 'border-slate-100 bg-white text-slate-600 hover:border-sky-200 hover:text-sky-600'
+                      ? 'border-sky-400 bg-gradient-to-r from-sky-50 to-indigo-50 text-sky-700 shadow-sm'
+                      : 'border-slate-100 bg-slate-50/50 text-slate-600 hover:border-sky-200 hover:bg-white hover:shadow-sm'
                   }`}
                 >
-                  <span className="truncate text-xs font-medium">{d.name}</span>
+                  <div className="flex items-center gap-2">
+                    <div className={`h-2 w-2 rounded-full ${d.id === currentId ? 'bg-sky-500' : 'bg-slate-300'}`}></div>
+                    <span className="truncate text-xs font-medium">{d.name}</span>
+                  </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteDiagram(d.id, d.name);
                     }}
-                    className="hidden text-slate-400 hover:text-rose-500 group-hover:block"
+                    className="hidden rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-500 group-hover:block transition"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

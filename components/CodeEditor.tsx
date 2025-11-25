@@ -1,9 +1,8 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, memo } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
-import { keymap, EditorView } from '@codemirror/view';
-import { indentWithTab } from '@codemirror/commands';
+import { EditorView } from '@codemirror/view';
 import { getLanguageExtension } from '@/lib/syntaxHighlight';
 import type { Engine } from '@/lib/diagramConfig';
 
@@ -16,39 +15,41 @@ export type CodeEditorProps = {
   minHeight?: string;
   maxHeight?: string;
   fontSize?: number;
-  lineWrapping?: boolean;
-  showLineNumbers?: boolean;
 };
 
-// 自定义编辑器主题
+// 自定义编辑器主题 - 美化样式
 const editorTheme = EditorView.theme({
   '&': {
-    fontSize: '14px',
+    fontSize: '13px',
     backgroundColor: 'transparent',
   },
   '.cm-content': {
-    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-    padding: '12px 0',
+    fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    padding: '16px 0',
+    caretColor: '#3b82f6',
   },
   '.cm-line': {
-    padding: '0 12px',
+    padding: '0 16px',
+    lineHeight: '1.6',
   },
   '.cm-gutters': {
     backgroundColor: '#f8fafc',
     borderRight: '1px solid #e2e8f0',
     color: '#94a3b8',
+    fontSize: '12px',
   },
   '.cm-activeLineGutter': {
     backgroundColor: '#f1f5f9',
+    color: '#64748b',
   },
   '.cm-activeLine': {
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(59, 130, 246, 0.04)',
   },
   '.cm-selectionBackground': {
-    backgroundColor: '#bfdbfe !important',
+    backgroundColor: '#dbeafe !important',
   },
   '&.cm-focused .cm-selectionBackground': {
-    backgroundColor: '#93c5fd !important',
+    backgroundColor: '#bfdbfe !important',
   },
   '.cm-cursor': {
     borderLeftColor: '#3b82f6',
@@ -58,97 +59,77 @@ const editorTheme = EditorView.theme({
     backgroundColor: '#fef3c7',
     outline: '1px solid #fbbf24',
   },
-  '.cm-searchMatch': {
-    backgroundColor: '#fef9c3',
-  },
-  '.cm-searchMatch.cm-searchMatch-selected': {
-    backgroundColor: '#fde047',
-  },
   '.cm-foldPlaceholder': {
     backgroundColor: '#e0f2fe',
     border: '1px solid #7dd3fc',
     color: '#0284c7',
     borderRadius: '4px',
-    padding: '0 4px',
+    padding: '0 6px',
+    margin: '0 4px',
+  },
+  '.cm-scroller': {
+    overflow: 'auto',
   },
 });
 
-// 行包装扩展
-const lineWrappingExtension = EditorView.lineWrapping;
-
-export function CodeEditor(props: CodeEditorProps) {
+function CodeEditorComponent(props: CodeEditorProps) {
   const { 
     value, 
     onChange, 
     disabled, 
     onCtrlEnter,
     engine = 'mermaid',
-    minHeight = '22rem',
+    minHeight = '300px',
     maxHeight,
-    fontSize = 14,
-    lineWrapping = true,
-    showLineNumbers = true,
+    fontSize = 13,
   } = props;
 
+  // 简化扩展配置，避免版本冲突
   const extensions = useMemo(() => {
-    const ext: any[] = [
+    const ext = [
       editorTheme,
-      indentWithTab,
+      EditorView.lineWrapping,
     ];
     
-    // 添加语法高亮
-    const langExt = getLanguageExtension(engine);
-    if (langExt.length > 0) {
-      ext.push(...langExt);
-    }
-    
-    // 行包装
-    if (lineWrapping) {
-      ext.push(lineWrappingExtension);
-    }
-    
-    // 快捷键
-    if (onCtrlEnter) {
-      ext.push(
-        keymap.of([
-          {
-            key: 'Mod-Enter',
-            run: () => {
-              onCtrlEnter();
-              return true;
-            },
-          },
-          {
-            key: 'Mod-s',
-            run: () => {
-              // 阻止浏览器默认保存行为
-              return true;
-            },
-          },
-        ]),
-      );
+    // 安全地添加语言扩展
+    try {
+      const langExt = getLanguageExtension(engine);
+      if (langExt && Array.isArray(langExt)) {
+        ext.push(...langExt);
+      }
+    } catch (e) {
+      console.warn('Language extension error:', e);
     }
     
     return ext;
-  }, [onCtrlEnter, engine, lineWrapping]);
+  }, [engine]);
 
   const handleChange = useCallback((val: string) => {
     onChange(val);
   }, [onChange]);
 
+  // 处理快捷键
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && onCtrlEnter) {
+      e.preventDefault();
+      onCtrlEnter();
+    }
+  }, [onCtrlEnter]);
+
   return (
     <div 
-      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 shadow-inner overflow-hidden"
+      className="code-editor-wrapper w-full rounded-xl border border-slate-200/80 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-300"
       style={{ 
         minHeight,
         maxHeight: maxHeight || undefined,
       }}
+      onKeyDown={handleKeyDown}
     >
       <CodeMirror
         value={value}
         editable={!disabled}
         basicSetup={{
-          lineNumbers: showLineNumbers,
+          lineNumbers: true,
           highlightActiveLineGutter: true,
           highlightActiveLine: true,
           foldGutter: true,
@@ -161,11 +142,6 @@ export function CodeEditor(props: CodeEditorProps) {
           rectangularSelection: true,
           crosshairCursor: false,
           highlightSelectionMatches: true,
-          closeBracketsKeymap: true,
-          searchKeymap: true,
-          foldKeymap: true,
-          completionKeymap: false,
-          lintKeymap: false,
         }}
         theme="light"
         height="100%"
@@ -181,4 +157,6 @@ export function CodeEditor(props: CodeEditorProps) {
   );
 }
 
+// 使用 memo 优化性能
+export const CodeEditor = memo(CodeEditorComponent);
 export default CodeEditor;

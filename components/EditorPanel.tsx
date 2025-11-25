@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { memo } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
-import { ENGINE_LABELS, ENGINE_CATEGORIES, ENGINE_CONFIGS } from '@/lib/diagramConfig';
+import { ENGINE_LABELS, ENGINE_CONFIGS } from '@/lib/diagramConfig';
 import { SAMPLES } from '@/lib/diagramSamples';
 import { CodeEditor } from '@/components/CodeEditor';
 
@@ -24,7 +24,10 @@ export type EditorPanelProps = {
   onFormatCode: () => void;
 };
 
-export function EditorPanel(props: EditorPanelProps) {
+// 常用引擎列表
+const COMMON_ENGINES: Engine[] = ['mermaid', 'plantuml', 'graphviz', 'flowchart'];
+
+function EditorPanelComponent(props: EditorPanelProps) {
   const {
     engine,
     code,
@@ -43,7 +46,6 @@ export function EditorPanel(props: EditorPanelProps) {
     onFormatCode,
   } = props;
 
-  const [showEngineSelector, setShowEngineSelector] = useState(false);
   const currentEngineConfig = ENGINE_CONFIGS[engine];
 
   return (
@@ -72,74 +74,18 @@ export function EditorPanel(props: EditorPanelProps) {
         </div>
       </div>
 
-      {/* 引擎选择器 */}
-      <div className="relative">
-        <button
-          onClick={() => setShowEngineSelector(!showEngineSelector)}
-          className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition hover:border-slate-300"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-900">{ENGINE_LABELS[engine]}</span>
-            {currentEngineConfig.description && (
-              <span className="text-xs text-slate-400 hidden sm:inline">
-                {currentEngineConfig.description.slice(0, 30)}...
-              </span>
-            )}
-          </div>
-          <svg className={`h-4 w-4 text-slate-400 transition ${showEngineSelector ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {/* 引擎下拉选择 */}
-        {showEngineSelector && (
-          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-            {Object.entries(ENGINE_CATEGORIES).map(([category, engines]) => (
-              <div key={category} className="mb-2 last:mb-0">
-                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  {category}
-                </div>
-                <div className="grid grid-cols-2 gap-1">
-                  {engines.map((eng) => {
-                    const config = ENGINE_CONFIGS[eng];
-                    const isSelected = eng === engine;
-                    return (
-                      <button
-                        key={eng}
-                        onClick={() => {
-                          onEngineChange(eng);
-                          setShowEngineSelector(false);
-                        }}
-                        className={`flex flex-col items-start rounded-lg px-2.5 py-2 text-left transition ${
-                          isSelected
-                            ? 'bg-sky-50 ring-1 ring-sky-500'
-                            : 'hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-xs font-medium ${isSelected ? 'text-sky-700' : 'text-slate-700'}`}>
-                            {config.label}
-                          </span>
-                          {config.supportsLocalRender && (
-                            <span className="rounded bg-emerald-100 px-1 py-0.5 text-[8px] font-medium text-emerald-600">
-                              本地
-                            </span>
-                          )}
-                        </div>
-                        {config.description && (
-                          <span className="mt-0.5 text-[10px] text-slate-400 line-clamp-1">
-                            {config.description}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* 引擎选择器 - 简化版 */}
+      <select
+        value={engine}
+        onChange={(e) => onEngineChange(e.target.value as Engine)}
+        className="w-full rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+      >
+        {COMMON_ENGINES.map((eng) => (
+          <option key={eng} value={eng}>
+            {ENGINE_LABELS[eng]}
+          </option>
+        ))}
+      </select>
 
       {/* 操作按钮 */}
       <div className="flex flex-wrap items-center gap-2">
@@ -272,4 +218,7 @@ export function EditorPanel(props: EditorPanelProps) {
   );
 }
 
+// 使用 memo 优化性能
+const EditorPanel = memo(EditorPanelComponent);
+export { EditorPanel };
 export default EditorPanel;

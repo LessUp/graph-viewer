@@ -86,16 +86,28 @@ export function PreviewPanel(props: PreviewPanelProps) {
   const exportableSvg = format === 'svg' ? svg : null;
 
   return (
-    <div className="relative flex h-full min-h-[500px] w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/50 shadow-inner">
+    <div className="relative flex h-full min-h-[500px] w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      {/* 背景网格 */}
+      <div 
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, #64748b 1px, transparent 1px),
+            linear-gradient(to bottom, #64748b 1px, transparent 1px)
+          `,
+          backgroundSize: '20px 20px',
+        }}
+      />
+
       {/* Loading Overlay */}
       {loading && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity">
-          <div className="flex flex-col items-center gap-3 rounded-xl bg-white px-8 py-6 shadow-xl ring-1 ring-slate-900/5">
-            <svg className="h-8 w-8 animate-spin text-sky-500" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-            <span className="text-sm font-medium text-slate-600">渲染中...</span>
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/90 backdrop-blur-sm transition-opacity">
+          <div className="flex flex-col items-center gap-4 rounded-2xl bg-white px-10 py-8 shadow-2xl ring-1 ring-slate-900/5">
+            <div className="relative">
+              <div className="h-12 w-12 rounded-full border-4 border-sky-100"></div>
+              <div className="absolute inset-0 h-12 w-12 animate-spin rounded-full border-4 border-transparent border-t-sky-500"></div>
+            </div>
+            <span className="text-sm font-medium text-slate-600">正在渲染图表...</span>
           </div>
         </div>
       )}
@@ -113,13 +125,25 @@ export function PreviewPanel(props: PreviewPanelProps) {
 
       {/* Empty State */}
       {!showPreview && !loading && (
-        <div className="flex h-full flex-col items-center justify-center gap-4 text-slate-400">
-          <div className="rounded-full bg-slate-100 p-6 shadow-sm">
-            <svg className="h-12 w-12 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+        <div className="flex h-full flex-col items-center justify-center gap-6 text-slate-400">
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-full bg-gradient-to-br from-sky-100 to-violet-100 opacity-60 blur-xl"></div>
+            <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 to-white p-6 shadow-lg ring-1 ring-slate-200/50">
+              <svg className="h-16 w-16 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
           </div>
-          <p className="text-sm font-medium">暂无预览，请输入代码后点击渲染</p>
+          <div className="text-center">
+            <p className="text-base font-medium text-slate-500">暂无预览</p>
+            <p className="mt-1 text-sm text-slate-400">输入代码后点击「渲染」按钮</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <kbd className="rounded bg-slate-100 px-2 py-1 font-mono text-[10px] font-medium">⌘</kbd>
+            <span>+</span>
+            <kbd className="rounded bg-slate-100 px-2 py-1 font-mono text-[10px] font-medium">Enter</kbd>
+            <span>快速渲染</span>
+          </div>
         </div>
       )}
 
