@@ -29,7 +29,7 @@ type DiagramStateControls = {
   setFormat: (format: Format) => void;
   setCode: (code: string) => void;
   setCurrentId: (id: string) => void;
-  createDiagram: () => void;
+  createDiagram: (defaultCode?: string) => void;
   renameDiagram: (id: string, name: string) => void;
   deleteDiagram: (id: string) => void;
   importWorkspace: (payload: { diagrams: DiagramDoc[]; currentId?: string }) => void;
@@ -218,21 +218,22 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     }
   };
 
-  const createDiagram = () => {
+  const createDiagram = (defaultCode?: string) => {
     const id = generateDiagramId();
     const now = new Date().toISOString();
     const name = `未命名图 ${diagrams.length + 1}`;
+    const newCode = defaultCode ?? '';
     const doc: DiagramDoc = {
       id,
       name,
       engine,
       format,
-      code: '',
+      code: newCode,
       updatedAt: now,
     };
     setDiagrams([...diagrams, doc]);
     setCurrentId(id);
-    setCode('');
+    setCode(newCode);
   };
 
   const renameDiagram = (id: string, name: string) => {

@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { compressToEncodedURIComponent } from 'lz-string';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { EditorPanel } from '@/components/EditorPanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { useDiagramState } from '@/hooks/useDiagramState';
@@ -50,9 +49,16 @@ export default function Page() {
     resetOutput,
   } = useDiagramRender(engine, 'svg', code); // 强制传入 'svg' 给 render hook
 
-  const [livePreview, setLivePreview] = useState(false);
+  const [livePreview, setLivePreview] = useState(true); // 默认开启实时预览
+  const [toast, setToast] = useState<string | null>(null);
   const debounceRef = useRef<number | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Toast 提示
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 2000);
+  }, []);
 
   const combinedError = error || linkError;
 
@@ -92,50 +98,12 @@ export default function Page() {
     };
   }, [livePreview, engine, code, renderDiagram, resetOutput]); // removed format dependency
 
-  async function handleCopyShareLink() {
-    clearError();
-    try {
-      if (typeof window === 'undefined') return;
-      const url = new URL(window.location.href);
-      const params = url.searchParams;
-      params.set('engine', engine);
-      // 默认为 svg，链接里可以不带，或者带上也行
-      params.set('format', 'svg');
-      if (code.trim()) {
-        let value = code;
-        try {
-          const encoded = compressToEncodedURIComponent(code);
-          if (encoded) {
-            value = encoded;
-            params.set('encoded', '1');
-          } else {
-            params.delete('encoded');
-          }
-        } catch {
-          params.delete('encoded');
-        }
-        params.set('code', value);
-      } else {
-        params.delete('code');
-        params.delete('encoded');
-      }
-      url.search = params.toString();
-      const finalUrl = url.toString();
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(finalUrl);
-      } else {
-        window.prompt('请手动复制以下链接', finalUrl);
-      }
-    } catch (e: any) {
-      setError(e?.message || '复制分享链接失败');
-    }
-  }
-
   async function handleCopyCode() {
     clearError();
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(code);
+        showToast('代码已复制到剪贴板');
       } else {
         window.prompt('请手动复制以下代码', code);
       }
@@ -149,19 +117,14 @@ export default function Page() {
     resetOutput();
   }
 
-  function handleFormatCode() {
-    if (!code) return;
-    const formatted = code.replace(/\t/g, '  ');
-    setCode(formatted);
-  }
-
   function handleSelectDiagram(id: string) {
     if (!id || id === currentId) return;
     setCurrentId(id);
   }
 
   function handleCreateDiagram() {
-    createDiagram();
+    // 新建图表时加载当前引擎的示例代码
+    createDiagram(SAMPLES[engine] || '');
   }
 
   function handleRenameDiagram(id: string, currentName: string) {
@@ -232,49 +195,57 @@ export default function Page() {
   }
 
   return (
-    <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1800px] flex-col gap-5 px-4 py-5 md:px-6 lg:gap-6 lg:py-6">
-      {/* Header Section */}
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-6 py-4 text-white shadow-xl ring-1 ring-white/10">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-sky-400 to-violet-500 opacity-75 blur"></div>
-            <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 shadow-lg">
-              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-              </svg>
-            </div>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              GraphViewer
-            </h1>
-            <p className="text-[11px] text-slate-400 font-medium">Mermaid · PlantUML · Graphviz · Flowchart</p>
+    <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1800px] flex-col gap-5 px-4 py-4 md:px-6 lg:gap-5 lg:py-5">
+      {/* Toast 提示 */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-fade-in">
+          <div className="flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-medium text-white shadow-lg">
+            <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {toast}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+      )}
+      {/* Header Section - 极简风格 */}
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500">
+            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-slate-800">GraphViewer</h1>
+            <p className="text-[11px] text-slate-400">图表可视化工具</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
           <button
              onClick={handleImportWorkspaceClick}
-             className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white hover:bg-white/20 transition-all hover:scale-105"
+             className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
             导入
           </button>
           <button
              onClick={handleExportWorkspace}
-             className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white hover:bg-white/20 transition-all hover:scale-105"
+             className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             导出
           </button>
+          <div className="mx-1 h-4 w-px bg-slate-200"></div>
           <a
             href="https://github.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center rounded-lg bg-white/10 p-2 text-white hover:bg-white/20 transition-all hover:scale-105"
+            className="flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
+            title="GitHub"
           >
             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
               <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
@@ -316,32 +287,47 @@ export default function Page() {
                 新建
               </button>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-y-auto lg:max-h-[100px]">
+            <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-y-auto lg:max-h-[120px]">
               {sortedDiagrams.map((d) => (
                 <div
                   key={d.id}
                   onClick={() => handleSelectDiagram(d.id)}
-                  className={`group flex shrink-0 cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 transition-all ${
+                  className={`group flex shrink-0 cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2 transition-all ${
                     d.id === currentId
-                      ? 'border-sky-400 bg-gradient-to-r from-sky-50 to-indigo-50 text-sky-700 shadow-sm'
-                      : 'border-slate-100 bg-slate-50/50 text-slate-600 hover:border-sky-200 hover:bg-white hover:shadow-sm'
+                      ? 'border-sky-400 bg-sky-50 text-sky-700'
+                      : 'border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-200 hover:bg-white'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${d.id === currentId ? 'bg-sky-500' : 'bg-slate-300'}`}></div>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${d.id === currentId ? 'bg-sky-500' : 'bg-slate-300'}`}></div>
                     <span className="truncate text-xs font-medium">{d.name}</span>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteDiagram(d.id, d.name);
-                    }}
-                    className="hidden rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-500 group-hover:block transition"
-                  >
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRenameDiagram(d.id, d.name);
+                      }}
+                      className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      title="重命名"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDiagram(d.id, d.name);
+                      }}
+                      className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-500"
+                      title="删除"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -358,13 +344,17 @@ export default function Page() {
               canUseLocalRender={canUseLocalRender}
               livePreviewEnabled={livePreview}
               onLivePreviewChange={setLivePreview}
-              onEngineChange={setEngine}
+              onEngineChange={(newEngine, loadSample) => {
+                setEngine(newEngine);
+                if (loadSample) {
+                  setCode(SAMPLES[newEngine] || '');
+                  resetOutput();
+                }
+              }}
               onCodeChange={setCode}
               onRender={renderDiagram}
-              onCopyShareLink={handleCopyShareLink}
               onCopyCode={handleCopyCode}
               onClearCode={handleClearCode}
-              onFormatCode={handleFormatCode}
             />
           </div>
         </div>

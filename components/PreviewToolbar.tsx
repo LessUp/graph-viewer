@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { exportSvg, exportPng, copyPngToClipboard, copySvgToClipboard, exportImage, EXPORT_PRESETS, type ExportPreset } from '@/lib/exportUtils';
 
 interface PreviewToolbarProps {
@@ -22,7 +22,13 @@ export function PreviewToolbar({
 }: PreviewToolbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const showCopySuccess = useCallback(() => {
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
+  }, []);
 
   // Click outside to close menu
   useEffect(() => {
@@ -47,7 +53,7 @@ export function PreviewToolbar({
         await exportPng(svgContent, filename, pngScale);
       } else if (type === 'copy') {
         await copyPngToClipboard(svgContent, pngScale);
-        // Could add a toast notification here
+        showCopySuccess();
       }
     } catch (e) {
       console.error('Export failed', e);
@@ -99,6 +105,16 @@ export function PreviewToolbar({
         </button>
       </div>
 
+      {/* Copy Success Toast */}
+      {copySuccess && (
+        <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-1 ring-emerald-200">
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          已复制
+        </div>
+      )}
+
       {/* Export Menu */}
       <div className="relative" ref={menuRef}>
         <button
@@ -106,7 +122,7 @@ export function PreviewToolbar({
           disabled={!svgContent || isExporting}
           className={`flex items-center gap-1.5 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
             isMenuOpen ? 'bg-sky-50 text-sky-600' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          }`}
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {isExporting ? (
              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">

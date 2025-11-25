@@ -15,13 +15,11 @@ export type EditorPanelProps = {
   canUseLocalRender: boolean;
   livePreviewEnabled: boolean;
   onLivePreviewChange: (enabled: boolean) => void;
-  onEngineChange: (engine: Engine) => void;
+  onEngineChange: (engine: Engine, loadSample?: boolean) => void;
   onCodeChange: (code: string) => void;
   onRender: () => Promise<void> | void;
-  onCopyShareLink: () => Promise<void> | void;
   onCopyCode: () => Promise<void> | void;
   onClearCode: () => void;
-  onFormatCode: () => void;
 };
 
 // 常用引擎列表
@@ -40,52 +38,52 @@ function EditorPanelComponent(props: EditorPanelProps) {
     onEngineChange,
     onCodeChange,
     onRender,
-    onCopyShareLink,
     onCopyCode,
     onClearCode,
-    onFormatCode,
   } = props;
+
+  // 切换引擎时自动加载示例代码
+  const handleEngineChange = (newEngine: Engine) => {
+    onEngineChange(newEngine, true);
+  };
 
   const currentEngineConfig = ENGINE_CONFIGS[engine];
 
   return (
     <div className="flex h-full flex-col space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-      {/* 头部 */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-900">代码编辑</h2>
+      {/* 头部 - 引擎选择和实时预览 */}
+      <div className="flex items-center justify-between gap-3">
+        <select
+          value={engine}
+          onChange={(e) => handleEngineChange(e.target.value as Engine)}
+          className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+        >
+          {COMMON_ENGINES.map((eng) => (
+            <option key={eng} value={eng}>
+              {ENGINE_LABELS[eng]}
+            </option>
+          ))}
+        </select>
         <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer">
+          <label className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={livePreviewEnabled}
               onChange={(e) => onLivePreviewChange(e.target.checked)}
               className="h-3.5 w-3.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
             />
-            实时预览
+            实时
           </label>
           {canUseLocalRender && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-              <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 8 8">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
+              <svg className="h-2 w-2" fill="currentColor" viewBox="0 0 8 8">
                 <circle cx="4" cy="4" r="3" />
               </svg>
-              本地渲染
+              本地
             </span>
           )}
         </div>
       </div>
-
-      {/* 引擎选择器 - 简化版 */}
-      <select
-        value={engine}
-        onChange={(e) => onEngineChange(e.target.value as Engine)}
-        className="w-full rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
-      >
-        {COMMON_ENGINES.map((eng) => (
-          <option key={eng} value={eng}>
-            {ENGINE_LABELS[eng]}
-          </option>
-        ))}
-      </select>
 
       {/* 操作按钮 */}
       <div className="flex flex-wrap items-center gap-2">
@@ -115,25 +113,15 @@ function EditorPanelComponent(props: EditorPanelProps) {
         </button>
         <button
           type="button"
-          onClick={onCopyShareLink}
-          disabled={!code.trim()}
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:opacity-50 transition"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
-          分享
-        </button>
-        <button
-          type="button"
           onClick={onCopyCode}
           disabled={!code.trim()}
-          className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 hover:text-slate-700 disabled:opacity-50 transition"
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 transition"
           title="复制代码"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
+          复制
         </button>
       </div>
 
@@ -153,24 +141,17 @@ function EditorPanelComponent(props: EditorPanelProps) {
               </a>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button 
               onClick={() => onCodeChange(SAMPLES[engine])} 
               className="hover:text-sky-600 transition"
             >
-              示例
-            </button>
-            <button 
-              onClick={onFormatCode} 
-              disabled={!code} 
-              className="hover:text-sky-600 disabled:opacity-30 transition"
-            >
-              格式化
+              加载示例
             </button>
             <button 
               onClick={onClearCode} 
               disabled={!code} 
-              className="hover:text-rose-600 disabled:opacity-30 transition"
+              className="hover:text-rose-500 disabled:opacity-30 transition"
             >
               清空
             </button>

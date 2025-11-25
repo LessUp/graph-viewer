@@ -125,24 +125,15 @@ export function PreviewPanel(props: PreviewPanelProps) {
 
       {/* Empty State */}
       {!showPreview && !loading && (
-        <div className="flex h-full flex-col items-center justify-center gap-6 text-slate-400">
-          <div className="relative">
-            <div className="absolute -inset-4 rounded-full bg-gradient-to-br from-sky-100 to-violet-100 opacity-60 blur-xl"></div>
-            <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 to-white p-6 shadow-lg ring-1 ring-slate-200/50">
-              <svg className="h-16 w-16 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
+        <div className="flex h-full flex-col items-center justify-center gap-4 text-slate-400">
+          <div className="rounded-2xl bg-slate-50 p-5">
+            <svg className="h-12 w-12 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
           <div className="text-center">
-            <p className="text-base font-medium text-slate-500">暂无预览</p>
-            <p className="mt-1 text-sm text-slate-400">输入代码后点击「渲染」按钮</p>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <kbd className="rounded bg-slate-100 px-2 py-1 font-mono text-[10px] font-medium">⌘</kbd>
-            <span>+</span>
-            <kbd className="rounded bg-slate-100 px-2 py-1 font-mono text-[10px] font-medium">Enter</kbd>
-            <span>快速渲染</span>
+            <p className="text-sm font-medium text-slate-500">预览区域</p>
+            <p className="mt-0.5 text-xs text-slate-400">编辑代码后自动渲染</p>
           </div>
         </div>
       )}
