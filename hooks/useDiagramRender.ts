@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { canUseLocalRender as canUseLocalRenderConfig } from '@/lib/diagramConfig';
 
+const GRAPHVIZ_WASM_BASE_URL =
+  process.env.NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL || 'https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist';
+
 let mermaidPromise: Promise<any> | null = null;
 let graphvizPromise: Promise<any> | null = null;
 
@@ -29,7 +32,7 @@ async function loadGraphviz() {
       .then(async (module) => {
         const g = (module as any).graphviz ?? module;
         if (g?.wasmFolder) {
-          g.wasmFolder('https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist');
+          g.wasmFolder(GRAPHVIZ_WASM_BASE_URL);
         }
         if (g?.load) {
           await g.load();
@@ -183,12 +186,22 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        const base = j?.error || '渲染失败';
+        let base = '渲染失败';
+        const codeValue = j?.code;
+        if (codeValue === 'KROKI_TIMEOUT') {
+          base = '远程渲染服务超时，请稍后重试或检查网络连接。';
+        } else if (codeValue === 'KROKI_NETWORK_ERROR') {
+          base = '无法连接远程渲染服务，可能是网络问题或访问被拦截。';
+        } else if (codeValue === 'KROKI_ERROR') {
+          base = '远程渲染服务渲染失败，可能是图形代码有误。';
+        } else if (typeof j?.error === 'string' && j.error) {
+          base = j.error;
+        }
         const httpStatus = res.status;
         const krokiStatus = typeof j?.status === 'number' ? j.status : null;
         const statusText = `（HTTP ${httpStatus}${krokiStatus ? ` / Kroki ${krokiStatus}` : ''}）`;
         const detailsText =
-          j?.code === 'PAYLOAD_TOO_LARGE' && j?.maxLength
+          codeValue === 'PAYLOAD_TOO_LARGE' && j?.maxLength
             ? `：输入过长，最大允许 ${j.maxLength} 字符`
             : j?.details
               ? `：${String(j.details).slice(0, 120)}`
@@ -246,16 +259,28 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        const base = j?.error || '下载失败';
+        let base = '下载失败';
+        const codeValue = j?.code;
+        if (codeValue === 'KROKI_TIMEOUT') {
+          base = '远程渲染服务超时，无法下载文件，请稍后重试或检查网络连接。';
+        } else if (codeValue === 'KROKI_NETWORK_ERROR') {
+          base = '无法连接远程渲染服务，下载失败，可能是网络问题或访问被拦截。';
+        } else if (codeValue === 'KROKI_ERROR') {
+          base = '远程渲染服务渲染失败，无法生成可下载文件，请检查图形代码。';
+        } else if (typeof j?.error === 'string' && j.error) {
+          base = j.error;
+        }
         const httpStatus = res.status;
         const krokiStatus = typeof j?.status === 'number' ? j.status : null;
         const statusText = `（HTTP ${httpStatus}${krokiStatus ? ` / Kroki ${krokiStatus}` : ''}）`;
         const detailsText =
-          j?.code === 'PAYLOAD_TOO_LARGE' && j?.maxLength
+          codeValue === 'PAYLOAD_TOO_LARGE' && j?.maxLength
             ? `：输入过长，最大允许 ${j.maxLength} 字符`
-            : j?.message
-              ? `：${String(j.message).slice(0, 120)}`
-              : '';
+            : j?.details
+              ? `：${String(j.details).slice(0, 120)}`
+              : j?.message
+                ? `：${String(j.message).slice(0, 120)}`
+                : '';
         throw new Error(base + statusText + detailsText);
       }
       const blob = await res.blob();
