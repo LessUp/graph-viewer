@@ -184,8 +184,17 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
       if (!res.ok) {
         const j = await res.json().catch(() => null);
         const base = j?.error || '渲染失败';
-        const statusText = j?.status ? `（HTTP ${j.status}）` : '';
-        const detailsText = j?.details ? `：${String(j.details).slice(0, 120)}` : '';
+        const httpStatus = res.status;
+        const krokiStatus = typeof j?.status === 'number' ? j.status : null;
+        const statusText = `（HTTP ${httpStatus}${krokiStatus ? ` / Kroki ${krokiStatus}` : ''}）`;
+        const detailsText =
+          j?.code === 'PAYLOAD_TOO_LARGE' && j?.maxLength
+            ? `：输入过长，最大允许 ${j.maxLength} 字符`
+            : j?.details
+              ? `：${String(j.details).slice(0, 120)}`
+              : j?.message
+                ? `：${String(j.message).slice(0, 120)}`
+                : '';
         throw new Error(base + statusText + detailsText);
       }
       const data = await res.json();
@@ -238,8 +247,16 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
       if (!res.ok) {
         const j = await res.json().catch(() => null);
         const base = j?.error || '下载失败';
-        const statusText = j?.status ? `（HTTP ${j.status}）` : '';
-        throw new Error(base + statusText);
+        const httpStatus = res.status;
+        const krokiStatus = typeof j?.status === 'number' ? j.status : null;
+        const statusText = `（HTTP ${httpStatus}${krokiStatus ? ` / Kroki ${krokiStatus}` : ''}）`;
+        const detailsText =
+          j?.code === 'PAYLOAD_TOO_LARGE' && j?.maxLength
+            ? `：输入过长，最大允许 ${j.maxLength} 字符`
+            : j?.message
+              ? `：${String(j.message).slice(0, 120)}`
+              : '';
+        throw new Error(base + statusText + detailsText);
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

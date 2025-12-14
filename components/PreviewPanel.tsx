@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { ENGINE_LABELS, FORMAT_LABELS } from '@/lib/diagramConfig';
 
@@ -12,6 +14,13 @@ export type PreviewPanelProps = {
 
 export function PreviewPanel(props: PreviewPanelProps) {
   const { engine, format, svg, base64, contentType, loading } = props;
+
+  const sanitizedSvg = useMemo(() => {
+    if (!svg) return '';
+    return DOMPurify.sanitize(svg, {
+      USE_PROFILES: { svg: true, svgFilters: true },
+    });
+  }, [svg]);
 
   const showPreview = (() => {
     if (format === 'svg') return Boolean(svg);
@@ -55,7 +64,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
         )}
         {format === 'svg' && svg && (
           <div className="relative h-full w-full overflow-auto p-4" aria-label="SVG 预览">
-            <div className="mx-auto max-w-full" dangerouslySetInnerHTML={{ __html: svg }} />
+            <div className="mx-auto max-w-full" dangerouslySetInnerHTML={{ __html: sanitizedSvg }} />
           </div>
         )}
         {format === 'png' && base64 && (
