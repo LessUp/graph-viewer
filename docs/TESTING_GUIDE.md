@@ -2,6 +2,11 @@
 
 ## 快速测试步骤
 
+### 0. 前置条件
+
+- Node.js 20
+- 首次运行需要安装依赖：`npm install`
+
 ### 1. 启动开发服务器
 
 ```bash
@@ -103,6 +108,17 @@ Bob -> Alice: Hi
 - 验证样式是否保留
 
 ## 常见问题排查
+
+### 问题 0：冒烟测试报 ECONNREFUSED
+
+**原因：**
+- `npm run test:smoke` 默认访问 `http://localhost:3000`，如果没有启动服务会连接失败。
+
+**解决方案：**
+- 先启动服务（开发环境：`npm run dev`；生产环境：`npm run build && npm run start`）
+- 或者指定目标地址：
+  - `APP_URL=http://localhost:3000 npm run test:smoke`
+  - `node scripts/smoke-test.js http://localhost:3000`
 
 ### 问题 1：导出的 PNG 模糊
 

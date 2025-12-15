@@ -1,7 +1,8 @@
 # 开发者文档
 
 ## 架构概览
-- 前端：`Next.js 14 (App Router)`、`React 18`、`Tailwind CSS`
+- 前端：`Next.js 15 (App Router)`、`React 19`、`Tailwind CSS`
+- 运行时：Node.js 20
 - 客户端渲染：Mermaid 与 Graphviz（WASM）用于 SVG 快速预览
 - 服务端渲染：`/api/render` 通过 `Kroki` 远程渲染 Mermaid/PlantUML/Graphviz 的 `svg/png/pdf`
 - 健康检查：`/api/healthz`
@@ -22,6 +23,8 @@
 ## 服务端渲染缓存
 - 基于 `engine|format|sha256(code)` 的 Key，内存缓存 `TTL=120s`
 - `svg` 直接缓存文本，`png/pdf` 缓存 `base64`
+- 额外治理：缓存上限 `MAX_CACHE_ENTRIES=200`，定期清理 `PRUNE_INTERVAL_MS=30s`
+- 并发去重：同一 Key 的并发请求通过 `inflight` 合并，避免重复请求 Kroki
 
 ## 环境变量
 - `KROKI_BASE_URL`：默认 `https://kroki.io`
@@ -31,14 +34,14 @@
 ## 启动与调试
 - 安装依赖：`npm install`
 - 开发启动：`npm run dev`，访问 `http://localhost:3000`
-- 生产构建：`npm run build` → `.next/standalone` 输出
+- 生产构建：`npm run build` → `.next/standalone` 输出；本地启动：`npm run start`
 
 ## 容器化
 - Dockerfile：多阶段构建，拷贝 `.next/standalone` 与 `.next/static`，非 root 用户运行，`/api/healthz` 健康检查
 - Compose Profiles：`dev|test|prod` 三套
 
 ## 测试与基准
-- 冒烟测试：`npm run test:smoke`（需服务运行）
+- 冒烟测试：`npm run test:smoke`（需服务运行；支持 `APP_URL` 或 `node scripts/smoke-test.js <url>` 指定目标）
 - 性能基准：`npm run bench`（支持 `APP_URL`、`N`）
 
 ## 代码风格与安全

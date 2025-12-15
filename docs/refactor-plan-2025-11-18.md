@@ -17,7 +17,7 @@ GraphViewer 当前实现已经具备完整的核心能力：编辑图形语法�
 
 ### 2.1 前端
 
-- 使用 Next.js 14 App Router。
+- 使用 Next.js 15 App Router。
 - 主要页面：`app/page.tsx`。
   - 集中承担以下职责：
     - UI 布局与样式渲染（TailwindCSS）。
@@ -31,7 +31,9 @@ GraphViewer 当前实现已经具备完整的核心能力：编辑图形语法�
 
 - API 路由：`app/api/render/route.ts`
   - 负责代理 Kroki：POST `{engine, format, code, binary}` → Kroki → 返回 JSON 或二进制。
-  - 实现简单的内存缓存（`Map + sha256(code)`），减少重复渲染请求。
+  - 实现内存缓存（`Map + sha256(code)`），减少重复渲染请求，并包含缓存上限与定期清理。
+  - 对同一 Key 的并发请求做合并（inflight 去重），避免重复请求 Kroki。
+  - 增加输入长度限制与 Kroki 请求超时控制。
   - 对错误进行封装，向前端返回统一错误结构。
 - 健康检查：`app/api/healthz/route.ts`（存在但不是本次重构重点）。
 
@@ -70,7 +72,7 @@ GraphViewer 当前实现已经具备完整的核心能力：编辑图形语法�
 - `components/EditorPanel.tsx`
   - 负责：
     - 渲染引擎和输出格式的选择。
-    - 代码编辑区域（textarea）。
+    - 代码编辑区域（CodeMirror）。
     - 操作按钮（渲染预览、下载、复制分享链接、恢复示例、清空代码、格式化缩进等）。
   - 通过 props 接收：
     - `engine`, `format`, `code`。
