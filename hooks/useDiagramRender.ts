@@ -186,28 +186,29 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        let message = '渲染失败';
+        let base = '渲染失败';
         const codeValue = j?.code;
         if (codeValue === 'KROKI_TIMEOUT') {
-          message = '远程渲染服务超时，请稍后重试或检查网络连接。';
+          base = '远程渲染服务超时，请稍后重试或检查网络连接。';
         } else if (codeValue === 'KROKI_NETWORK_ERROR') {
-          message = '无法连接远程渲染服务，可能是网络问题或访问被拦截。';
+          base = '无法连接远程渲染服务，可能是网络问题或访问被拦截。';
         } else if (codeValue === 'KROKI_ERROR') {
-          message = '远程渲染服务渲染失败，可能是图形代码有误。';
+          base = '远程渲染服务渲染失败，可能是图形代码有误。';
         } else if (typeof j?.error === 'string' && j.error) {
-          message = j.error;
+          base = j.error;
         }
-        const extra: string[] = [];
-        if (typeof j?.status === 'number' && j.status) {
-          extra.push(`HTTP ${j.status}`);
-        }
-        if (j?.details) {
-          extra.push(String(j.details).slice(0, 120));
-        }
-        if (extra.length > 0) {
-          message += `（${extra.join(' · ')}）`;
-        }
-        throw new Error(message);
+        const httpStatus = res.status;
+        const krokiStatus = typeof j?.status === 'number' ? j.status : null;
+        const statusText = `（HTTP ${httpStatus}${krokiStatus ? ` / Kroki ${krokiStatus}` : ''}）`;
+        const detailsText =
+          codeValue === 'PAYLOAD_TOO_LARGE' && j?.maxLength
+            ? `：输入过长，最大允许 ${j.maxLength} 字符`
+            : j?.details
+              ? `：${String(j.details).slice(0, 120)}`
+              : j?.message
+                ? `：${String(j.message).slice(0, 120)}`
+                : '';
+        throw new Error(base + statusText + detailsText);
       }
       const data = await res.json();
       setContentType(data.contentType || '');
@@ -258,25 +259,29 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        let message = '下载失败';
+        let base = '下载失败';
         const codeValue = j?.code;
         if (codeValue === 'KROKI_TIMEOUT') {
-          message = '远程渲染服务超时，无法下载文件，请稍后重试或检查网络连接。';
+          base = '远程渲染服务超时，无法下载文件，请稍后重试或检查网络连接。';
         } else if (codeValue === 'KROKI_NETWORK_ERROR') {
-          message = '无法连接远程渲染服务，下载失败，可能是网络问题或访问被拦截。';
+          base = '无法连接远程渲染服务，下载失败，可能是网络问题或访问被拦截。';
         } else if (codeValue === 'KROKI_ERROR') {
-          message = '远程渲染服务渲染失败，无法生成可下载文件，请检查图形代码。';
+          base = '远程渲染服务渲染失败，无法生成可下载文件，请检查图形代码。';
         } else if (typeof j?.error === 'string' && j.error) {
-          message = j.error;
+          base = j.error;
         }
-        const extra: string[] = [];
-        if (typeof j?.status === 'number' && j.status) {
-          extra.push(`HTTP ${j.status}`);
-        }
-        if (extra.length > 0) {
-          message += `（${extra.join(' · ')}）`;
-        }
-        throw new Error(message);
+        const httpStatus = res.status;
+        const krokiStatus = typeof j?.status === 'number' ? j.status : null;
+        const statusText = `（HTTP ${httpStatus}${krokiStatus ? ` / Kroki ${krokiStatus}` : ''}）`;
+        const detailsText =
+          codeValue === 'PAYLOAD_TOO_LARGE' && j?.maxLength
+            ? `：输入过长，最大允许 ${j.maxLength} 字符`
+            : j?.details
+              ? `：${String(j.details).slice(0, 120)}`
+              : j?.message
+                ? `：${String(j.message).slice(0, 120)}`
+                : '';
+        throw new Error(base + statusText + detailsText);
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
