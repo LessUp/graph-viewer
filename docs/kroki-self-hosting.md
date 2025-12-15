@@ -61,6 +61,8 @@ docker run -d --name kroki \
 
 2. 打开浏览器访问 `http://localhost:3000` 即可使用自建 Kroki。
 
+> 说明：`web-dev` 使用 Node.js 20 镜像运行（`node:20-alpine`），并会在容器内执行 `npm install && npm run dev`。
+
 > 注意：不设置 `KROKI_BASE_URL` 时，GraphViewer 仍会回退到 `https://kroki.io`，dev/test/prod 行为保持向后兼容。
 
 ---
@@ -103,6 +105,8 @@ docker run -d --name kroki \
    ```
 
 3. 对外暴露 `web` 服务端口（默认 3000），按需要配置反向代理或 TLS。
+
+> 提示：如果你使用 `web-test` profile，宿主机端口默认为 `3001`（映射到容器内 3000）。
 
 ### 4.2 Netlify 等托管平台
 
