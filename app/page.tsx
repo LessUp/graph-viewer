@@ -37,6 +37,9 @@ export default function Page() {
     }
   }, [format, setFormat]);
 
+  // 设置管理
+  const { settings, saveSettings, toggleSidebar } = useSettings();
+
   const {
     svg,
     base64,
@@ -49,16 +52,18 @@ export default function Page() {
     clearError,
     setError,
     resetOutput,
-  } = useDiagramRender(engine, 'svg', code); // 强制传入 'svg' 给 render hook
+  } = useDiagramRender(
+    engine,
+    'svg',
+    code,
+    settings.useCustomServer ? settings.renderServerUrl : undefined,
+  ); // 强制传入 'svg' 给 render hook
 
   const [livePreview, setLivePreview] = useState(true); // 默认开启实时预览
   const [toast, setToast] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const debounceRef = useRef<number | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
-
-  // 设置管理
-  const { settings, saveSettings, toggleSidebar } = useSettings();
 
   // Toast 提示
   const showToast = useCallback((message: string) => {

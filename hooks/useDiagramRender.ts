@@ -107,7 +107,12 @@ export type UseDiagramRenderResult = {
   resetOutput: () => void;
 };
 
-export function useDiagramRender(engine: Engine, format: Format, code: string): UseDiagramRenderResult {
+export function useDiagramRender(
+  engine: Engine,
+  format: Format,
+  code: string,
+  krokiBaseUrl?: string,
+): UseDiagramRenderResult {
   const [svg, setSvg] = useState<string>('');
   const [base64, setBase64] = useState<string>('');
   const [contentType, setContentType] = useState<string>('');
@@ -178,10 +183,16 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
         }
       }
 
+      const payload: Record<string, unknown> = { engine, format, code };
+      const customBaseUrl = typeof krokiBaseUrl === 'string' ? krokiBaseUrl.trim() : '';
+      if (customBaseUrl) {
+        payload.krokiBaseUrl = customBaseUrl;
+      }
+
       const res = await fetch('/api/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ engine, format, code }),
+        body: JSON.stringify(payload),
         signal,
       });
       if (!res.ok) {
@@ -229,7 +240,7 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
     } finally {
       setLoading(false);
     }
-  }, [canUseLocalRender, code, engine, format, resetOutput]);
+  }, [canUseLocalRender, code, engine, format, krokiBaseUrl, resetOutput]);
 
   const downloadDiagram = useCallback(async () => {
     setErrorState('');
@@ -251,10 +262,17 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
       }
       abortRef.current = new AbortController();
       const { signal } = abortRef.current;
+
+      const payload: Record<string, unknown> = { engine, format, code, binary: true };
+      const customBaseUrl = typeof krokiBaseUrl === 'string' ? krokiBaseUrl.trim() : '';
+      if (customBaseUrl) {
+        payload.krokiBaseUrl = customBaseUrl;
+      }
+
       const res = await fetch('/api/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ engine, format, code, binary: true }),
+        body: JSON.stringify(payload),
         signal,
       });
       if (!res.ok) {
@@ -297,7 +315,7 @@ export function useDiagramRender(engine: Engine, format: Format, code: string): 
         setErrorState(e?.message || '下载失败');
       }
     }
-  }, [canUseLocalRender, code, engine, format, svg]);
+  }, [canUseLocalRender, code, engine, format, krokiBaseUrl, svg]);
 
   return {
     svg,

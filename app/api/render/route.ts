@@ -34,9 +34,35 @@ function pruneCache(now: number) {
   }
 }
 
-function keyOf(engine: string, format: string, code: string): string {
+function keyOf(base: string, engine: string, format: string, code: string): string {
   const h = crypto.createHash('sha256').update(code).digest('hex');
-  return `${engine}|${format}|${h}`;
+  return `${base}|${engine}|${format}|${h}`;
+}
+
+function normalizeKrokiBaseUrl(value: string): string | null {
+  try {
+    const u = new URL(value);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    if (u.username || u.password) return null;
+    if (u.search || u.hash) return null;
+    const pathname = u.pathname.replace(/\/$/, '');
+    return `${u.origin}${pathname}`;
+  } catch {
+    return null;
+  }
+}
+
+function parseKrokiBaseUrlAllowlist(raw: string | undefined): Set<string> {
+  const parts = (raw || '')
+    .split(/[,\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const out = new Set<string>();
+  for (const p of parts) {
+    const n = normalizeKrokiBaseUrl(p);
+    if (n) out.add(n);
+  }
+  return out;
 }
 
 function toArrayBuffer(buf: Buffer): ArrayBuffer {
@@ -83,11 +109,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body', code: 'INVALID_BODY' }, { status: 400 });
     }
 
-    const { engine, format, code, binary } = body as {
+    const { engine, format, code, binary, krokiBaseUrl } = body as {
       engine?: string;
       format?: string;
       code?: string;
       binary?: boolean;
+      krokiBaseUrl?: string;
     };
 
     if (!engine || !format || typeof code !== 'string') {
@@ -112,14 +139,35 @@ export async function POST(req: NextRequest) {
     }
 
     const type = getKrokiType(engine);
-    const base = (process.env.KROKI_BASE_URL || 'https://kroki.io').replace(/\/$/, '');
+
+    const envBaseRaw = process.env.KROKI_BASE_URL || 'https://kroki.io';
+    const envBase = normalizeKrokiBaseUrl(envBaseRaw);
+    if (!envBase) {
+      throw new RenderError(500, { error: 'Invalid KROKI_BASE_URL', code: 'INVALID_KROKI_CONFIG' });
+    }
+
+    let base = envBase;
+    const requestedBaseRaw = typeof krokiBaseUrl === 'string' ? krokiBaseUrl.trim() : '';
+    if (requestedBaseRaw) {
+      const requested = normalizeKrokiBaseUrl(requestedBaseRaw);
+      if (!requested) {
+        throw new RenderError(400, { error: 'Invalid krokiBaseUrl', code: 'INVALID_KROKI_BASE_URL' });
+      }
+      const allowAny = (process.env.KROKI_ALLOW_CLIENT_BASE_URL || '').toLowerCase() === 'true';
+      const allowlist = parseKrokiBaseUrlAllowlist(process.env.KROKI_CLIENT_BASE_URL_ALLOWLIST);
+      if (!allowAny && !allowlist.has(requested)) {
+        throw new RenderError(400, { error: 'krokiBaseUrl not allowed', code: 'KROKI_BASE_URL_NOT_ALLOWED' });
+      }
+      base = requested;
+    }
+
     const url = `${base}/${type}/${format}`;
     const accept = format === 'svg' ? 'image/svg+xml' : format === 'png' ? 'image/png' : 'application/pdf';
 
     const now = Date.now();
     pruneCache(now);
 
-    const k = keyOf(engine, format, code);
+    const k = keyOf(base, engine, format, code);
     const cached = cache.get(k);
     if (cached && cached.expires > now) {
       if (binary) {
@@ -178,7 +226,7 @@ export async function POST(req: NextRequest) {
               timeoutMs: KROKI_TIMEOUT_MS,
               length: code.length,
             });
-            throw new RenderError(504, { error: 'Kroki timeout', code: 'KROKI_TIMEOUT' });
+            throw new RenderError(504, { error: 'Kroki timeout', code: 'KROKI_TIMEOUT', krokiUrl: url });
           }
           console.error('[render] Kroki request failed', {
             engine,
@@ -190,6 +238,7 @@ export async function POST(req: NextRequest) {
             error: 'Kroki request failed',
             code: 'KROKI_NETWORK_ERROR',
             message: error?.message || '',
+            krokiUrl: url,
           });
         }
 
