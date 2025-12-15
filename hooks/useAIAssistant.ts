@@ -40,7 +40,20 @@ const DEFAULT_CONFIG: AIConfig = {
   model: 'gpt-4o-mini',
 };
 
-const SYSTEM_PROMPTS: Record<Engine, string> = {
+const DEFAULT_SYSTEM_PROMPT = `你是一个图表语法专家。你的任务是：
+1. 分析用户提供的图表代码，找出语法错误
+2. 提供修正建议和正确的代码
+3. 解释错误原因
+4. 给出改进建议
+
+请以 JSON 格式回复，包含以下字段：
+- hasErrors: boolean - 是否有错误
+- errors: array - 错误列表，每个错误包含 line(行号), message(错误描述), suggestion(修正建议)
+- correctedCode: string - 修正后的完整代码（如果有错误）
+- suggestions: array - 改进建议列表
+- explanation: string - 总体解释`;
+
+const SYSTEM_PROMPTS: Partial<Record<Engine, string>> = {
   mermaid: `你是一个 Mermaid 图表语法专家。你的任务是：
 1. 分析用户提供的 Mermaid 代码，找出语法错误
 2. 提供修正建议和正确的代码
@@ -94,7 +107,7 @@ const SYSTEM_PROMPTS: Record<Engine, string> = {
 - explanation: string - 总体解释`,
 };
 
-const GENERATION_PROMPTS: Record<Engine, string> = {
+const GENERATION_PROMPTS: Partial<Record<Engine, string>> = {
   mermaid: `你是一个 Mermaid 图表生成专家。根据用户的描述，生成对应的 Mermaid 代码。
 只返回纯 Mermaid 代码，不要包含任何解释或 markdown 代码块标记。`,
 
@@ -241,16 +254,11 @@ export function useAIAssistant(engine: Engine) {
   }, [config]);
 
   // 分析代码
-  const analyzeCode = useCallback(async (code: string): Promise<AIAnalysisResult | null> => {
-    if (!code.trim()) {
-      setState(prev => ({ ...prev, error: '请输入代码' }));
-      return null;
-    }
-
+  const analyzeCode = useCallback(async (code: string): Promise<AIAnalysisResult> => {
     setState(prev => ({ ...prev, isAnalyzing: true, error: null }));
 
     try {
-      const systemPrompt = SYSTEM_PROMPTS[engine];
+      const systemPrompt = SYSTEM_PROMPTS[engine] || DEFAULT_SYSTEM_PROMPT;
       const userMessage = `请分析以下 ${engine} 代码：\n\n${code}`;
 
       const response = await callAI(systemPrompt, userMessage);
@@ -287,21 +295,23 @@ export function useAIAssistant(engine: Engine) {
         isAnalyzing: false,
         error: e.message || '分析失败',
       }));
-      return null;
+      return {
+        hasErrors: true,
+        errors: [{ message: e.message || '分析失败' }],
+        suggestions: [],
+        explanation: '',
+      };
     }
   }, [engine, callAI]);
 
   // 生成代码
   const generateCode = useCallback(async (description: string): Promise<string | null> => {
-    if (!description.trim()) {
-      setState(prev => ({ ...prev, error: '请输入描述' }));
-      return null;
-    }
-
     setState(prev => ({ ...prev, isGenerating: true, error: null }));
 
     try {
-      const systemPrompt = GENERATION_PROMPTS[engine];
+      const systemPrompt =
+        GENERATION_PROMPTS[engine] ||
+        `你是一个图表生成专家。根据用户的描述，生成对应的 ${engine} 代码。\n只返回纯代码，不要包含任何解释或 markdown 代码块标记。`;
       const response = await callAI(systemPrompt, description);
 
       // 清理可能的 markdown 代码块

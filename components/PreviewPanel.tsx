@@ -1,7 +1,7 @@
-
 'use client';
 
-import { useEffect, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
+import DOMPurify from 'dompurify';
 import { PreviewToolbar } from '@/components/PreviewToolbar';
 
 export type PreviewPanelProps = {
@@ -17,6 +17,13 @@ export type PreviewPanelProps = {
 
 export function PreviewPanel(props: PreviewPanelProps) {
   const { svg, base64, contentType, loading, showPreview, format, code = '', engine = 'mermaid' } = props;
+
+  const sanitizedSvg = useMemo(() => {
+    if (!svg) return '';
+    return DOMPurify.sanitize(svg, {
+      USE_PROFILES: { svg: true, svgFilters: true },
+    });
+  }, [svg]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -113,7 +120,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
   }, []);
 
   // 只有 SVG 格式支持前端导出和无限缩放
-  const exportableSvg = format === 'svg' ? svg : null;
+  const exportableSvg = format === 'svg' ? sanitizedSvg : null;
 
   return (
     <div 
@@ -206,7 +213,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
         >
           {format === 'svg' && svg && (
             <div
-              dangerouslySetInnerHTML={{ __html: svg }}
+              dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
               className="diagram-container pointer-events-none" // 禁止内部 SVG 的交互，由外层容器接管
             />
           )}
