@@ -44,7 +44,7 @@ async function svgToCanvas(svgContent: string, options: ExportOptions = {}): Pro
 
 **优化配置：**
 - 默认 2x 缩放（可选 4x 超清）
-- 质量设置为 0.95（接近无损）
+- PNG 为无损格式，不使用 `quality` 参数（通过缩放与高质量平滑提升清晰度）
 - 启用高质量图像平滑（imageSmoothingQuality: 'high'）
 - 白色背景确保兼容性
 
@@ -103,19 +103,19 @@ await copyPngToClipboard(svgContent, 2);
 ```typescript
 type ExportOptions = {
   scale?: number;           // 缩放倍数 (1-8)，默认 2
-  quality?: number;         // 图片质量 (0-1)，默认 0.95
+  quality?: number;         // 图片质量 (0-1)，默认 0.95（PNG 为无损格式，不使用该参数）
   backgroundColor?: string; // 背景颜色，默认 '#ffffff'
   padding?: number;         // 内边距（像素），默认 20
   watermark?: string;       // 水印文字
-  maxWidth?: number;        // 最大宽度限制
-  maxHeight?: number;       // 最大高度限制
+  maxWidth?: number;        // 最大宽度限制（预留字段，当前版本未实现）
+  maxHeight?: number;       // 最大高度限制（预留字段，当前版本未实现）
 };
 ```
 
 ## 支持的导出格式
 
 - ✅ **SVG** - 矢量图，无损质量
-- ✅ **PNG** - 高质量位图，支持透明
+- ✅ **PNG** - 高质量位图（默认白底）
 - ✅ **HTML** - 独立网页文件
 - ✅ **Markdown** - 包含源代码的文档
 - ✅ **源代码** - 原始图表代码
