@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
 import DOMPurify from 'dompurify';
 import { PreviewToolbar } from '@/components/PreviewToolbar';
+import { Loader2, X, Image } from 'lucide-react';
 
 export type PreviewPanelProps = {
   svg: string;
@@ -143,10 +144,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
       {loading && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/90 backdrop-blur-sm transition-opacity">
           <div className="flex flex-col items-center gap-4 rounded-2xl bg-white px-10 py-8 shadow-2xl ring-1 ring-slate-900/5">
-            <div className="relative">
-              <div className="h-12 w-12 rounded-full border-4 border-sky-100"></div>
-              <div className="absolute inset-0 h-12 w-12 animate-spin rounded-full border-4 border-transparent border-t-sky-500"></div>
-            </div>
+            <Loader2 className="h-12 w-12 animate-spin text-sky-500" />
             <span className="text-sm font-medium text-slate-600">正在渲染图表...</span>
           </div>
         </div>
@@ -172,9 +170,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
           onClick={handleFullscreen}
           className="absolute left-4 top-4 z-30 flex items-center gap-2 rounded-lg bg-slate-800/80 px-3 py-2 text-xs font-medium text-white backdrop-blur hover:bg-slate-700 transition"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="h-4 w-4" />
           退出全屏 (ESC)
         </button>
       )}
@@ -183,9 +179,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
       {!showPreview && !loading && (
         <div className="flex h-full flex-col items-center justify-center gap-4 text-slate-400">
           <div className="rounded-2xl bg-slate-50 p-5">
-            <svg className="h-12 w-12 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <Image className="h-12 w-12 text-slate-300" strokeWidth={1.5} />
           </div>
           <div className="text-center">
             <p className="text-sm font-medium text-slate-500">预览区域</p>

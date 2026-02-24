@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 导入 JetBrains Mono 字体 */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* JetBrains Mono 字体通过 next/font 在 layout.tsx 中加载 */
 
 :root {
   color-scheme: light;

@@ -24,7 +24,7 @@ const editorTheme = EditorView.theme({
     backgroundColor: 'transparent',
   },
   '.cm-content': {
-    fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    fontFamily: 'var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
     padding: '16px 0',
     caretColor: '#3b82f6',
   },

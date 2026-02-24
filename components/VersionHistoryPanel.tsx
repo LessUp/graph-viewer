@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { VersionRecord } from '@/hooks/useVersionHistory';
+import { Loader2, Clock, Plus, Pencil, ChevronDown, RotateCcw, Trash2 } from 'lucide-react';
 
 export type VersionHistoryPanelProps = {
   versions: VersionRecord[];
@@ -87,10 +88,7 @@ export function VersionHistoryPanel(props: VersionHistoryPanelProps) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="flex items-center gap-2 text-slate-400">
-          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
+          <Loader2 className="h-5 w-5 animate-spin" />
           <span className="text-sm">加载中...</span>
         </div>
       </div>
@@ -107,9 +105,7 @@ export function VersionHistoryPanel(props: VersionHistoryPanelProps) {
             onClick={onCreateSnapshot}
             className="flex items-center gap-1 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition"
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="h-3.5 w-3.5" />
             创建快照
           </button>
           {versions.length > 0 && (
@@ -127,9 +123,7 @@ export function VersionHistoryPanel(props: VersionHistoryPanelProps) {
       <div className="flex-1 overflow-y-auto">
         {versions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-            <svg className="h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <Clock className="h-12 w-12 mb-3" strokeWidth={1.5} />
             <p className="text-sm">暂无版本历史</p>
             <p className="text-xs mt-1">系统会自动保存您的修改</p>
           </div>
@@ -186,9 +180,7 @@ export function VersionHistoryPanel(props: VersionHistoryPanelProps) {
                           onClick={() => handleStartEdit(version)}
                           className="hidden group-hover:block text-slate-400 hover:text-slate-600"
                         >
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
+                          <Pencil className="h-3 w-3" />
                         </button>
                       </div>
                     )}
@@ -217,27 +209,21 @@ export function VersionHistoryPanel(props: VersionHistoryPanelProps) {
                       className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
                       title={expandedId === version.id ? '收起' : '展开'}
                     >
-                      <svg className={`h-4 w-4 transition ${expandedId === version.id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                      <ChevronDown className={`h-4 w-4 transition ${expandedId === version.id ? 'rotate-180' : ''}`} />
                     </button>
                     <button
                       onClick={() => onRestore(version)}
                       className="rounded p-1 text-slate-400 hover:bg-sky-100 hover:text-sky-600"
                       title="恢复此版本"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
+                      <RotateCcw className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => onDelete(version.id)}
                       className="rounded p-1 text-slate-400 hover:bg-rose-100 hover:text-rose-600"
                       title="删除此版本"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

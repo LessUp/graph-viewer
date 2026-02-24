@@ -5,10 +5,25 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { EditorPanel } from '@/components/EditorPanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { SettingsModal } from '@/components/SettingsModal';
+import { Toast } from '@/components/Toast';
 import { useDiagramState } from '@/hooks/useDiagramState';
 import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/hooks/useToast';
 import { SAMPLES } from '@/lib/diagramSamples';
+import {
+  Palette,
+  Upload,
+  Download,
+  Settings,
+  Github,
+  ChevronsRight,
+  ChevronsLeft,
+  Plus,
+  Layers,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 
 export default function Page() {
   const {
@@ -60,16 +75,10 @@ export default function Page() {
   ); // 强制传入 'svg' 给 render hook
 
   const [livePreview, setLivePreview] = useState(true); // 默认开启实时预览
-  const [toast, setToast] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const debounceRef = useRef<number | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Toast 提示
-  const showToast = useCallback((message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 2000);
-  }, []);
+  const { toast, showToast } = useToast();
 
   const combinedError = error || linkError;
 
@@ -208,16 +217,7 @@ export default function Page() {
   return (
     <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1800px] flex-col gap-5 px-4 py-4 md:px-6 lg:gap-5 lg:py-5">
       {/* Toast 提示 */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-fade-in">
-          <div className="flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-medium text-white shadow-lg">
-            <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            {toast}
-          </div>
-        </div>
-      )}
+      <Toast toast={toast} />
       {/* Settings Modal */}
       <SettingsModal
         isOpen={showSettings}
@@ -230,9 +230,7 @@ export default function Page() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500">
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
+            <Palette className="h-5 w-5 text-white" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-slate-800">GraphViewer</h1>
@@ -245,9 +243,7 @@ export default function Page() {
              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
              title="导入工作区 (JSON 格式，包含所有图表数据)"
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
+            <Upload className="h-3.5 w-3.5" />
             导入工作区
           </button>
           <button
@@ -255,9 +251,7 @@ export default function Page() {
              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
              title="导出工作区 (JSON 格式，包含所有图表数据)"
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
+            <Download className="h-3.5 w-3.5" />
             导出工作区
           </button>
           <div className="mx-1.5 h-4 w-px bg-slate-200"></div>
@@ -266,10 +260,7 @@ export default function Page() {
             className="flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
             title="设置"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <Settings className="h-4 w-4" />
           </button>
           <a
             href="https://github.com"
@@ -278,9 +269,7 @@ export default function Page() {
             className="flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
             title="GitHub"
           >
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-            </svg>
+            <Github className="h-5 w-5" />
           </a>
           <input
             ref={importInputRef}
@@ -306,9 +295,7 @@ export default function Page() {
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
                 title="展开侧边栏"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                </svg>
+                <ChevronsRight className="h-4 w-4" />
               </button>
               <div className="w-full h-px bg-slate-100"></div>
               <button
@@ -316,9 +303,7 @@ export default function Page() {
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-sky-600 hover:bg-sky-50 transition"
                 title="新建图表"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
+                <Plus className="h-4 w-4" />
               </button>
               <span className="text-[10px] font-medium text-slate-400">{diagrams.length}</span>
             </div>
@@ -329,9 +314,7 @@ export default function Page() {
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100">
-                      <svg className="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
+                      <Layers className="h-3.5 w-3.5 text-slate-500" />
                     </div>
                     <span className="text-sm font-semibold text-slate-700">我的图表</span>
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">{diagrams.length}</span>
@@ -341,9 +324,7 @@ export default function Page() {
                       onClick={handleCreateDiagram}
                       className="flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition"
                     >
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
+                      <Plus className="h-3.5 w-3.5" />
                       新建
                     </button>
                     <button
@@ -351,9 +332,7 @@ export default function Page() {
                       className="hidden lg:flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
                       title="收起侧边栏"
                     >
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                      </svg>
+                      <ChevronsLeft className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -381,9 +360,7 @@ export default function Page() {
                           className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                           title="重命名"
                         >
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <Pencil className="h-3 w-3" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -393,9 +370,7 @@ export default function Page() {
                           className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-500"
                           title="删除"
                         >
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
                     </div>

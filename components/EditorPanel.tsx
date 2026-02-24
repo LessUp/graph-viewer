@@ -5,6 +5,7 @@ import type { Engine } from '@/lib/diagramConfig';
 import { ENGINE_LABELS, ENGINE_CONFIGS } from '@/lib/diagramConfig';
 import { SAMPLES } from '@/lib/diagramSamples';
 import { CodeEditor } from '@/components/CodeEditor';
+import { PlayCircle, Loader2, Copy, AlertCircle } from 'lucide-react';
 
 export type EditorPanelProps = {
   engine: Engine;
@@ -76,9 +77,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
           </label>
           {canUseLocalRender && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
-              <svg className="h-2 w-2" fill="currentColor" viewBox="0 0 8 8">
-                <circle cx="4" cy="4" r="3" />
-              </svg>
+              <span className="h-2 w-2 rounded-full bg-current" />
               本地
             </span>
           )}
@@ -95,18 +94,12 @@ function EditorPanelComponent(props: EditorPanelProps) {
         >
           {loading ? (
             <>
-              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
+              <Loader2 className="h-4 w-4 animate-spin" />
               渲染中
             </>
           ) : (
             <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <PlayCircle className="h-4 w-4" />
               渲染
             </>
           )}
@@ -118,9 +111,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
           className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 transition"
           title="复制代码"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
+          <Copy className="h-4 w-4" />
           复制
         </button>
       </div>
@@ -188,9 +179,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
       {error && (
         <div className="rounded-lg bg-rose-50 p-3 text-xs text-rose-600 ring-1 ring-inset ring-rose-500/10">
           <div className="flex items-start gap-2">
-            <svg className="h-4 w-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         </div>

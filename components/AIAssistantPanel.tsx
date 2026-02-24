@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { AIConfig, AIProvider, AIAnalysisResult } from '@/hooks/useAIAssistant';
+import { Zap, Loader2, Lightbulb, Pencil, AlertTriangle, CheckCircle, AlertCircle, Key } from 'lucide-react';
 
 export type AIAssistantPanelProps = {
   config: AIConfig;
@@ -77,9 +78,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600">
-            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <Zap className="h-4 w-4 text-white" />
           </div>
           <h3 className="text-sm font-semibold text-slate-700">AI 助手</h3>
         </div>
@@ -189,9 +188,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {!isConfigured ? (
           <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-            <svg className="h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
+            <Key className="h-12 w-12 mb-3" strokeWidth={1.5} />
             <p className="text-sm">请先配置 API Key</p>
             <p className="text-xs mt-1">点击上方「设置」按钮进行配置</p>
           </div>
@@ -206,17 +203,12 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
               >
                 {isAnalyzing ? (
                   <>
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                    </svg>
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     分析中...
                   </>
                 ) : (
                   <>
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
+                    <Lightbulb className="h-4 w-4" />
                     分析代码
                   </>
                 )}
@@ -226,9 +218,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
                 disabled={isAnalyzing}
                 className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-600 hover:bg-violet-100 disabled:opacity-50 transition"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+                <Pencil className="h-4 w-4" />
                 自动修复
               </button>
             </div>
@@ -236,9 +226,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
             {/* 错误提示 */}
             {error && (
               <div className="rounded-lg bg-rose-50 p-3 text-xs text-rose-600 flex items-start gap-2">
-                <svg className="h-4 w-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p>{error}</p>
                   <button onClick={onClearError} className="mt-1 text-rose-500 hover:text-rose-700 underline">
@@ -256,13 +244,9 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
                   lastAnalysis.hasErrors ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
                 }`}>
                   {lastAnalysis.hasErrors ? (
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                    <AlertTriangle className="h-5 w-5" />
                   ) : (
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <CheckCircle className="h-5 w-5" />
                   )}
                   <span className="text-sm font-medium">
                     {lastAnalysis.hasErrors ? `发现 ${lastAnalysis.errors.length} 个问题` : '代码看起来没问题！'}
@@ -368,17 +352,12 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
             >
               {isGenerating ? (
                 <>
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   生成中...
                 </>
               ) : (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                  <Zap className="h-4 w-4" />
                   生成图表
                 </>
               )}
