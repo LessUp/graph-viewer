@@ -336,17 +336,6 @@ export async function copyPngToClipboard(svgContent: string, scale = 2): Promise
 }
 
 /**
- * 复制 SVG 到剪贴板
- */
-export async function copySvgToClipboard(svgContent: string): Promise<void> {
-    try {
-        await navigator.clipboard.writeText(svgContent);
-    } catch (err) {
-        throw new Error('复制失败');
-    }
-}
-
-/**
  * 导出为 HTML
  */
 export function exportHtml(svgContent: string, filename: string, title = 'Diagram'): void {

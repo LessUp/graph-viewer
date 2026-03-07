@@ -1,14 +1,15 @@
 'use client';
 
 import { memo } from 'react';
-import type { Engine } from '@/lib/diagramConfig';
-import { ENGINE_LABELS, ENGINE_CONFIGS } from '@/lib/diagramConfig';
+import type { Engine, Format } from '@/lib/diagramConfig';
+import { ENGINE_LABELS, ENGINE_CONFIGS, FORMAT_LABELS } from '@/lib/diagramConfig';
 import { SAMPLES } from '@/lib/diagramSamples';
 import { CodeEditor } from '@/components/CodeEditor';
 import { PlayCircle, Loader2, Copy, AlertCircle } from 'lucide-react';
 
 export type EditorPanelProps = {
   engine: Engine;
+  format: Format;
   code: string;
   codeStats: { lines: number; chars: number };
   loading: boolean;
@@ -17,6 +18,7 @@ export type EditorPanelProps = {
   livePreviewEnabled: boolean;
   onLivePreviewChange: (enabled: boolean) => void;
   onEngineChange: (engine: Engine, loadSample?: boolean) => void;
+  onFormatChange: (format: Format) => void;
   onCodeChange: (code: string) => void;
   onRender: () => Promise<void> | void;
   onCopyCode: () => Promise<void> | void;
@@ -29,6 +31,7 @@ const COMMON_ENGINES: Engine[] = ['mermaid', 'plantuml', 'graphviz', 'flowchart'
 function EditorPanelComponent(props: EditorPanelProps) {
   const {
     engine,
+    format,
     code,
     codeStats,
     loading,
@@ -37,6 +40,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
     livePreviewEnabled,
     onLivePreviewChange,
     onEngineChange,
+    onFormatChange,
     onCodeChange,
     onRender,
     onCopyCode,
@@ -51,21 +55,34 @@ function EditorPanelComponent(props: EditorPanelProps) {
   const currentEngineConfig = ENGINE_CONFIGS[engine];
 
   return (
-    <div className="flex h-full flex-col space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+    <div className="flex h-full flex-col space-y-4 overflow-hidden rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-sm backdrop-blur md:p-5">
       {/* 头部 - 引擎选择和实时预览 */}
-      <div className="flex items-center justify-between gap-3">
-        <select
-          value={engine}
-          onChange={(e) => handleEngineChange(e.target.value as Engine)}
-          className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
-        >
-          {COMMON_ENGINES.map((eng) => (
-            <option key={eng} value={eng}>
-              {ENGINE_LABELS[eng]}
-            </option>
-          ))}
-        </select>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+          <select
+            value={engine}
+            onChange={(e) => handleEngineChange(e.target.value as Engine)}
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+          >
+            {COMMON_ENGINES.map((eng) => (
+              <option key={eng} value={eng}>
+                {ENGINE_LABELS[eng]}
+              </option>
+            ))}
+          </select>
+          <select
+            value={format}
+            onChange={(e) => onFormatChange(e.target.value as Format)}
+            className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+          >
+            {Object.entries(FORMAT_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center justify-between gap-2 md:justify-end">
           <label className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -85,12 +102,12 @@ function EditorPanelComponent(props: EditorPanelProps) {
       </div>
 
       {/* 操作按钮 */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <button
           type="button"
           onClick={onRender}
           disabled={loading || !code.trim()}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
         >
           {loading ? (
             <>
@@ -108,7 +125,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
           type="button"
           onClick={onCopyCode}
           disabled={!code.trim()}
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 transition"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2.5 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 sm:min-w-[112px]"
           title="复制代码"
         >
           <Copy className="h-4 w-4" />
@@ -118,7 +135,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
 
       {/* 编辑器区域 */}
       <div className="flex flex-1 flex-col space-y-2 overflow-hidden min-h-0">
-        <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <span className="font-medium">代码编辑器</span>
             {currentEngineConfig.docUrl && (
@@ -132,7 +149,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
               </a>
             )}
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 text-[11px]">
             <button 
               onClick={() => onCodeChange(SAMPLES[engine])} 
               className="hover:text-sky-600 transition"
@@ -164,9 +181,11 @@ function EditorPanelComponent(props: EditorPanelProps) {
           />
         </div>
         
-        <div className="flex justify-between text-[10px] text-slate-400">
+        <div className="flex flex-col gap-2 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <span>{codeStats.lines} 行 · {codeStats.chars} 字符</span>
           <span className="flex items-center gap-1">
+            <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[9px]">Ctrl</kbd>
+            <span>/</span>
             <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[9px]">⌘</kbd>
             <span>+</span>
             <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[9px]">Enter</kbd>

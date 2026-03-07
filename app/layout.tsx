@@ -9,8 +9,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: "Graph Viewer",
-  description: "Diagram renderer",
+  title: "GraphViewer",
+  description: "支持 Mermaid、Graphviz、PlantUML 等多种语法的图表可视化工具",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
