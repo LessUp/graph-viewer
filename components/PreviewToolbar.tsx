@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { exportSvg, exportPng, copyPngToClipboard, copySvgToClipboard, exportHtml, exportMarkdown, exportSourceCode } from '@/lib/exportUtils';
+import { exportSvg, exportPng, copyPngToClipboard, exportHtml, exportMarkdown, exportSourceCode } from '@/lib/exportUtils';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize, Download, Loader2, Check, Copy } from 'lucide-react';
 
 interface PreviewToolbarProps {

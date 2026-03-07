@@ -48,11 +48,6 @@ function formatTimestamp(timestamp: string): string {
   });
 }
 
-function truncateCode(code: string, maxLength = 100): string {
-  if (code.length <= maxLength) return code;
-  return code.slice(0, maxLength) + '...';
-}
-
 export function VersionHistoryPanel(props: VersionHistoryPanelProps) {
   const {
     versions,

@@ -46,9 +46,13 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
   const [linkError, setLinkError] = useState<string>('');
   const [diagrams, setDiagrams] = useState<DiagramDoc[]>([]);
   const [currentId, setCurrentId] = useState<string>('');
+  const [hasHydrated, setHasHydrated] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      setHasHydrated(true);
+      return;
+    }
     try {
       const params = new URLSearchParams(window.location.search);
       const qsEngine = params.get('engine');
@@ -128,10 +132,13 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       }
     } catch {
       // ignore
+    } finally {
+      setHasHydrated(true);
     }
   }, []);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!diagrams.length && !currentId) {
       const id = generateDiagramId();
       const now = new Date().toISOString();
@@ -189,17 +196,17 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       };
       setDiagrams(next);
     }
-  }, [engine, format, code, currentId, diagrams]);
+  }, [engine, format, code, currentId, diagrams, hasHydrated]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !hasHydrated) return;
     try {
       const payload = JSON.stringify({ engine, format, code, diagrams, currentId });
       window.localStorage.setItem(LOCAL_STORAGE_KEY, payload);
     } catch {
       // ignore
     }
-  }, [engine, format, code, diagrams, currentId]);
+  }, [engine, format, code, diagrams, currentId, hasHydrated]);
 
   const codeStats = useMemo(() => {
     const lines = code.split('\n').length;

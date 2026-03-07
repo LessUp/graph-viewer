@@ -10,21 +10,31 @@ import { AppHeader } from '@/components/AppHeader';
 import { DiagramList } from '@/components/DiagramList';
 import { CollapsedSidebar } from '@/components/CollapsedSidebar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AIAssistantPanel } from '@/components/AIAssistantPanel';
+import { VersionHistoryPanel } from '@/components/VersionHistoryPanel';
 import { useDiagramState } from '@/hooks/useDiagramState';
 import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/hooks/useToast';
+import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { useVersionHistory, type VersionRecord } from '@/hooks/useVersionHistory';
 import { SAMPLES } from '@/lib/diagramSamples';
+import { isEngine } from '@/lib/diagramConfig';
+import { Code2, Zap, Clock } from 'lucide-react';
+
+type SidebarTab = 'editor' | 'ai' | 'history';
 
 export default function Page() {
   const {
     engine,
+    format,
     code,
     codeStats,
     linkError,
     diagrams,
     currentId,
     setEngine,
+    setFormat,
     setCode,
     setCurrentId,
     createDiagram,
@@ -49,15 +59,39 @@ export default function Page() {
     resetOutput,
   } = useDiagramRender(
     engine,
-    'svg',
+    format,
     code,
     settings.useCustomServer ? settings.renderServerUrl : undefined,
   );
 
   const [livePreview, setLivePreview] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('editor');
   const debounceRef = useRef<number | null>(null);
   const { toast, showToast } = useToast();
+
+  // AI 助手
+  const {
+    config: aiConfig,
+    updateConfig: updateAIConfig,
+    state: aiState,
+    analyzeCode,
+    generateCode,
+    fixCode,
+    clearError: clearAIError,
+    clearAnalysis: clearAIAnalysis,
+    isConfigured: isAIConfigured,
+  } = useAIAssistant(engine);
+
+  // 版本历史
+  const {
+    versions,
+    isLoading: isVersionsLoading,
+    createVersion,
+    deleteVersion,
+    renameVersion,
+    clearDiagramVersions,
+  } = useVersionHistory(currentId, code, engine);
 
   const combinedError = error || linkError;
 
@@ -172,9 +206,65 @@ export default function Page() {
     [setEngine, setCode, resetOutput],
   );
 
+  // --- AI 助手事件处理 ---
+  const handleAIAnalyze = useCallback(() => {
+    if (!code.trim()) return;
+    analyzeCode(code);
+  }, [code, analyzeCode]);
+
+  const handleAIFix = useCallback(async () => {
+    if (!code.trim()) return;
+    const fixed = await fixCode(code, combinedError || undefined);
+    if (fixed) {
+      setCode(fixed);
+      showToast('AI 已修复代码', 'success');
+    }
+  }, [code, combinedError, fixCode, setCode, showToast]);
+
+  const handleAIGenerate = useCallback(async (description: string) => {
+    const generated = await generateCode(description);
+    if (generated) {
+      setCode(generated);
+      setSidebarTab('editor');
+      showToast('代码已生成', 'success');
+    }
+  }, [generateCode, setCode, showToast]);
+
+  const handleAIApplyCode = useCallback((newCode: string) => {
+    setCode(newCode);
+    setSidebarTab('editor');
+    showToast('已应用修改', 'success');
+  }, [setCode, showToast]);
+
+  // --- 版本历史事件处理 ---
+  const handleCreateSnapshot = useCallback(() => {
+    const v = createVersion('手动快照');
+    if (v) {
+      showToast('快照已创建', 'success');
+    } else {
+      showToast('代码无变化，无需创建快照', 'info');
+    }
+  }, [createVersion, showToast]);
+
+  const handleRestoreVersion = useCallback((version: VersionRecord) => {
+    setCode(version.code);
+    if (isEngine(version.engine)) {
+      setEngine(version.engine);
+    }
+    showToast('已恢复到该版本', 'success');
+  }, [setCode, setEngine, showToast]);
+
+  const handleClearVersions = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    if (window.confirm('确定要清空所有版本历史吗？此操作不可撤销。')) {
+      clearDiagramVersions();
+      showToast('版本历史已清空', 'info');
+    }
+  }, [clearDiagramVersions, showToast]);
+
   return (
     <ErrorBoundary>
-      <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1800px] flex-col gap-5 px-4 py-4 md:px-6 lg:gap-5 lg:py-5">
+      <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1920px] flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:gap-4 lg:py-5">
         <Toast toast={toast} />
         <SettingsModal
           isOpen={showSettings}
@@ -191,11 +281,11 @@ export default function Page() {
         />
 
         {/* Workspace Section */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:h-[calc(100vh-140px)]">
+        <div className="flex flex-col gap-4 lg:h-[calc(100vh-150px)] lg:flex-row lg:items-stretch lg:gap-5">
           {/* Left Sidebar */}
           <div
-            className={`flex flex-col gap-4 lg:h-full lg:shrink-0 transition-all duration-300 ${
-              settings.sidebarCollapsed ? 'lg:w-12' : 'w-full lg:w-[460px]'
+            className={`flex min-h-0 flex-col gap-4 transition-all duration-300 ${
+              settings.sidebarCollapsed ? 'lg:w-14' : 'w-full lg:w-[430px] xl:w-[470px]'
             }`}
           >
             {settings.sidebarCollapsed ? (
@@ -215,36 +305,116 @@ export default function Page() {
                   onDelete={handleDeleteDiagram}
                   onCollapseSidebar={toggleSidebar}
                 />
-                <div className="flex-1 min-h-[400px] lg:min-h-0">
-                  <EditorPanel
-                    engine={engine}
-                    code={code}
-                    codeStats={codeStats}
-                    loading={loading}
-                    error={combinedError}
-                    canUseLocalRender={canUseLocalRender}
-                    livePreviewEnabled={livePreview}
-                    onLivePreviewChange={setLivePreview}
-                    onEngineChange={handleEngineChange}
-                    onCodeChange={setCode}
-                    onRender={renderDiagram}
-                    onCopyCode={handleCopyCode}
-                    onClearCode={handleClearCode}
-                  />
+
+                {/* Tab 切换栏 */}
+                <div className="flex overflow-hidden rounded-2xl border border-slate-200/70 bg-white/80 p-1 shadow-sm backdrop-blur">
+                  <button
+                    onClick={() => setSidebarTab('editor')}
+                    className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition ${
+                      sidebarTab === 'editor'
+                        ? 'rounded-xl bg-sky-50 text-sky-700 shadow-sm ring-1 ring-sky-100'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                    }`}
+                  >
+                    <Code2 className="h-3.5 w-3.5" />
+                    代码
+                  </button>
+                  <button
+                    onClick={() => setSidebarTab('ai')}
+                    className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition ${
+                      sidebarTab === 'ai'
+                        ? 'rounded-xl bg-violet-50 text-violet-700 shadow-sm ring-1 ring-violet-100'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                    }`}
+                  >
+                    <Zap className="h-3.5 w-3.5" />
+                    AI 助手
+                  </button>
+                  <button
+                    onClick={() => setSidebarTab('history')}
+                    className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition ${
+                      sidebarTab === 'history'
+                        ? 'rounded-xl bg-amber-50 text-amber-700 shadow-sm ring-1 ring-amber-100'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                    }`}
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    历史
+                    {versions.length > 0 && (
+                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                        {versions.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Tab 内容区 */}
+                <div className="flex-1 min-h-[360px] lg:min-h-0">
+                  {sidebarTab === 'editor' && (
+                    <EditorPanel
+                      engine={engine}
+                      format={format}
+                      code={code}
+                      codeStats={codeStats}
+                      loading={loading}
+                      error={combinedError}
+                      canUseLocalRender={canUseLocalRender}
+                      livePreviewEnabled={livePreview}
+                      onLivePreviewChange={setLivePreview}
+                      onEngineChange={handleEngineChange}
+                      onFormatChange={setFormat}
+                      onCodeChange={setCode}
+                      onRender={renderDiagram}
+                      onCopyCode={handleCopyCode}
+                      onClearCode={handleClearCode}
+                    />
+                  )}
+                  {sidebarTab === 'ai' && (
+                    <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">
+                      <AIAssistantPanel
+                        config={aiConfig}
+                        isConfigured={isAIConfigured}
+                        isAnalyzing={aiState.isAnalyzing}
+                        isGenerating={aiState.isGenerating}
+                        lastAnalysis={aiState.lastAnalysis}
+                        error={aiState.error}
+                        onUpdateConfig={updateAIConfig}
+                        onAnalyze={handleAIAnalyze}
+                        onFix={handleAIFix}
+                        onGenerate={handleAIGenerate}
+                        onApplyCode={handleAIApplyCode}
+                        onClearError={clearAIError}
+                        onClearAnalysis={clearAIAnalysis}
+                      />
+                    </div>
+                  )}
+                  {sidebarTab === 'history' && (
+                    <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">
+                      <VersionHistoryPanel
+                        versions={versions}
+                        isLoading={isVersionsLoading}
+                        onRestore={handleRestoreVersion}
+                        onDelete={deleteVersion}
+                        onRename={renameVersion}
+                        onCreateSnapshot={handleCreateSnapshot}
+                        onClearAll={handleClearVersions}
+                      />
+                    </div>
+                  )}
                 </div>
               </>
             )}
           </div>
 
           {/* Right: Preview */}
-          <div className="flex-1 h-[500px] lg:h-full">
+          <div className="flex-1 min-h-[420px] lg:h-full lg:min-h-0">
             <PreviewPanel
               svg={svg}
               base64={base64}
               contentType={contentType}
               loading={loading}
               showPreview={showPreview}
-              format="svg"
+              format={format}
               code={code}
               engine={engine}
             />

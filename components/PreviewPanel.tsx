@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
 import DOMPurify from 'dompurify';
 import { PreviewToolbar } from '@/components/PreviewToolbar';
-import { Loader2, X, Image } from 'lucide-react';
+import { ENGINE_LABELS, FORMAT_LABELS, type Engine, type Format } from '@/lib/diagramConfig';
+import { Loader2, X, Image as ImageIcon } from 'lucide-react';
 
 export type PreviewPanelProps = {
   svg: string;
@@ -11,9 +12,9 @@ export type PreviewPanelProps = {
   contentType: string;
   loading: boolean;
   showPreview: boolean;
-  format: string;
+  format: Format;
   code?: string;
-  engine?: string;
+  engine?: Engine;
 };
 
 export function PreviewPanel(props: PreviewPanelProps) {
@@ -26,7 +27,6 @@ export function PreviewPanel(props: PreviewPanelProps) {
     });
   }, [svg]);
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -122,11 +122,13 @@ export function PreviewPanel(props: PreviewPanelProps) {
 
   // 只有 SVG 格式支持前端导出和无限缩放
   const exportableSvg = format === 'svg' ? sanitizedSvg : null;
+  const previewHint =
+    format === 'svg' ? '支持无限缩放与矢量导出' : format === 'png' ? '适合截图分享与复制' : '适合文档交付与打印';
 
   return (
     <div 
       ref={containerRef}
-      className={`relative flex h-full min-h-[500px] w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm ${isFullscreen ? 'rounded-none border-0' : ''}`}
+      className={`relative flex h-full min-h-[420px] w-full flex-col overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur ${isFullscreen ? 'rounded-none border-0' : ''}`}
     >
       {/* 背景网格 */}
       <div 
@@ -150,6 +152,19 @@ export function PreviewPanel(props: PreviewPanelProps) {
         </div>
       )}
 
+      {/* Preview Meta */}
+      <div className="pointer-events-none absolute left-4 top-4 z-20 flex max-w-[calc(100%-210px)] flex-wrap items-center gap-2">
+        <span className="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">
+          {ENGINE_LABELS[engine]}
+        </span>
+        <span className="rounded-full bg-sky-50/95 px-2.5 py-1 text-[11px] font-medium text-sky-700 shadow-sm ring-1 ring-sky-100">
+          {FORMAT_LABELS[format]}
+        </span>
+        <span className="hidden rounded-full bg-slate-900/75 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm md:inline-flex">
+          {previewHint}
+        </span>
+      </div>
+
       {/* Toolbar */}
       {showPreview && (
         <PreviewToolbar
@@ -168,7 +183,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
       {isFullscreen && (
         <button
           onClick={handleFullscreen}
-          className="absolute left-4 top-4 z-30 flex items-center gap-2 rounded-lg bg-slate-800/80 px-3 py-2 text-xs font-medium text-white backdrop-blur hover:bg-slate-700 transition"
+          className="absolute left-4 top-16 z-30 flex items-center gap-2 rounded-lg bg-slate-800/80 px-3 py-2 text-xs font-medium text-white backdrop-blur hover:bg-slate-700 transition"
         >
           <X className="h-4 w-4" />
           退出全屏 (ESC)
@@ -179,7 +194,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
       {!showPreview && !loading && (
         <div className="flex h-full flex-col items-center justify-center gap-4 text-slate-400">
           <div className="rounded-2xl bg-slate-50 p-5">
-            <Image className="h-12 w-12 text-slate-300" strokeWidth={1.5} />
+            <ImageIcon className="h-12 w-12 text-slate-300" strokeWidth={1.5} />
           </div>
           <div className="text-center">
             <p className="text-sm font-medium text-slate-500">预览区域</p>
@@ -190,8 +205,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
 
       {/* Content Area */}
       <div
-        ref={scrollContainerRef}
-        className={`relative h-full w-full overflow-hidden ${isPanning ? 'cursor-grabbing' : 'cursor-grab'} ${!showPreview ? 'pointer-events-none' : ''}`}
+        className={`relative flex-1 overflow-hidden ${isPanning ? 'cursor-grabbing' : 'cursor-grab'} ${!showPreview ? 'pointer-events-none' : ''}`}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -199,7 +213,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
         onMouseLeave={endPan}
       >
         <div
-          className="flex h-full w-full items-center justify-center p-8 transition-transform duration-75 ease-out"
+          className="flex h-full w-full items-center justify-center p-6 pt-20 transition-transform duration-75 ease-out sm:p-8 sm:pt-20"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center',
@@ -216,7 +230,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
             <img
               src={`data:${contentType};base64,${base64}`}
               alt="diagram preview"
-              className="max-h-full max-w-full shadow-lg ring-1 ring-slate-900/5"
+              className="max-h-full max-w-full rounded-2xl bg-white shadow-lg ring-1 ring-slate-900/5"
               draggable={false}
             />
           )}
@@ -225,7 +239,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
             <iframe
               title="diagram preview"
               src={`data:application/pdf;base64,${base64}`}
-              className="h-full w-full rounded border border-slate-200 shadow-sm"
+              className="h-full w-full rounded-2xl border border-slate-200 bg-white shadow-sm"
             />
           )}
         </div>
