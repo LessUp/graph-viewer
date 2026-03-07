@@ -1,157 +1,134 @@
-# 导出功能改进文档
+# 导出能力说明
 
-## 问题分析
+> 本文描述 **当前导出实现与限制**，不是一次性历史变更记录。
 
-原有的导出功能存在以下问题：
+## 1. 当前支持的导出能力
 
-1. **SVG 样式丢失**：导出时 CSS 样式可能无法正确保留
-2. **PNG 质量不佳**：使用简单的 Image 对象转换，对复杂 SVG 支持不足
-3. **字体渲染问题**：自定义字体可能无法正确显示
-4. **兼容性问题**：某些浏览器下导出失败
+在当前 UI 中，导出入口位于 `PreviewToolbar.tsx`。
 
-## 改进方案
+### 1.1 文件导出
 
-### 1. 增强的 SVG 预处理
+- SVG 矢量图
+- PNG 高清（2x）
+- PNG 超清（4x）
+- HTML 网页
+- Markdown 文档
+- 源代码文件
 
-```typescript
-function preprocessSvg(svgContent: string, options: ExportOptions = {}): string
-```
+### 1.2 剪贴板
 
-**改进点：**
-- ✅ 确保所有必要的 XML 命名空间（xmlns, xmlns:xlink）
-- ✅ 将 CSS 样式内联到元素属性中
-- ✅ 正确处理 CDATA 包裹的样式
-- ✅ 自动补全缺失的宽高属性
-- ✅ 支持自定义内边距
+- 复制 PNG 图片到剪贴板
 
-### 2. 双重转换策略
+### 1.3 当前不支持的内容
 
-**主要方法：html2canvas**
-- 使用 `html2canvas` 库进行高质量渲染
-- 支持复杂的 SVG 结构和样式
-- 更好的字体和颜色处理
+- 工具栏中 **没有单独的 PDF 导出按钮**
+- 项目支持 `pdf` 作为渲染 / 预览格式，但当前导出工具链并未提供 PDF 文件导出
 
-**备用方法：原生 Image**
-- 当 html2canvas 失败时自动回退
-- 使用原生 Image 对象加载 SVG
-- 确保基本功能可用
+## 2. 使用前提
 
-```typescript
-async function svgToCanvas(svgContent: string, options: ExportOptions = {}): Promise<HTMLCanvasElement>
-```
+当前导出菜单依赖 **SVG 预览内容**：
 
-### 3. 高质量 PNG 导出
+- 如果当前图表能生成 SVG 预览，导出菜单可用
+- 如果当前预览格式切换到 `png` 或 `pdf`，导出菜单会禁用
+- 需要切回 `svg` 后再导出 SVG / PNG / HTML / Markdown / 源码
 
-**优化配置：**
-- 默认 2x 缩放（可选 4x 超清）
-- PNG 为无损格式，不使用 `quality` 参数（通过缩放与高质量平滑提升清晰度）
-- 启用高质量图像平滑（imageSmoothingQuality: 'high'）
-- 白色背景确保兼容性
+这与 `PreviewPanel.tsx` 向 `PreviewToolbar.tsx` 传递的 `svgContent` 逻辑一致。
 
-```typescript
-export async function exportPng(svgContent: string, filename: string, scale = 2): Promise<void>
-```
+## 3. 实现入口
 
-### 4. 样式内联优化
+- 交互入口：`components/PreviewToolbar.tsx`
+- 导出实现：`lib/exportUtils.ts`
 
-**关键样式属性：**
-- fill（填充色）
-- stroke（描边色）
-- stroke-width（描边宽度）
-- font-family（字体）
-- font-size（字号）
-- font-weight（字重）
-- opacity（透明度）
+对应函数：
 
-这些样式会从计算样式中提取并内联到 SVG 元素上，确保导出时不丢失。
+- `exportSvg()`
+- `exportPng()`
+- `copyPngToClipboard()`
+- `exportHtml()`
+- `exportMarkdown()`
+- `exportSourceCode()`
 
-## 使用方法
+## 4. 关键实现细节
 
-### 导出 SVG
+### 4.1 SVG 预处理
 
-```typescript
-import { exportSvg } from '@/lib/exportUtils';
+`preprocessSvg()` 会在导出前做几件事：
 
-exportSvg(svgContent, 'diagram', {
-  padding: 20,
-  backgroundColor: '#ffffff'
-});
-```
+- 确保 SVG 命名空间完整
+- 处理样式标签
+- 尝试把部分关键计算样式内联到元素属性上
+- 在缺失宽高时根据 `viewBox` 补全尺寸
+- 按需扩展 `viewBox` 以加入 padding
 
-### 导出高质量 PNG
+### 4.2 PNG 生成策略
 
-```typescript
-import { exportPng } from '@/lib/exportUtils';
+PNG 导出采用双重策略：
 
-// 标准质量 (2x)
-await exportPng(svgContent, 'diagram', 2);
+1. 优先 `html2canvas`
+2. 失败后回退到原生 `Image + canvas`
 
-// 超清质量 (4x)
-await exportPng(svgContent, 'diagram', 4);
-```
+这样做的目标是：
 
-### 复制到剪贴板
+- 提高复杂 SVG 的兼容性
+- 在 `html2canvas` 失败时保留兜底能力
 
-```typescript
-import { copyPngToClipboard } from '@/lib/exportUtils';
+### 4.3 PNG 清晰度
 
-await copyPngToClipboard(svgContent, 2);
-```
+当前 UI 默认提供两档：
 
-## 导出选项
+- `2x`
+- `4x`
 
-```typescript
-type ExportOptions = {
-  scale?: number;           // 缩放倍数 (1-8)，默认 2
-  quality?: number;         // 图片质量 (0-1)，默认 0.95（PNG 为无损格式，不使用该参数）
-  backgroundColor?: string; // 背景颜色，默认 '#ffffff'
-  padding?: number;         // 内边距（像素），默认 20
-  watermark?: string;       // 水印文字
-  maxWidth?: number;        // 最大宽度限制（预留字段，当前版本未实现）
-  maxHeight?: number;       // 最大高度限制（预留字段，当前版本未实现）
-};
-```
+放大倍数越高：
 
-## 支持的导出格式
+- 图片越清晰
+- 文件越大
+- 导出耗时也可能更长
 
-- ✅ **SVG** - 矢量图，无损质量
-- ✅ **PNG** - 高质量位图（默认白底）
-- ✅ **HTML** - 独立网页文件
-- ✅ **Markdown** - 包含源代码的文档
-- ✅ **源代码** - 原始图表代码
+### 4.4 HTML / Markdown / 源码导出
 
-## 性能优化
+- `exportHtml()`
+  - 生成一个独立 HTML 文件并内嵌 SVG
+- `exportMarkdown()`
+  - 根据引擎映射语言标识并导出 markdown code fence
+- `exportSourceCode()`
+  - 根据引擎映射文件扩展名
 
-1. **异步处理**：所有导出操作都是异步的，不会阻塞 UI
-2. **资源清理**：自动清理临时 DOM 元素和 Blob URL
-3. **错误处理**：完善的错误捕获和回退机制
-4. **内存管理**：及时释放不再使用的资源
+## 5. 什么时候选哪种格式
 
-## 兼容性
+- **SVG**
+  - 适合继续编辑、放大查看、嵌入网页
+- **PNG 2x**
+  - 适合一般截图分享
+- **PNG 4x**
+  - 适合高清展示、打印前素材
+- **HTML**
+  - 适合把图表作为独立网页交付
+- **Markdown**
+  - 适合文档仓库、知识库、说明文档
+- **源代码**
+  - 适合保存原始图表语法
 
-- ✅ Chrome 90+
-- ✅ Firefox 88+
-- ✅ Safari 14+
-- ✅ Edge 90+
+## 6. 已知限制
 
-## 测试建议
+- Clipboard API 依赖浏览器支持与安全上下文
+- 极大尺寸的 SVG 可能导致 canvas 内存压力
+- 某些复杂滤镜 / 字体 / 外部资源样式未必能 100% 保真
+- 当前导出菜单与 SVG 预览绑定，不是完全独立于预览格式的导出系统
 
-1. 测试不同类型的图表（Mermaid, PlantUML, Graphviz 等）
-2. 测试不同的缩放级别（1x, 2x, 4x）
-3. 测试包含自定义字体的图表
-4. 测试大型复杂图表
-5. 测试剪贴板功能
+## 7. 建议的手工验证项
 
-## 已知限制
+- Mermaid / Graphviz / PlantUML 等不同引擎在 SVG 下的导出表现
+- 2x 与 4x 的清晰度和文件体积差异
+- 中文、emoji、特殊字符的显示
+- 剪贴板能力在不同浏览器中的表现
+- HTML / Markdown / 源码导出的文件名和扩展名是否正确
 
-1. 某些浏览器可能不支持剪贴板 API
-2. 非常大的图表（>10000x10000px）可能导致内存问题
-3. 某些特殊的 SVG 效果（如滤镜）可能无法完美导出
+## 8. 如果后续要继续增强
 
-## 未来改进方向
+优先建议从这几个方向继续：
 
-- [ ] 支持 PDF 导出（使用 jsPDF）
-- [ ] 支持批量导出
-- [ ] 添加导出进度提示
-- [ ] 支持自定义水印位置和样式
-- [ ] 支持导出预览
+- 让导出菜单不再强依赖 SVG 预览
+- 为 `app/api/render/route.ts` 和导出链路补更完整测试
+- 评估是否增加 PDF 文件导出
+- 为大图导出增加更明确的进度与错误提示

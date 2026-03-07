@@ -1,140 +1,172 @@
 # Kroki 自建与 GraphViewer 集成指南
 
-本指南说明如何自建 Kroki 实例，并让 GraphViewer 使用该实例进行 PlantUML 等图形的远程渲染，以提升稳定性和控制数据流向。
+> 本文描述 **当前仓库对 Kroki 的接入方式**，包括固定服务端配置和前端自定义服务器配置。
 
-## 1. 基本原理
+## 1. 当前支持的两种接入方式
 
-GraphViewer 后端 `/api/render` 会将图形代码转发到 `KROKI_BASE_URL` 指定的 Kroki 实例：
+GraphViewer 的远程渲染统一通过 `/api/render` 完成，目前支持两种 Kroki 来源：
 
-- 未设置时默认使用公共服务 `https://kroki.io`。
-- 设置为自建地址后，将改用你的 Kroki 实例，例如：`http://localhost:8000` 或 `http://kroki:8000`。
+- **方式 A：服务端固定 Kroki 地址**
+  - 通过环境变量 `KROKI_BASE_URL` 配置
+  - 这是默认方式
+- **方式 B：前端设置面板指定自定义 Kroki 地址**
+  - 用户在设置面板中输入 `renderServerUrl`
+  - 由前端通过 `krokiBaseUrl` 传给 `/api/render`
+  - 服务端会进一步校验是否允许该地址
 
-前端逻辑无需修改，只要正确配置环境变量即可。
+## 2. 默认行为
 
----
+如果你不做额外配置：
 
-## 2. 本地 Docker 自建 Kroki
+- `/api/render` 默认使用：
 
-### 2.1 直接运行 Kroki 容器
-
-在本地终端执行：
-
-```bash
-docker run -d --name kroki \
-  -p 8000:8000 \
-  yuzutech/kroki
+```text
+https://kroki.io
 ```
 
-启动成功后，本机 Kroki 地址为：`http://localhost:8000`。
+这意味着：
 
-### 2.2 让本地 GraphViewer 指向自建 Kroki
+- Mermaid / Flowchart / Graphviz 在满足本地渲染条件时优先本地渲染
+- PlantUML、D2、Nomnoml 等远程引擎会走默认 Kroki
 
-#### 方式 A：直接 `npm run dev` 开发
+## 3. 方式 A：通过环境变量固定使用自建 Kroki
 
-1. 在项目根目录创建 `.env.local`（若已存在则追加）：
+### 3.1 本地开发
 
-   ```env
-   KROKI_BASE_URL=http://localhost:8000
-   ```
+在项目根目录创建或更新 `.env.local`：
 
-2. 重新启动开发服务器：
+```env
+KROKI_BASE_URL=http://localhost:8000
+```
 
-   ```bash
-   npm run dev
-   ```
+然后启动：
 
-3. 打开 `http://localhost:3000`，切换到 PlantUML / 其他远程引擎进行预览，流量将通过本地 Kroki 实例。
+```bash
+npm run dev
+```
 
-#### 方式 B：使用 `docker-compose` 的 dev profile
+### 3.2 Docker 直接运行 Kroki
 
-`docker-compose.yml` 已内置一个可选的 `kroki` 服务（profile `kroki`），以及开发服务 `web-dev`：
+```bash
+docker run -d --name kroki -p 8000:8000 yuzutech/kroki
+```
 
-1. 启动 GraphViewer + Kroki：
+启动后，本机可访问：
 
-   ```bash
-   KROKI_BASE_URL=http://kroki:8000 \
-   docker compose --profile dev --profile kroki up
-   ```
+```text
+http://localhost:8000
+```
 
-   - `kroki` 服务监听容器内 `8000` 端口，对外映射为宿主机 `8000`。
-   - `web-dev` 容器通过 `http://kroki:8000` 访问 Kroki。
+### 3.3 Docker Compose
 
-2. 打开浏览器访问 `http://localhost:3000` 即可使用自建 Kroki。
+仓库当前 `docker-compose.yml` 提供：
 
-> 说明：`web-dev` 使用 Node.js 20 镜像运行（`node:20-alpine`），并会在容器内执行 `npm install && npm run dev`。
+- `web-dev`（dev，宿主机 `3000`）
+- `web`（prod，宿主机 `3000`）
+- `web-test`（test，宿主机 `3001`）
+- `kroki`（宿主机 `8000`）
 
-> 注意：不设置 `KROKI_BASE_URL` 时，GraphViewer 仍会回退到 `https://kroki.io`，dev/test/prod 行为保持向后兼容。
+开发环境示例：
 
----
+```bash
+$env:KROKI_BASE_URL='http://kroki:8000'
+docker compose --profile dev --profile kroki up
+```
 
-## 3. 测试与验证
+生产环境示例：
 
-建议在自建 Kroki 后按以下步骤验证：
+```bash
+$env:KROKI_BASE_URL='http://kroki:8000'
+docker compose --profile prod --profile kroki up -d
+```
 
-1. **Mermaid/Flowchart**：
-   - 使用默认示例代码，确认本地渲染正常。
-2. **Graphviz**：
-   - 使用示例 DOT 图，确认本地 WASM 渲染正常。
-3. **PlantUML**：
-   - 切换为 PlantUML，引擎选择 `plantuml`，使用示例状态图/时序图：
-   - 点击“渲染预览”：
-     - 正常时应快速获得 SVG/PNG/PDF 预览。
-     - 如遇错误，请查看后端日志中 `/api/render` 的 `KROKI_ERROR` 或 `KROKI_TIMEOUT` 记录。
+## 4. 方式 B：允许前端设置面板指定自定义 Kroki 地址
 
-如 PlantUML 在使用公共 `https://kroki.io` 时经常失败，而在自建 Kroki 下恢复正常，则说明问题主要来自网络或公共服务稳定性。
+### 4.1 前端行为
 
----
+当前 UI 已支持：
 
-## 4. 生产环境 / 其他环境集成
+- 打开设置面板
+- 开启“自定义渲染服务器”
+- 输入 `https://kroki.example.com` 这样的地址
+- 保存后，前端会在调用 `/api/render` 时附带 `krokiBaseUrl`
 
-### 4.1 使用 Docker Compose 部署 GraphViewer + Kroki
+### 4.2 服务端安全限制
 
-假设你在服务器上使用 `docker-compose.yml` 的 `prod` profile：
+服务端 **不会默认接受任意客户端地址**。
 
-1. 启动 Kroki：
+当前支持两种放开方式：
 
-   ```bash
-   docker compose --profile kroki up -d kroki
-   ```
+#### 方式 1：允许任意客户端地址（风险更高）
 
-2. 启动 GraphViewer：
+```env
+KROKI_ALLOW_CLIENT_BASE_URL=true
+```
 
-   ```bash
-   KROKI_BASE_URL=http://kroki:8000 \
-   docker compose --profile prod up -d web
-   ```
+#### 方式 2：只允许白名单地址（推荐）
 
-3. 对外暴露 `web` 服务端口（默认 3000），按需要配置反向代理或 TLS。
+```env
+KROKI_CLIENT_BASE_URL_ALLOWLIST=https://kroki.example.com,http://kroki:8000
+```
 
-> 提示：如果你使用 `web-test` profile，宿主机端口默认为 `3001`（映射到容器内 3000）。
+### 4.3 地址被拒绝时的表现
 
-### 4.2 Netlify 等托管平台
+如果前端传入的地址未被允许，`/api/render` 会返回：
 
-对于 Netlify 这类托管平台，自建 Kroki 通常需要运行在其他可访问的服务器上，例如：
+- `KROKI_BASE_URL_NOT_ALLOWED`
 
-- 自己的 VPS / 云主机，运行 Kroki 容器并开放 80/443 或 8000 端口；
-- 一个支持容器的 PaaS（Fly.io、Render 等）。
+如果地址本身非法，则会返回：
 
-假设自建 Kroki 域名为 `https://kroki.example.com`，在 Netlify 后台：
+- `INVALID_KROKI_BASE_URL`
 
-1. 打开对应站点的 **Site settings → Environment variables**。
-2. 新增或修改：
+## 5. 验证步骤
 
-   - `KROKI_BASE_URL=https://kroki.example.com`
+建议至少验证以下场景：
 
-3. 重新部署站点。
+### 5.1 固定服务端 Kroki
 
-部署完成后，GraphViewer 在 Netlify 环境中会使用你的自建 Kroki 实例进行 PlantUML / 其他远程渲染。
+- 设置 `KROKI_BASE_URL`
+- 启动应用
+- 用 PlantUML 或其他远程引擎渲染一个图表
+- 确认预览正常
 
----
+### 5.2 前端自定义服务器
 
-## 5. 运行维护建议
+- 在设置面板中开启“自定义渲染服务器”
+- 输入一个被服务端允许的地址
+- 重新渲染远程引擎图表
+- 确认请求成功
 
-- **资源限制**：
-  - 默认 Kroki 即可满足中小规模使用；如并发较高，可结合 Docker / K8s 做横向扩展。
-- **安全与访问控制**：
-  - 建议在自建 Kroki 前面加一层反向代理（nginx/Caddy），根据需要启用 HTTPS、IP 访问控制或身份验证。
-- **监控与日志**：
-  - 可结合反向代理与容器日志，观察请求量、错误率，必要时增加告警或限流策略。
+### 5.3 拒绝分支
 
-通过以上配置，GraphViewer 可以在不修改业务代码的前提下，稳定地使用自建 Kroki 实例，特别是增强 PlantUML 渲染的可靠性与可控性。
+- 输入一个未在 allowlist 中的地址
+- 重新渲染
+- 确认前端获得明确错误提示
+
+## 6. 推荐实践
+
+- **个人本地开发**
+  - 直接用 `.env.local` + 本地 Kroki 容器
+- **团队内网 / 测试环境**
+  - 优先使用 `KROKI_CLIENT_BASE_URL_ALLOWLIST`
+  - 不要直接对所有客户端开放任意地址
+- **生产环境**
+  - 优先使用固定的 `KROKI_BASE_URL`
+  - 在反向代理层补 HTTPS、访问控制和日志策略
+
+## 7. 常见问题
+
+### 问题 1：PlantUML 仍然走公共 Kroki
+
+- 检查 `KROKI_BASE_URL` 是否真正注入到运行环境
+- 检查容器内是否能访问 `http://kroki:8000`
+
+### 问题 2：设置面板填了地址但不生效
+
+- 检查是否开启了“自定义渲染服务器”开关
+- 检查服务端是否允许客户端传入该地址
+
+### 问题 3：返回 `KROKI_BASE_URL_NOT_ALLOWED`
+
+- 将目标地址加入 `KROKI_CLIENT_BASE_URL_ALLOWLIST`
+- 或在可控环境下显式开启 `KROKI_ALLOW_CLIENT_BASE_URL=true`

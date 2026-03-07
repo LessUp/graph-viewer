@@ -1,215 +1,189 @@
-# 导出功能测试指南
+# 测试指南
 
-## 快速测试步骤
+> 本文描述 **当前测试体系**。如果与历史导出测试说明冲突，以当前脚本和测试文件为准。
 
-### 0. 前置条件
+## 1. 测试分层
 
-- Node.js 20
-- 首次运行需要安装依赖：`npm install`
+当前项目有三类测试：
 
-### 1. 启动开发服务器
+- **单元 / 组件测试**
+  - 使用 Vitest + Testing Library
+  - 适合验证 Hook、工具模块、组件行为
+- **接口冒烟测试**
+  - 使用 `scripts/smoke-test.js`
+  - 适合验证部署后的基础可用性
+- **手工回归测试**
+  - 适合验证导出、剪贴板、Kroki、自定义服务器等浏览器相关行为
+
+## 2. 前置条件
+
+- Node.js 20+
+- 首次运行先执行：
 
 ```bash
 npm install
+```
+
+## 3. 自动化测试
+
+### 3.1 运行全部测试
+
+```bash
+npm run test
+```
+
+### 3.2 监听模式
+
+```bash
+npm run test:watch
+```
+
+### 3.3 当前自动化测试覆盖
+
+当前仓库已包含以下测试：
+
+- `lib/__tests__/diagramConfig.test.ts`
+- `hooks/__tests__/useDiagramState.test.tsx`
+- `components/__tests__/AppHeader.test.tsx`
+- `app/api/healthz/route.test.ts`
+
+这些测试主要覆盖：
+
+- 引擎 / 格式定义
+- 工作区状态恢复与持久化
+- 导入导出入口行为
+- 健康检查接口
+
+## 4. Lint 与测试建议执行顺序
+
+推荐在修改业务代码后执行：
+
+```bash
+npm run lint
+npm run test
+```
+
+如果只修改测试代码，通常至少执行：
+
+```bash
+npm run test
+```
+
+## 5. 冒烟测试
+
+### 5.1 本地开发环境
+
+先启动服务：
+
+```bash
 npm run dev
 ```
 
-访问 http://localhost:3000
+然后执行：
 
-### 2. 测试 SVG 导出
-
-1. 在编辑器中输入或选择一个示例图表
-2. 等待图表渲染完成
-3. 点击右上角的"导出"按钮
-4. 选择"SVG 矢量图"
-5. 验证下载的 SVG 文件可以正常打开和显示
-
-**预期结果：**
-- ✅ SVG 文件可以在浏览器中打开
-- ✅ 所有样式和颜色正确显示
-- ✅ 文字清晰可读
-- ✅ 图表结构完整
-
-### 3. 测试 PNG 导出（标准质量）
-
-1. 点击"导出" → "PNG 高清 (2x)"
-2. 验证下载的 PNG 文件
-
-**预期结果：**
-- ✅ PNG 图片清晰，无明显锯齿
-- ✅ 颜色准确
-- ✅ 背景为白色
-- ✅ 文件大小合理（通常 < 5MB）
-
-### 4. 测试 PNG 导出（超清质量）
-
-1. 点击"导出" → "PNG 超清 (4x)"
-2. 验证下载的 PNG 文件
-
-**预期结果：**
-- ✅ PNG 图片非常清晰，适合打印
-- ✅ 文件大小较大但可接受
-- ✅ 细节保留完整
-
-### 5. 测试复制到剪贴板
-
-1. 点击"导出" → "复制图片到剪贴板"
-2. 打开任意图片编辑器或文档编辑器
-3. 粘贴（Ctrl+V 或 Cmd+V）
-
-**预期结果：**
-- ✅ 显示"已复制"提示
-- ✅ 可以成功粘贴到其他应用
-- ✅ 粘贴的图片质量良好
-
-### 6. 测试不同图表类型
-
-测试以下图表引擎的导出：
-
-#### Mermaid
-```mermaid
-graph TD
-    A[开始] --> B{判断}
-    B -->|是| C[执行]
-    B -->|否| D[结束]
-    C --> D
+```bash
+npm run test:smoke
 ```
 
-#### Graphviz
-```dot
-digraph G {
-    A -> B;
-    B -> C;
-    C -> A;
-}
+默认目标地址：
+
+```text
+http://localhost:3000
 ```
 
-#### PlantUML
-```plantuml
-@startuml
-Alice -> Bob: Hello
-Bob -> Alice: Hi
-@enduml
+### 5.2 指定目标地址
+
+```bash
+node scripts/smoke-test.js http://localhost:3000
 ```
 
-### 7. 测试边界情况
+如果是 `web-test` profile：
 
-#### 大型图表
-- 创建包含 50+ 节点的复杂图表
-- 测试导出是否成功
-- 验证导出时间是否合理（< 10秒）
+```bash
+node scripts/smoke-test.js http://localhost:3001
+```
 
-#### 包含特殊字符
-- 测试包含中文、emoji、特殊符号的图表
-- 验证导出后字符显示正确
+### 5.3 当前冒烟测试覆盖
 
-#### 自定义样式
-- 测试包含自定义颜色、字体的图表
-- 验证样式是否保留
+当前脚本会验证：
 
-## 常见问题排查
+- `GET /api/healthz`
+- `POST /api/render`（Mermaid SVG）
+- `POST /api/render`（Mermaid PNG）
 
-### 问题 0：冒烟测试报 ECONNREFUSED
+> 注意：当前冒烟脚本 **还没有覆盖 PDF**。
 
-**原因：**
-- `npm run test:smoke` 默认访问 `http://localhost:3000`，如果没有启动服务会连接失败。
+## 6. 手工回归检查清单
 
-**解决方案：**
-- 先启动服务（开发环境：`npm run dev`；生产环境：`npm run build && npm run start`）
-- 或者指定目标地址：
-  - `APP_URL=http://localhost:3000 npm run test:smoke`
-  - `node scripts/smoke-test.js http://localhost:3000`
+### 6.1 基础渲染
 
-### 问题 1：导出的 PNG 模糊
+- Mermaid / Flowchart 在 `svg` 下可预览
+- Graphviz 在 `svg` 下可本地渲染
+- PlantUML / D2 / 其他远程引擎可通过 `/api/render` 预览
+- `format` 在 `svg / png / pdf` 间切换正常
 
-**可能原因：**
-- 缩放倍数太低
-- 浏览器缩放设置不是 100%
+### 6.2 导出能力
 
-**解决方案：**
-- 使用 4x 超清导出
-- 重置浏览器缩放到 100%
+在 **SVG 预览已生成** 的前提下检查：
 
-### 问题 2：导出失败或报错
+- SVG 导出
+- PNG 2x 导出
+- PNG 4x 导出
+- HTML 导出
+- Markdown 导出
+- 源代码导出
+- 复制 PNG 到剪贴板
 
-**可能原因：**
-- SVG 内容过大
-- 浏览器内存不足
-- 网络问题（如果使用远程渲染）
+> 当前 UI 中，若预览格式切到 `png` 或 `pdf`，导出菜单会不可用；需要切回 `svg` 后再验证导出。
 
-**解决方案：**
-- 简化图表内容
-- 关闭其他标签页释放内存
-- 检查网络连接
+### 6.3 工作区与设置
 
-### 问题 3：样式丢失
+- 工作区 JSON 导入 / 导出正常
+- localStorage 中的当前图表、格式、代码可恢复
+- 自定义 Kroki 服务器设置保存正常
+- 未被服务端允许的自定义 Kroki 地址会返回明确错误
 
-**可能原因：**
-- 使用了外部 CSS
-- 浏览器兼容性问题
+### 6.4 侧栏能力
 
-**解决方案：**
-- 已在新版本中修复
-- 确保使用最新代码
+- AI 助手面板可切换、分析、生成或修复代码
+- 版本历史面板可创建快照、恢复、重命名、删除版本
 
-### 问题 4：复制到剪贴板失败
+## 7. 常见问题排查
 
-**可能原因：**
+### 问题 1：`npm run test` 失败
+
+- 确认依赖已安装：`npm install`
+- 确认测试环境仍使用 `vitest.config.ts` 和 `vitest.setup.ts`
+- 若失败点与浏览器 API 相关，优先检查测试里是否显式 mock 了：
+  - `localStorage`
+  - `history.replaceState`
+  - `File.text()`
+  - `navigator.clipboard`
+
+### 问题 2：冒烟测试报 `ECONNREFUSED`
+
+- 目标服务未启动
+- 默认地址错误
+- 目标端口不匹配（例如 `web-test` 用的是 `3001`）
+
+### 问题 3：复制到剪贴板失败
+
 - 浏览器不支持 Clipboard API
+- 不是安全上下文（推荐 `localhost` 或 HTTPS）
 - 权限被拒绝
 
-**解决方案：**
-- 使用现代浏览器（Chrome 90+, Firefox 88+）
-- 允许剪贴板权限
-- 使用 HTTPS 或 localhost
+### 问题 4：自定义 Kroki 地址无效
 
-## 性能基准
+- 地址不是合法 `http/https`
+- 服务端未开启 `KROKI_ALLOW_CLIENT_BASE_URL`
+- 或地址不在 `KROKI_CLIENT_BASE_URL_ALLOWLIST` 中
 
-### 标准图表（< 100 节点）
-- SVG 导出：< 100ms
-- PNG 2x 导出：< 2s
-- PNG 4x 导出：< 5s
+## 8. 建议补充的后续测试
 
-### 大型图表（100-500 节点）
-- SVG 导出：< 500ms
-- PNG 2x 导出：< 5s
-- PNG 4x 导出：< 15s
+优先建议继续覆盖：
 
-### 超大图表（> 500 节点）
-- 建议使用 SVG 格式
-- PNG 导出可能需要 30s+
-
-## 浏览器兼容性测试清单
-
-- [ ] Chrome/Edge (Chromium)
-- [ ] Firefox
-- [ ] Safari
-- [ ] 移动端浏览器
-
-## 自动化测试（未来）
-
-```javascript
-// 示例测试代码
-describe('Export Functions', () => {
-  it('should export SVG correctly', async () => {
-    const svg = '<svg>...</svg>';
-    await exportSvg(svg, 'test');
-    // 验证文件下载
-  });
-
-  it('should export PNG with correct dimensions', async () => {
-    const svg = '<svg width="100" height="100">...</svg>';
-    const canvas = await svgToCanvas(svg, { scale: 2 });
-    expect(canvas.width).toBe(200);
-    expect(canvas.height).toBe(200);
-  });
-});
-```
-
-## 反馈和报告
-
-如果发现问题，请提供：
-1. 浏览器版本
-2. 图表类型和代码
-3. 错误信息截图
-4. 控制台日志
+- `app/api/render/route.ts`
+- `hooks/useDiagramRender.ts`
+- `components/PreviewPanel.tsx`
+- `components/EditorPanel.tsx`
+- 自定义 Kroki 地址允许 / 拒绝分支

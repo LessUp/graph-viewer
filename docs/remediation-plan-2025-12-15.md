@@ -1,3 +1,5 @@
+> 归档说明：本文是历史整改计划文档。当前仓库中，自定义渲染服务器闭环、format 可配置、AI 助手与版本历史侧栏已接入主页面；若本文与当前代码冲突，请以 docs/DEVELOPMENT.md、docs/TESTING_GUIDE.md 和代码实现为准。
+
 # GraphViewer 整改修复计划（2025-12-15）
 
 ## 0. 背景
@@ -64,4 +66,5 @@
 - [ ] Phase 2：format 策略收敛或完整支持（确定方案后实施）
 - [ ] Phase 3：版本历史/AI（可选）
 - [ ] 验收：`npm run test:smoke` + 手工验证（分享链接、缓存、导出）
+
 
