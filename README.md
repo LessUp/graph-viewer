@@ -1,5 +1,10 @@
 # GraphViewer
 
+[![App](https://img.shields.io/badge/App-GitHub%20Pages-blue?logo=github)](https://lessup.github.io/graph-viewer/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+简体中文 | [English](README.en.md)
+
 一站式图形语法可视化工具，支持 Mermaid、PlantUML、Graphviz、D2、Nomnoml、Ditaa、BlockDiag、NwDiag、ActDiag、SeqDiag、ERD、SVGBob、WaveDrom、Vega、Vega-Lite 等 16 种图表引擎，提供本地与服务端混合渲染、容器化部署与自动化测试。
 
 ## 新功能
