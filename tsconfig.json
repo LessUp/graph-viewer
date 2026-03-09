@@ -1,16 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2021",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ES2021"
-    ],
-    "types": [
-      "node",
-      "vitest/globals",
-      "@testing-library/jest-dom"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ES2021"],
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
@@ -21,9 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -34,13 +24,6 @@
       }
     ]
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

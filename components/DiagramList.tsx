@@ -78,9 +78,9 @@ export function DiagramList({
                 : 'border-slate-100 bg-slate-50/60 text-slate-600 hover:border-slate-200 hover:bg-white'
             }`}
           >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <div
-                className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${d.id === currentId ? 'bg-sky-500' : 'bg-slate-300'}`}
+                className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${d.id === currentId ? 'bg-sky-500' : 'bg-slate-300'}`}
               ></div>
               <span className="truncate text-xs font-medium">{d.name}</span>
             </div>

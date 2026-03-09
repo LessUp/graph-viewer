@@ -23,23 +23,30 @@ description: Add a new diagram engine to GraphViewer end-to-end
 8. Verify preview in `components/PreviewPanel.tsx` and export in `lib/exportUtils.ts`.
 
 9. Run validation:
-// turbo
+   // turbo
+
 ```
 npm run lint
 ```
+
 // turbo
+
 ```
 npm run test
 ```
+
 // turbo
+
 ```
 npm run build
 ```
 
 10. Start dev server and manually test:
+
 ```
 npm run dev
 ```
+
     - Select the new engine in the editor
     - Verify sample renders
     - Switch SVG / PNG / PDF

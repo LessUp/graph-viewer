@@ -27,7 +27,7 @@ export function Toast({ toast }: { toast: ToastState }) {
   const Icon = ICON_MAP[toast.type];
 
   return (
-    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-fade-in">
+    <div className="animate-fade-in fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
       <div
         className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-lg ${STYLE_MAP[toast.type]}`}
       >

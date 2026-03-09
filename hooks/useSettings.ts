@@ -27,7 +27,9 @@ export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
   const settingsRef = useRef(settings);
-  useEffect(() => { settingsRef.current = settings; }, [settings]);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   // 从 localStorage 加载设置
   useEffect(() => {
@@ -38,7 +40,7 @@ export function useSettings() {
         const parsed = JSON.parse(stored);
         setSettings({ ...DEFAULT_SETTINGS, ...parsed });
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Failed to load settings:', e);
     }
     setIsLoaded(true);
@@ -51,7 +53,7 @@ export function useSettings() {
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        } catch (e) {
+        } catch (e: unknown) {
           console.error('Failed to save settings:', e);
         }
       }

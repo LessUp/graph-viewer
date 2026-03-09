@@ -4,7 +4,10 @@ import { useRef, type ChangeEvent } from 'react';
 import { Palette, Upload, Download, Settings, Github } from 'lucide-react';
 
 export type AppHeaderProps = {
-  onImportWorkspace: (data: { diagrams: Array<Record<string, unknown>>; currentId?: string }) => void;
+  onImportWorkspace: (data: {
+    diagrams: Array<Record<string, unknown>>;
+    currentId?: string;
+  }) => void;
   onExportWorkspace: () => void;
   onOpenSettings: () => void;
   onError: (message: string) => void;

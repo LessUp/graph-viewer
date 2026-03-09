@@ -12,26 +12,17 @@ function makePayload(engine, format, code) {
 async function check(path, opts) {
   const res = await fetch(`${target}${path}`, opts);
   const contentType = res.headers.get('content-type') || '';
-  const data = contentType.includes('application/json')
-    ? await res.json()
-    : await res.text();
+  const data = contentType.includes('application/json') ? await res.json() : await res.text();
   return { ok: res.ok, status: res.status, data, contentType };
 }
 
 async function main() {
-  const sample =
-    'flowchart TD\nA[Start] --> B{Is it?}\nB -- Yes --> C[OK]\nB -- No --> D[End]';
+  const sample = 'flowchart TD\nA[Start] --> B{Is it?}\nB -- Yes --> C[OK]\nB -- No --> D[End]';
 
   const results = [];
   results.push(['healthz', await check('/api/healthz')]);
-  results.push([
-    'render-svg',
-    await check('/api/render', makePayload('mermaid', 'svg', sample)),
-  ]);
-  results.push([
-    'render-png',
-    await check('/api/render', makePayload('mermaid', 'png', sample)),
-  ]);
+  results.push(['render-svg', await check('/api/render', makePayload('mermaid', 'svg', sample))]);
+  results.push(['render-png', await check('/api/render', makePayload('mermaid', 'png', sample))]);
 
   let failed = false;
   for (const [name, r] of results) {

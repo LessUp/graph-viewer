@@ -35,6 +35,7 @@ Run these in order:
 ## Files to inspect if something breaks
 
 ### Core logic
+
 - `app/page.tsx`
 - `components/EditorPanel.tsx`
 - `components/PreviewPanel.tsx`
@@ -48,6 +49,7 @@ Run these in order:
 - `lib/exportUtils.ts`
 
 ### API & deployment
+
 - `app/api/render/route.ts`
 - `app/api/healthz/route.ts`
 - `netlify.toml`

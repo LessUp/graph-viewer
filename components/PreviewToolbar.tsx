@@ -2,9 +2,26 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { compressToEncodedURIComponent } from 'lz-string';
-import { exportSvg, exportPng, copyPngToClipboard, exportHtml, exportMarkdown, exportSourceCode } from '@/lib/exportUtils';
+import {
+  exportSvg,
+  exportPng,
+  copyPngToClipboard,
+  exportHtml,
+  exportMarkdown,
+  exportSourceCode,
+} from '@/lib/exportUtils';
 import type { Engine } from '@/lib/diagramConfig';
-import { ZoomIn, ZoomOut, RotateCcw, Maximize, Download, Loader2, Check, Copy, Share2 } from 'lucide-react';
+import {
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Maximize,
+  Download,
+  Loader2,
+  Check,
+  Copy,
+  Share2,
+} from 'lucide-react';
 
 interface PreviewToolbarProps {
   scale: number;
@@ -15,6 +32,7 @@ interface PreviewToolbarProps {
   svgContent: string | null;
   code?: string;
   engine?: Engine;
+  format?: string;
   filename?: string;
 }
 
@@ -27,6 +45,7 @@ export function PreviewToolbar({
   svgContent,
   code = '',
   engine = 'mermaid',
+  format = 'svg',
   filename = 'diagram',
 }: PreviewToolbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,7 +69,10 @@ export function PreviewToolbar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleExport = async (type: 'svg' | 'png' | 'copy' | 'html' | 'md' | 'source', pngScale = 2) => {
+  const handleExport = async (
+    type: 'svg' | 'png' | 'copy' | 'html' | 'md' | 'source',
+    pngScale = 2,
+  ) => {
     if (!svgContent && type !== 'md' && type !== 'source') return;
     if (!code && (type === 'md' || type === 'source')) return;
     setIsExporting(true);
@@ -71,7 +93,7 @@ export function PreviewToolbar({
       } else if (type === 'source') {
         exportSourceCode(code, engine, filename);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Export failed', e);
       alert('导出失败，请重试');
     } finally {
@@ -124,12 +146,13 @@ export function PreviewToolbar({
           try {
             const params = new URLSearchParams();
             params.set('engine', engine);
+            params.set('format', format);
             const compressed = compressToEncodedURIComponent(code);
             params.set('code', compressed);
             params.set('encoded', '1');
             const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
             navigator.clipboard.writeText(shareUrl).then(() => showCopySuccess());
-          } catch (e) {
+          } catch (e: unknown) {
             console.error('Share link failed', e);
           }
         }}
@@ -154,8 +177,10 @@ export function PreviewToolbar({
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           disabled={!svgContent || isExporting}
           className={`flex items-center gap-1.5 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
-            isMenuOpen ? 'bg-sky-50 text-sky-600' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
+            isMenuOpen
+              ? 'bg-sky-50 text-sky-600'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          } disabled:cursor-not-allowed disabled:opacity-50`}
         >
           {isExporting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -169,52 +194,68 @@ export function PreviewToolbar({
         {isMenuOpen && (
           <div className="absolute right-0 top-full mt-2 w-52 origin-top-right rounded-xl border border-slate-100 bg-white p-1.5 shadow-xl ring-1 ring-slate-200 focus:outline-none">
             {/* 图片格式 */}
-            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">图片格式</div>
+            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              图片格式
+            </div>
             <button
               onClick={() => handleExport('svg')}
               className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-orange-100 text-[0.6rem] font-bold text-orange-600">S</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-orange-100 text-[0.6rem] font-bold text-orange-600">
+                S
+              </span>
               SVG 矢量图
             </button>
             <button
               onClick={() => handleExport('png', 2)}
               className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-100 text-[0.6rem] font-bold text-emerald-600">P</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-100 text-[0.6rem] font-bold text-emerald-600">
+                P
+              </span>
               PNG 高清 (2x)
             </button>
             <button
               onClick={() => handleExport('png', 4)}
               className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-100 text-[0.6rem] font-bold text-emerald-600">P</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-100 text-[0.6rem] font-bold text-emerald-600">
+                P
+              </span>
               PNG 超清 (4x)
             </button>
 
             <div className="my-1.5 h-px bg-slate-100" />
 
             {/* 文档格式 */}
-            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">文档格式</div>
+            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              文档格式
+            </div>
             <button
               onClick={() => handleExport('html')}
               className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-100 text-[0.6rem] font-bold text-blue-600">H</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-100 text-[0.6rem] font-bold text-blue-600">
+                H
+              </span>
               HTML 网页
             </button>
             <button
               onClick={() => handleExport('md')}
               className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-violet-100 text-[0.6rem] font-bold text-violet-600">M</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-violet-100 text-[0.6rem] font-bold text-violet-600">
+                M
+              </span>
               Markdown 文档
             </button>
             <button
               onClick={() => handleExport('source')}
               className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-sky-600"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-slate-100 text-[0.6rem] font-bold text-slate-600">C</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded bg-slate-100 text-[0.6rem] font-bold text-slate-600">
+                C
+              </span>
               源代码文件
             </button>
 

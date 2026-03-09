@@ -24,7 +24,8 @@ const editorTheme = EditorView.theme({
     backgroundColor: 'transparent',
   },
   '.cm-content': {
-    fontFamily: 'var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    fontFamily:
+      'var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
     padding: '16px 0',
     caretColor: '#3b82f6',
   },
@@ -86,10 +87,7 @@ function CodeEditorComponent(props: CodeEditorProps) {
 
   // 简化扩展配置，避免版本冲突
   const extensions = useMemo(() => {
-    const ext = [
-      editorTheme,
-      EditorView.lineWrapping,
-    ];
+    const ext = [editorTheme, EditorView.lineWrapping];
 
     // 安全地添加语言扩展
     try {
@@ -97,28 +95,34 @@ function CodeEditorComponent(props: CodeEditorProps) {
       if (langExt && Array.isArray(langExt)) {
         ext.push(...langExt);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.warn('Language extension error:', e);
     }
 
     return ext;
   }, [engine]);
 
-  const handleChange = useCallback((val: string) => {
-    onChange(val);
-  }, [onChange]);
+  const handleChange = useCallback(
+    (val: string) => {
+      onChange(val);
+    },
+    [onChange],
+  );
 
   // 处理快捷键
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && onCtrlEnter) {
-      e.preventDefault();
-      onCtrlEnter();
-    }
-  }, [onCtrlEnter]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && onCtrlEnter) {
+        e.preventDefault();
+        onCtrlEnter();
+      }
+    },
+    [onCtrlEnter],
+  );
 
   return (
     <div
-      className="code-editor-wrapper w-full rounded-xl border border-slate-200/80 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-300"
+      className="code-editor-wrapper w-full overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-shadow focus-within:border-sky-300 focus-within:ring-2 focus-within:ring-sky-500/20 hover:shadow-md"
       style={{
         minHeight,
         maxHeight: maxHeight || undefined,

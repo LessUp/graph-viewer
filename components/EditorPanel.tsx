@@ -2,7 +2,12 @@
 
 import { memo } from 'react';
 import type { Engine, Format } from '@/lib/diagramConfig';
-import { ENGINE_LABELS, ENGINE_CONFIGS, ENGINE_CATEGORIES, FORMAT_LABELS } from '@/lib/diagramConfig';
+import {
+  ENGINE_LABELS,
+  ENGINE_CONFIGS,
+  ENGINE_CATEGORIES,
+  FORMAT_LABELS,
+} from '@/lib/diagramConfig';
 import { SAMPLES } from '@/lib/diagramSamples';
 import { CodeEditor } from '@/components/CodeEditor';
 import { PlayCircle, Loader2, Copy, AlertCircle } from 'lucide-react';
@@ -25,7 +30,6 @@ export type EditorPanelProps = {
   onClearCode: () => void;
   editorFontSize?: number;
 };
-
 
 function EditorPanelComponent(props: EditorPanelProps) {
   const {
@@ -87,7 +91,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
           </select>
         </div>
         <div className="flex items-center justify-between gap-2 md:justify-end">
-          <label className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 cursor-pointer select-none">
+          <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700">
             <input
               type="checkbox"
               checked={livePreviewEnabled}
@@ -138,7 +142,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
       </div>
 
       {/* 编辑器区域 */}
-      <div className="flex flex-1 flex-col space-y-2 overflow-hidden min-h-0">
+      <div className="flex min-h-0 flex-1 flex-col space-y-2 overflow-hidden">
         <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <span className="font-medium">代码编辑器</span>
@@ -156,21 +160,21 @@ function EditorPanelComponent(props: EditorPanelProps) {
           <div className="flex gap-3 text-[11px]">
             <button
               onClick={() => onCodeChange(SAMPLES[engine])}
-              className="hover:text-sky-600 transition"
+              className="transition hover:text-sky-600"
             >
               加载示例
             </button>
             <button
               onClick={onClearCode}
               disabled={!code}
-              className="hover:text-rose-500 disabled:opacity-30 transition"
+              className="transition hover:text-rose-500 disabled:opacity-30"
             >
               清空
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 min-h-0">
+        <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
           <CodeEditor
             value={code}
             onChange={onCodeChange}
@@ -187,7 +191,9 @@ function EditorPanelComponent(props: EditorPanelProps) {
         </div>
 
         <div className="flex flex-col gap-2 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-          <span>{codeStats.lines} 行 · {codeStats.chars} 字符</span>
+          <span>
+            {codeStats.lines} 行 · {codeStats.chars} 字符
+          </span>
           <span className="flex items-center gap-1">
             <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[9px]">Ctrl</kbd>
             <span>/</span>
@@ -203,7 +209,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
       {error && (
         <div className="rounded-lg bg-rose-50 p-3 text-xs text-rose-600 ring-1 ring-inset ring-rose-500/10">
           <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
           </div>
         </div>

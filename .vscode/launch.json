@@ -63,12 +63,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vitest",
-        "run",
-        "--reporter=verbose",
-        "${relativeFile}"
-      ],
+      "runtimeArgs": ["vitest", "run", "--reporter=verbose", "${relativeFile}"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**", "node_modules/**"]
@@ -77,10 +72,7 @@
   "compounds": [
     {
       "name": "Next.js: 全栈调试 (服务端 + 客户端)",
-      "configurations": [
-        "Next.js: 调试服务端",
-        "Next.js: 调试客户端 (Chrome)"
-      ]
+      "configurations": ["Next.js: 调试服务端", "Next.js: 调试客户端 (Chrome)"]
     }
   ]
 }

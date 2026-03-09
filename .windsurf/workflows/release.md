@@ -3,27 +3,32 @@ description: Pre-release quality gate for GraphViewer
 ---
 
 1. Run full quality checks:
-// turbo
+   // turbo
+
 ```
 npm run lint
 ```
 
 2. Run tests:
-// turbo
+   // turbo
+
 ```
 npm run test
 ```
 
 3. Build the project:
-// turbo
+   // turbo
+
 ```
 npm run build
 ```
 
 4. Start dev server and run smoke tests:
+
 ```
 npm run dev
 ```
+
 ```
 npm run test:smoke
 ```

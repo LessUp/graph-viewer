@@ -2,7 +2,16 @@
 
 import { useState } from 'react';
 import type { AIConfig, AIProvider, AIAnalysisResult } from '@/hooks/useAIAssistant';
-import { Zap, Loader2, Lightbulb, Pencil, AlertTriangle, CheckCircle, AlertCircle, Key } from 'lucide-react';
+import {
+  Zap,
+  Loader2,
+  Lightbulb,
+  Pencil,
+  AlertTriangle,
+  CheckCircle,
+  AlertCircle,
+  Key,
+} from 'lucide-react';
 
 export type AIAssistantPanelProps = {
   config: AIConfig;
@@ -60,11 +69,12 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [activeTab, setActiveTab] = useState<'analyze' | 'generate'>('analyze');
 
-  const models = config.provider === 'openai'
-    ? OPENAI_MODELS
-    : config.provider === 'anthropic'
-    ? ANTHROPIC_MODELS
-    : [];
+  const models =
+    config.provider === 'openai'
+      ? OPENAI_MODELS
+      : config.provider === 'anthropic'
+        ? ANTHROPIC_MODELS
+        : [];
 
   const handleGenerate = () => {
     if (generatePrompt.trim()) {
@@ -73,9 +83,9 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* 头部 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600">
             <Zap className="h-4 w-4 text-white" />
@@ -92,10 +102,10 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
 
       {/* 配置面板 */}
       {showConfig && (
-        <div className="border-b border-slate-200 bg-slate-50 p-4 space-y-4">
+        <div className="space-y-4 border-b border-slate-200 bg-slate-50 p-4">
           {/* 提供商选择 */}
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">AI 服务提供商</label>
+            <label className="mb-1.5 block text-xs font-medium text-slate-600">AI 服务提供商</label>
             <div className="grid grid-cols-3 gap-2">
               {PROVIDERS.map((p) => (
                 <button
@@ -115,7 +125,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
 
           {/* API Key */}
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">API Key</label>
+            <label className="mb-1.5 block text-xs font-medium text-slate-600">API Key</label>
             <input
               type="password"
               value={config.apiKey}
@@ -131,14 +141,16 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
           {/* 模型选择 */}
           {models.length > 0 && (
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">模型</label>
+              <label className="mb-1.5 block text-xs font-medium text-slate-600">模型</label>
               <select
                 value={config.model}
                 onChange={(e) => onUpdateConfig({ model: e.target.value })}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none"
               >
                 {models.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -147,7 +159,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
           {/* 自定义端点 */}
           {config.provider === 'custom' && (
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">API 端点</label>
+              <label className="mb-1.5 block text-xs font-medium text-slate-600">API 端点</label>
               <input
                 type="url"
                 value={config.apiEndpoint || ''}
@@ -188,9 +200,9 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {!isConfigured ? (
           <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-            <Key className="h-12 w-12 mb-3" strokeWidth={1.5} />
+            <Key className="mb-3 h-12 w-12" strokeWidth={1.5} />
             <p className="text-sm">请先配置 API Key</p>
-            <p className="text-xs mt-1">点击上方「设置」按钮进行配置</p>
+            <p className="mt-1 text-xs">点击上方「设置」按钮进行配置</p>
           </div>
         ) : activeTab === 'analyze' ? (
           <div className="space-y-4">
@@ -199,7 +211,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
               <button
                 onClick={onAnalyze}
                 disabled={isAnalyzing}
-                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-700 disabled:opacity-50"
               >
                 {isAnalyzing ? (
                   <>
@@ -216,7 +228,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
               <button
                 onClick={onFix}
                 disabled={isAnalyzing}
-                className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-600 hover:bg-violet-100 disabled:opacity-50 transition"
+                className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-600 transition hover:bg-violet-100 disabled:opacity-50"
               >
                 <Pencil className="h-4 w-4" />
                 自动修复
@@ -225,11 +237,14 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
 
             {/* 错误提示 */}
             {error && (
-              <div className="rounded-lg bg-rose-50 p-3 text-xs text-rose-600 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-xs text-rose-600">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                 <div className="flex-1">
                   <p>{error}</p>
-                  <button onClick={onClearError} className="mt-1 text-rose-500 hover:text-rose-700 underline">
+                  <button
+                    onClick={onClearError}
+                    className="mt-1 text-rose-500 underline hover:text-rose-700"
+                  >
                     关闭
                   </button>
                 </div>
@@ -240,16 +255,22 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
             {lastAnalysis && (
               <div className="space-y-3">
                 {/* 状态 */}
-                <div className={`flex items-center gap-2 rounded-lg p-3 ${
-                  lastAnalysis.hasErrors ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
-                }`}>
+                <div
+                  className={`flex items-center gap-2 rounded-lg p-3 ${
+                    lastAnalysis.hasErrors
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'bg-emerald-50 text-emerald-700'
+                  }`}
+                >
                   {lastAnalysis.hasErrors ? (
                     <AlertTriangle className="h-5 w-5" />
                   ) : (
                     <CheckCircle className="h-5 w-5" />
                   )}
                   <span className="text-sm font-medium">
-                    {lastAnalysis.hasErrors ? `发现 ${lastAnalysis.errors.length} 个问题` : '代码看起来没问题！'}
+                    {lastAnalysis.hasErrors
+                      ? `发现 ${lastAnalysis.errors.length} 个问题`
+                      : '代码看起来没问题！'}
                   </span>
                 </div>
 
@@ -269,9 +290,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
                             )}
                             <p className="text-xs text-slate-700">{err.message}</p>
                             {err.suggestion && (
-                              <p className="mt-1 text-[11px] text-slate-500">
-                                💡 {err.suggestion}
-                              </p>
+                              <p className="mt-1 text-[11px] text-slate-500">💡 {err.suggestion}</p>
                             )}
                           </div>
                         </div>
@@ -287,12 +306,12 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
                       <h4 className="text-xs font-medium text-slate-600">修正后的代码</h4>
                       <button
                         onClick={() => onApplyCode(lastAnalysis.correctedCode!)}
-                        className="text-xs text-violet-600 hover:text-violet-700 font-medium"
+                        className="text-xs font-medium text-violet-600 hover:text-violet-700"
                       >
                         应用修改
                       </button>
                     </div>
-                    <div className="rounded-lg bg-slate-100 p-3 text-[11px] font-mono text-slate-600 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                    <div className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-lg bg-slate-100 p-3 font-mono text-[11px] text-slate-600">
                       {lastAnalysis.correctedCode}
                     </div>
                   </div>
@@ -334,7 +353,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
           /* 智能生成 */
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              <label className="mb-1.5 block text-xs font-medium text-slate-600">
                 描述您想要生成的图表
               </label>
               <textarea
@@ -342,13 +361,13 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
                 onChange={(e) => setGeneratePrompt(e.target.value)}
                 placeholder="例如：创建一个展示用户登录流程的时序图，包含用户、前端、后端和数据库四个参与者..."
                 rows={4}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none resize-none"
+                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none"
               />
             </div>
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !generatePrompt.trim()}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-700 disabled:opacity-50"
             >
               {isGenerating ? (
                 <>
@@ -367,16 +386,11 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-500">快速示例：</p>
               <div className="flex flex-wrap gap-2">
-                {[
-                  '用户注册流程图',
-                  '微服务架构图',
-                  'API 调用时序图',
-                  '状态机图',
-                ].map((example) => (
+                {['用户注册流程图', '微服务架构图', 'API 调用时序图', '状态机图'].map((example) => (
                   <button
                     key={example}
                     onClick={() => setGeneratePrompt(example)}
-                    className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 hover:bg-slate-200 transition"
+                    className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 transition hover:bg-slate-200"
                   >
                     {example}
                   </button>

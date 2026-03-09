@@ -74,7 +74,10 @@ describe('useDiagramState', () => {
     expect(result.current.engine).toBe('graphviz');
     expect(result.current.format).toBe('svg');
     expect(result.current.code).toBe('digraph G { A -> B }');
-    expect(result.current.diagrams.map((diagram: { id: string }) => diagram.id)).toEqual(['d-1', 'd-2']);
+    expect(result.current.diagrams.map((diagram: { id: string }) => diagram.id)).toEqual([
+      'd-1',
+      'd-2',
+    ]);
   });
 
   it('prefers query parameters over persisted workspace state', async () => {

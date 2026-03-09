@@ -14,10 +14,7 @@ function makePayload(engine, format, code, binary = false) {
 async function benchOnce(format) {
   const t0 = Date.now();
   try {
-    const res = await fetch(
-      `${target}/api/render`,
-      makePayload('mermaid', format, sample),
-    );
+    const res = await fetch(`${target}/api/render`, makePayload('mermaid', format, sample));
     return { ok: res.ok, ms: Date.now() - t0 };
   } catch {
     return { ok: false, ms: Date.now() - t0 };

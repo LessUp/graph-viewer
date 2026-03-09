@@ -14,7 +14,8 @@ description: Debug and fix a bug in GraphViewer — diagnose, fix, verify
 3. Locate the root cause. Read the relevant source files and trace the data flow.
 
 4. Write or update a test that reproduces the bug:
-// turbo
+   // turbo
+
 ```
 npx vitest run --reporter=verbose
 ```
@@ -22,15 +23,20 @@ npx vitest run --reporter=verbose
 5. Implement the minimal fix. Prefer upstream root-cause fixes over downstream workarounds.
 
 6. Verify the fix:
-// turbo
+   // turbo
+
 ```
 npm run lint
 ```
+
 // turbo
+
 ```
 npm run test
 ```
+
 // turbo
+
 ```
 npm run build
 ```

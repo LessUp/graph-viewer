@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type WheelEvent,
+} from 'react';
 import DOMPurify from 'dompurify';
 import { PreviewToolbar } from '@/components/PreviewToolbar';
 import { ENGINE_LABELS, FORMAT_LABELS, type Engine, type Format } from '@/lib/diagramConfig';
@@ -18,7 +26,16 @@ export type PreviewPanelProps = {
 };
 
 export function PreviewPanel(props: PreviewPanelProps) {
-  const { svg, base64, contentType, loading, showPreview, format, code = '', engine = 'mermaid' } = props;
+  const {
+    svg,
+    base64,
+    contentType,
+    loading,
+    showPreview,
+    format,
+    code = '',
+    engine = 'mermaid',
+  } = props;
 
   const sanitizedSvg = useMemo(() => {
     if (!svg) return '';
@@ -62,14 +79,17 @@ export function PreviewPanel(props: PreviewPanelProps) {
   }, []);
 
   // 移动中
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isPanning) return;
-    e.preventDefault();
-    const dx = e.clientX - lastMousePos.current.x;
-    const dy = e.clientY - lastMousePos.current.y;
-    lastMousePos.current = { x: e.clientX, y: e.clientY };
-    setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
-  }, [isPanning]);
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isPanning) return;
+      e.preventDefault();
+      const dx = e.clientX - lastMousePos.current.x;
+      const dy = e.clientY - lastMousePos.current.y;
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+      setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+    },
+    [isPanning],
+  );
 
   // 结束平移
   const endPan = useCallback(() => {
@@ -112,7 +132,11 @@ export function PreviewPanel(props: PreviewPanelProps) {
   // 只有 SVG 格式支持前端导出和无限缩放
   const exportableSvg = format === 'svg' ? sanitizedSvg : null;
   const previewHint =
-    format === 'svg' ? '支持无限缩放与矢量导出' : format === 'png' ? '适合截图分享与复制' : '适合文档交付与打印';
+    format === 'svg'
+      ? '支持无限缩放与矢量导出'
+      : format === 'png'
+        ? '适合截图分享与复制'
+        : '适合文档交付与打印';
 
   return (
     <div
@@ -165,6 +189,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
           svgContent={exportableSvg}
           code={code}
           engine={engine}
+          format={format}
         />
       )}
 
@@ -172,7 +197,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
       {isFullscreen && (
         <button
           onClick={handleFullscreen}
-          className="absolute left-4 top-16 z-30 flex items-center gap-2 rounded-lg bg-slate-800/80 px-3 py-2 text-xs font-medium text-white backdrop-blur hover:bg-slate-700 transition"
+          className="absolute left-4 top-16 z-30 flex items-center gap-2 rounded-lg bg-slate-800/80 px-3 py-2 text-xs font-medium text-white backdrop-blur transition hover:bg-slate-700"
         >
           <X className="h-4 w-4" />
           退出全屏 (ESC)

@@ -1,6 +1,7 @@
 # GraphViewer 内网版开发路线图（docker-compose 部署）
 
 > 本路线图面向 **公司内网部署场景**，假设：
+>
 > - 使用 `docker-compose` 在内网服务器上部署 GraphViewer；
 > - 可访问公司内网 Docker Registry / npm 源；
 > - 暂不对接集中监控平台，主要依赖容器健康检查与日志；
@@ -125,13 +126,11 @@
    即可拉起 GraphViewer + Kroki。
 
 2. 从浏览器访问 `http://<内网服务器 IP>:3000` 可以：
-
    - 使用 Mermaid、PlantUML、Graphviz 三种语法编辑并成功渲染预览；
    - 成功下载对应的 SVG/PNG/PDF；
    - 刷新页面后仍保留最近编辑记录（依赖 `localStorage`）。
 
 3. 在关闭服务器外网（或通过抓包/日志验证）后：
-
    - 图形渲染主要依赖内网 Kroki 与本地 WASM，不再强依赖公网服务的可用性。
 
 ---

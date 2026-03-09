@@ -3,10 +3,18 @@ import type { Engine, Format } from '@/lib/diagramConfig';
 import { canUseLocalRender as canUseLocalRenderConfig } from '@/lib/diagramConfig';
 
 const GRAPHVIZ_WASM_BASE_URL =
-  process.env.NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL || 'https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist';
+  process.env.NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL ||
+  'https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist';
 
-type MermaidApi = { initialize?: (cfg: Record<string, unknown>) => void; render: (id: string, code: string) => Promise<{ svg: string }> };
-type GraphvizApi = { wasmFolder?: (url: string) => void; load?: () => Promise<void>; layout: (code: string, format: string, engine: string) => Promise<string> };
+type MermaidApi = {
+  initialize?: (cfg: Record<string, unknown>) => void;
+  render: (id: string, code: string) => Promise<{ svg: string }>;
+};
+type GraphvizApi = {
+  wasmFolder?: (url: string) => void;
+  load?: () => Promise<void>;
+  layout: (code: string, format: string, engine: string) => Promise<string>;
+};
 
 let mermaidPromise: Promise<MermaidApi> | null = null;
 let graphvizPromise: Promise<GraphvizApi> | null = null;
@@ -221,9 +229,10 @@ export function useDiagramRender(
       const { signal } = abortRef.current;
 
       if (canUseLocalRender) {
-        const ok = engine === 'graphviz'
-          ? await renderGraphvizLocally(code, setContentType, setSvg, setBase64)
-          : await renderMermaidLocally(code, setContentType, setSvg, setBase64);
+        const ok =
+          engine === 'graphviz'
+            ? await renderGraphvizLocally(code, setContentType, setSvg, setBase64)
+            : await renderMermaidLocally(code, setContentType, setSvg, setBase64);
         if (ok) {
           return;
         }
@@ -251,9 +260,10 @@ export function useDiagramRender(
       if (data.base64) setBase64(data.base64);
     } catch (e: unknown) {
       if (canUseLocalRender) {
-        const ok = engine === 'graphviz'
-          ? await renderGraphvizLocally(code, setContentType, setSvg, setBase64)
-          : await renderMermaidLocally(code, setContentType, setSvg, setBase64);
+        const ok =
+          engine === 'graphviz'
+            ? await renderGraphvizLocally(code, setContentType, setSvg, setBase64)
+            : await renderMermaidLocally(code, setContentType, setSvg, setBase64);
         if (ok) {
           return;
         }

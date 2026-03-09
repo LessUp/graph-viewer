@@ -71,7 +71,7 @@ function loadConfig(): AIConfig {
     if (raw) {
       return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
     }
-  } catch (e) {
+  } catch (e: unknown) {
     console.error('加载 AI 配置失败:', e);
   }
   return DEFAULT_CONFIG;
@@ -83,7 +83,7 @@ function saveConfig(config: AIConfig) {
     // 不保存 API Key 到 localStorage（安全考虑），只保存其他配置
     const { apiKey, ...rest } = config;
     window.localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(rest));
-  } catch (e) {
+  } catch (e: unknown) {
     console.error('保存 AI 配置失败:', e);
   }
 }
@@ -99,11 +99,13 @@ export function useAIAssistant(engine: Engine) {
 
   // 用 ref 保持 config 最新值，避免 callAI 重建导致 analyzeCode/generateCode/fixCode 级联失效
   const configRef = useRef(config);
-  useEffect(() => { configRef.current = config; }, [config]);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   // 更新配置
   const updateConfig = useCallback((newConfig: Partial<AIConfig>) => {
-    setConfig(prev => {
+    setConfig((prev) => {
       const updated = { ...prev, ...newConfig };
       saveConfig(updated);
       return updated;
@@ -127,7 +129,7 @@ export function useAIAssistant(engine: Engine) {
         endpoint = apiEndpoint || 'https://api.openai.com/v1/chat/completions';
         headers = {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         };
         body = {
           model: model || 'gpt-4o-mini',
@@ -150,9 +152,7 @@ export function useAIAssistant(engine: Engine) {
           model: model || 'claude-3-haiku-20240307',
           max_tokens: 4096,
           system: systemPrompt,
-          messages: [
-            { role: 'user', content: userMessage },
-          ],
+          messages: [{ role: 'user', content: userMessage }],
         };
         break;
 
@@ -163,7 +163,7 @@ export function useAIAssistant(engine: Engine) {
         endpoint = apiEndpoint;
         headers = {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         };
         body = {
           model: model || 'default',
@@ -185,9 +185,10 @@ export function useAIAssistant(engine: Engine) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({} as Record<string, unknown>));
+      const errorData = await response.json().catch(() => ({}) as Record<string, unknown>);
       const errObj = errorData?.error as Record<string, unknown> | undefined;
-      const errMsg = typeof errObj?.message === 'string' ? errObj.message : `API 请求失败: ${response.status}`;
+      const errMsg =
+        typeof errObj?.message === 'string' ? errObj.message : `API 请求失败: ${response.status}`;
       throw new Error(errMsg);
     }
 
@@ -204,125 +205,134 @@ export function useAIAssistant(engine: Engine) {
   }, []);
 
   // 分析代码
-  const analyzeCode = useCallback(async (code: string): Promise<AIAnalysisResult> => {
-    setState(prev => ({ ...prev, isAnalyzing: true, error: null }));
+  const analyzeCode = useCallback(
+    async (code: string): Promise<AIAnalysisResult> => {
+      setState((prev) => ({ ...prev, isAnalyzing: true, error: null }));
 
-    try {
-      const systemPrompt = buildAnalysisPrompt(engine);
-      const userMessage = `请分析以下 ${engine} 代码：\n\n${code}`;
-
-      const response = await callAI(systemPrompt, userMessage);
-
-      // 尝试解析 JSON 响应
-      let result: AIAnalysisResult;
       try {
-        // 清理可能的 markdown 代码块
-        const cleanResponse = response
-          .replace(/```json\n?/g, '')
-          .replace(/```\n?/g, '')
-          .trim();
-        result = JSON.parse(cleanResponse);
-      } catch (e) {
-        // 如果不是 JSON，尝试从文本中提取信息
-        result = {
-          hasErrors: false,
-          errors: [],
-          suggestions: [response],
-          explanation: response,
+        const systemPrompt = buildAnalysisPrompt(engine);
+        const userMessage = `请分析以下 ${engine} 代码：\n\n${code}`;
+
+        const response = await callAI(systemPrompt, userMessage);
+
+        // 尝试解析 JSON 响应
+        let result: AIAnalysisResult;
+        try {
+          // 清理可能的 markdown 代码块
+          const cleanResponse = response
+            .replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
+            .trim();
+          result = JSON.parse(cleanResponse);
+        } catch (e: unknown) {
+          // 如果不是 JSON，尝试从文本中提取信息
+          result = {
+            hasErrors: false,
+            errors: [],
+            suggestions: [response],
+            explanation: response,
+          };
+        }
+
+        setState((prev) => ({
+          ...prev,
+          isAnalyzing: false,
+          lastAnalysis: result,
+        }));
+
+        return result;
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : '分析失败';
+        setState((prev) => ({
+          ...prev,
+          isAnalyzing: false,
+          error: msg,
+        }));
+        return {
+          hasErrors: true,
+          errors: [{ message: msg }],
+          suggestions: [],
+          explanation: '',
         };
       }
-
-      setState(prev => ({
-        ...prev,
-        isAnalyzing: false,
-        lastAnalysis: result,
-      }));
-
-      return result;
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : '分析失败';
-      setState(prev => ({
-        ...prev,
-        isAnalyzing: false,
-        error: msg,
-      }));
-      return {
-        hasErrors: true,
-        errors: [{ message: msg }],
-        suggestions: [],
-        explanation: '',
-      };
-    }
-  }, [engine, callAI]);
+    },
+    [engine, callAI],
+  );
 
   // 生成代码
-  const generateCode = useCallback(async (description: string): Promise<string | null> => {
-    setState(prev => ({ ...prev, isGenerating: true, error: null }));
+  const generateCode = useCallback(
+    async (description: string): Promise<string | null> => {
+      setState((prev) => ({ ...prev, isGenerating: true, error: null }));
 
-    try {
-      const systemPrompt = buildGenerationPrompt(engine);
-      const response = await callAI(systemPrompt, description);
+      try {
+        const systemPrompt = buildGenerationPrompt(engine);
+        const response = await callAI(systemPrompt, description);
 
-      // 清理可能的 markdown 代码块
-      const cleanCode = response
-        .replace(/```(?:mermaid|plantuml|dot|graphviz|flowchart)?\n?/gi, '')
-        .replace(/```\n?/g, '')
-        .trim();
+        // 清理可能的 markdown 代码块
+        const cleanCode = response
+          .replace(/```(?:mermaid|plantuml|dot|graphviz|flowchart)?\n?/gi, '')
+          .replace(/```\n?/g, '')
+          .trim();
 
-      setState(prev => ({ ...prev, isGenerating: false }));
-      return cleanCode;
-    } catch (e: unknown) {
-      setState(prev => ({
-        ...prev,
-        isGenerating: false,
-        error: e instanceof Error ? e.message : '生成失败',
-      }));
-      return null;
-    }
-  }, [engine, callAI]);
+        setState((prev) => ({ ...prev, isGenerating: false }));
+        return cleanCode;
+      } catch (e: unknown) {
+        setState((prev) => ({
+          ...prev,
+          isGenerating: false,
+          error: e instanceof Error ? e.message : '生成失败',
+        }));
+        return null;
+      }
+    },
+    [engine, callAI],
+  );
 
   // 修复代码
-  const fixCode = useCallback(async (code: string, errorMessage?: string): Promise<string | null> => {
-    if (!code.trim()) {
-      setState(prev => ({ ...prev, error: '请输入代码' }));
-      return null;
-    }
+  const fixCode = useCallback(
+    async (code: string, errorMessage?: string): Promise<string | null> => {
+      if (!code.trim()) {
+        setState((prev) => ({ ...prev, error: '请输入代码' }));
+        return null;
+      }
 
-    setState(prev => ({ ...prev, isAnalyzing: true, error: null }));
+      setState((prev) => ({ ...prev, isAnalyzing: true, error: null }));
 
-    try {
-      const systemPrompt = `你是一个 ${engine} 图表语法专家。请修复以下代码中的错误，只返回修复后的纯代码，不要包含任何解释或 markdown 代码块标记。`;
-      const userMessage = errorMessage
-        ? `错误信息：${errorMessage}\n\n代码：\n${code}`
-        : `请修复以下代码：\n${code}`;
+      try {
+        const systemPrompt = `你是一个 ${engine} 图表语法专家。请修复以下代码中的错误，只返回修复后的纯代码，不要包含任何解释或 markdown 代码块标记。`;
+        const userMessage = errorMessage
+          ? `错误信息：${errorMessage}\n\n代码：\n${code}`
+          : `请修复以下代码：\n${code}`;
 
-      const response = await callAI(systemPrompt, userMessage);
+        const response = await callAI(systemPrompt, userMessage);
 
-      const cleanCode = response
-        .replace(/```(?:mermaid|plantuml|dot|graphviz|flowchart)?\n?/gi, '')
-        .replace(/```\n?/g, '')
-        .trim();
+        const cleanCode = response
+          .replace(/```(?:mermaid|plantuml|dot|graphviz|flowchart)?\n?/gi, '')
+          .replace(/```\n?/g, '')
+          .trim();
 
-      setState(prev => ({ ...prev, isAnalyzing: false }));
-      return cleanCode;
-    } catch (e: unknown) {
-      setState(prev => ({
-        ...prev,
-        isAnalyzing: false,
-        error: e instanceof Error ? e.message : '修复失败',
-      }));
-      return null;
-    }
-  }, [engine, callAI]);
+        setState((prev) => ({ ...prev, isAnalyzing: false }));
+        return cleanCode;
+      } catch (e: unknown) {
+        setState((prev) => ({
+          ...prev,
+          isAnalyzing: false,
+          error: e instanceof Error ? e.message : '修复失败',
+        }));
+        return null;
+      }
+    },
+    [engine, callAI],
+  );
 
   // 清除错误
   const clearError = useCallback(() => {
-    setState(prev => ({ ...prev, error: null }));
+    setState((prev) => ({ ...prev, error: null }));
   }, []);
 
   // 清除分析结果
   const clearAnalysis = useCallback(() => {
-    setState(prev => ({ ...prev, lastAnalysis: null }));
+    setState((prev) => ({ ...prev, lastAnalysis: null }));
   }, []);
 
   return {

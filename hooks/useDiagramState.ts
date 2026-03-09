@@ -67,9 +67,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
           setFormat(qsFormat);
           appliedFromQuery = true;
         } else {
-          setLinkError((prev: string) =>
-            prev || '分享链接中的格式参数无效，已使用默认格式。',
-          );
+          setLinkError((prev: string) => prev || '分享链接中的格式参数无效，已使用默认格式。');
         }
       }
       if (qsCode !== null) {
@@ -80,14 +78,12 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
             if (typeof decompressed === 'string' && decompressed.length > 0) {
               codeFromQuery = decompressed;
             } else {
-              setLinkError((prev: string) =>
-                prev || '分享链接中的代码解压后为空，已使用原始内容。',
+              setLinkError(
+                (prev: string) => prev || '分享链接中的代码解压后为空，已使用原始内容。',
               );
             }
           } catch {
-            setLinkError((prev: string) =>
-              prev || '分享链接中的代码解压失败，已使用原始内容。',
-            );
+            setLinkError((prev: string) => prev || '分享链接中的代码解压失败，已使用原始内容。');
           }
           setCode(codeFromQuery);
         } else {
@@ -95,9 +91,24 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
         }
         appliedFromQuery = true;
       }
-      if (appliedFromQuery) return;
 
+      // 无论是否来自分享链接，都从 localStorage 恢复图表列表
       const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (appliedFromQuery) {
+        // 分享链接场景：恢复已有图表，但 engine/format/code 使用链接中的值
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw) as { diagrams?: DiagramDoc[] };
+            if (Array.isArray(parsed.diagrams) && parsed.diagrams.length > 0) {
+              setDiagrams(parsed.diagrams);
+            }
+          } catch {
+            // ignore
+          }
+        }
+        return;
+      }
+
       if (!raw) return;
       const parsed = JSON.parse(raw) as {
         engine?: string;
@@ -172,11 +183,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       }
 
       const current = prev[idx];
-      if (
-        current.engine === engine &&
-        current.format === format &&
-        current.code === code
-      ) {
+      if (current.engine === engine && current.format === format && current.code === code) {
         return prev; // 无变化，不触发重新渲染
       }
 
@@ -216,25 +223,28 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     });
   }, []);
 
-  const createDiagram = useCallback((defaultCode?: string) => {
-    const id = generateDiagramId();
-    const now = new Date().toISOString();
-    const newCode = defaultCode ?? '';
-    setDiagrams((prev) => {
-      const name = `未命名图 ${prev.length + 1}`;
-      const doc: DiagramDoc = {
-        id,
-        name,
-        engine,
-        format,
-        code: newCode,
-        updatedAt: now,
-      };
-      return [...prev, doc];
-    });
-    setCurrentId(id);
-    setCode(newCode);
-  }, [engine, format]);
+  const createDiagram = useCallback(
+    (defaultCode?: string) => {
+      const id = generateDiagramId();
+      const now = new Date().toISOString();
+      const newCode = defaultCode ?? '';
+      setDiagrams((prev) => {
+        const name = `未命名图 ${prev.length + 1}`;
+        const doc: DiagramDoc = {
+          id,
+          name,
+          engine,
+          format,
+          code: newCode,
+          updatedAt: now,
+        };
+        return [...prev, doc];
+      });
+      setCurrentId(id);
+      setCode(newCode);
+    },
+    [engine, format],
+  );
 
   const renameDiagram = useCallback((id: string, name: string) => {
     if (!id) return;
@@ -248,76 +258,82 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     });
   }, []);
 
-  const importWorkspace = useCallback((payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => {
-    const raw = Array.isArray(payload?.diagrams) ? payload.diagrams : [];
-    if (!raw.length) return;
+  const importWorkspace = useCallback(
+    (payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => {
+      const raw = Array.isArray(payload?.diagrams) ? payload.diagrams : [];
+      if (!raw.length) return;
 
-    const list: DiagramDoc[] = raw
-      .filter((d): d is Record<string, unknown> & { id: string; name: string; code: string } =>
-        typeof d?.id === 'string' && typeof d?.name === 'string' && typeof d?.code === 'string',
-      )
-      .map((d) => ({
-        id: d.id,
-        name: d.name,
-        engine: isEngine(d.engine) ? d.engine : 'mermaid',
-        format: isFormat(d.format) ? d.format : 'svg',
-        code: d.code,
-        updatedAt: typeof d.updatedAt === 'string' ? d.updatedAt : new Date().toISOString(),
-      }));
+      const list: DiagramDoc[] = raw
+        .filter(
+          (d): d is Record<string, unknown> & { id: string; name: string; code: string } =>
+            typeof d?.id === 'string' && typeof d?.name === 'string' && typeof d?.code === 'string',
+        )
+        .map((d) => ({
+          id: d.id,
+          name: d.name,
+          engine: isEngine(d.engine) ? d.engine : 'mermaid',
+          format: isFormat(d.format) ? d.format : 'svg',
+          code: d.code,
+          updatedAt: typeof d.updatedAt === 'string' ? d.updatedAt : new Date().toISOString(),
+        }));
 
-    if (!list.length) return;
+      if (!list.length) return;
 
-    setDiagrams(list);
-    const hasCurrent =
-      payload.currentId && list.some((d) => d.id === payload.currentId);
-    const nextId = hasCurrent ? (payload.currentId as string) : list[0].id;
-    const nextDoc = list.find((d) => d.id === nextId) ?? list[0];
-    setCurrentId(nextDoc.id);
-    setEngine(nextDoc.engine);
-    setFormat(nextDoc.format);
-    setCode(nextDoc.code);
-  }, []);
+      setDiagrams(list);
+      const hasCurrent = payload.currentId && list.some((d) => d.id === payload.currentId);
+      const nextId = hasCurrent ? (payload.currentId as string) : list[0].id;
+      const nextDoc = list.find((d) => d.id === nextId) ?? list[0];
+      setCurrentId(nextDoc.id);
+      setEngine(nextDoc.engine);
+      setFormat(nextDoc.format);
+      setCode(nextDoc.code);
+    },
+    [],
+  );
 
-  const deleteDiagram = useCallback((id: string) => {
-    if (!id) return;
-    setDiagrams((prev) => {
-      const idx = prev.findIndex((d) => d.id === id);
-      if (idx === -1) return prev;
-      const next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+  const deleteDiagram = useCallback(
+    (id: string) => {
+      if (!id) return;
+      setDiagrams((prev) => {
+        const idx = prev.findIndex((d) => d.id === id);
+        if (idx === -1) return prev;
+        const next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
 
-      // If deleting a non-current diagram, just return the new list.
-      if (id !== currentId) {
+        // If deleting a non-current diagram, just return the new list.
+        if (id !== currentId) {
+          return next;
+        }
+
+        // Deleted the current diagram.
+        if (next.length === 0) {
+          const newId = generateDiagramId();
+          const now = new Date().toISOString();
+          const doc: DiagramDoc = {
+            id: newId,
+            name: '未命名图 1',
+            engine: 'mermaid',
+            format: 'svg',
+            code: '',
+            updatedAt: now,
+          };
+          setEngine('mermaid');
+          setFormat('svg');
+          setCode('');
+          setCurrentId(newId);
+          return [doc];
+        }
+
+        const fallbackIndex = idx - 1 >= 0 ? idx - 1 : 0;
+        const fallback = next[fallbackIndex];
+        setCurrentId(fallback.id);
+        setEngine(fallback.engine);
+        setFormat(fallback.format);
+        setCode(fallback.code);
         return next;
-      }
-
-      // Deleted the current diagram.
-      if (next.length === 0) {
-        const newId = generateDiagramId();
-        const now = new Date().toISOString();
-        const doc: DiagramDoc = {
-          id: newId,
-          name: '未命名图 1',
-          engine: 'mermaid',
-          format: 'svg',
-          code: '',
-          updatedAt: now,
-        };
-        setEngine('mermaid');
-        setFormat('svg');
-        setCode('');
-        setCurrentId(newId);
-        return [doc];
-      }
-
-      const fallbackIndex = idx - 1 >= 0 ? idx - 1 : 0;
-      const fallback = next[fallbackIndex];
-      setCurrentId(fallback.id);
-      setEngine(fallback.engine);
-      setFormat(fallback.format);
-      setCode(fallback.code);
-      return next;
-    });
-  }, [currentId]);
+      });
+    },
+    [currentId],
+  );
 
   return {
     engine,

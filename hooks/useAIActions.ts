@@ -14,9 +14,14 @@ type AIActionsDeps = {
 
 export function useAIActions(deps: AIActionsDeps) {
   const {
-    code, combinedError,
-    analyzeCode, fixCode, generateCode,
-    setCode, setSidebarTab, showToast,
+    code,
+    combinedError,
+    analyzeCode,
+    fixCode,
+    generateCode,
+    setCode,
+    setSidebarTab,
+    showToast,
   } = deps;
 
   const handleAIAnalyze = useCallback(() => {
@@ -33,20 +38,26 @@ export function useAIActions(deps: AIActionsDeps) {
     }
   }, [code, combinedError, fixCode, setCode, showToast]);
 
-  const handleAIGenerate = useCallback(async (description: string) => {
-    const generated = await generateCode(description);
-    if (generated) {
-      setCode(generated);
-      setSidebarTab('editor');
-      showToast('代码已生成', 'success');
-    }
-  }, [generateCode, setCode, setSidebarTab, showToast]);
+  const handleAIGenerate = useCallback(
+    async (description: string) => {
+      const generated = await generateCode(description);
+      if (generated) {
+        setCode(generated);
+        setSidebarTab('editor');
+        showToast('代码已生成', 'success');
+      }
+    },
+    [generateCode, setCode, setSidebarTab, showToast],
+  );
 
-  const handleAIApplyCode = useCallback((newCode: string) => {
-    setCode(newCode);
-    setSidebarTab('editor');
-    showToast('已应用修改', 'success');
-  }, [setCode, setSidebarTab, showToast]);
+  const handleAIApplyCode = useCallback(
+    (newCode: string) => {
+      setCode(newCode);
+      setSidebarTab('editor');
+      showToast('已应用修改', 'success');
+    },
+    [setCode, setSidebarTab, showToast],
+  );
 
   return {
     handleAIAnalyze,

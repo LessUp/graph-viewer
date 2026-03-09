@@ -61,12 +61,12 @@ export const ENGINE_LABELS: Record<Engine, string> = {
 };
 
 export const ENGINE_CATEGORIES: Record<string, Engine[]> = {
-  '常用图表': ['mermaid', 'plantuml', 'graphviz', 'd2'],
-  '流程图系列': ['flowchart', 'blockdiag', 'actdiag'],
-  '时序与网络': ['seqdiag', 'nwdiag'],
-  '数据可视化': ['vega', 'vegalite', 'wavedrom'],
+  常用图表: ['mermaid', 'plantuml', 'graphviz', 'd2'],
+  流程图系列: ['flowchart', 'blockdiag', 'actdiag'],
+  时序与网络: ['seqdiag', 'nwdiag'],
+  数据可视化: ['vega', 'vegalite', 'wavedrom'],
   'ASCII 艺术': ['ditaa', 'svgbob', 'nomnoml'],
-  '数据建模': ['erd'],
+  数据建模: ['erd'],
 };
 
 export const FORMAT_LABELS: Record<Format, string> = {

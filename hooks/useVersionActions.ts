@@ -22,11 +22,14 @@ export function useVersionActions(deps: VersionActionsDeps) {
     }
   }, [createVersion, showToast]);
 
-  const handleRestoreVersion = useCallback((version: VersionRecord) => {
-    setCode(version.code);
-    setEngine(version.engine);
-    showToast('已恢复到该版本', 'success');
-  }, [setCode, setEngine, showToast]);
+  const handleRestoreVersion = useCallback(
+    (version: VersionRecord) => {
+      setCode(version.code);
+      setEngine(version.engine);
+      showToast('已恢复到该版本', 'success');
+    },
+    [setCode, setEngine, showToast],
+  );
 
   const handleClearVersions = useCallback(() => {
     if (typeof window === 'undefined') return;

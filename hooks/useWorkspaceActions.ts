@@ -22,10 +22,20 @@ type WorkspaceActionsDeps = {
 
 export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
   const {
-    engine, code, currentId, diagrams,
-    setCode, setEngine, resetOutput,
-    createDiagram, renameDiagram, deleteDiagram, setCurrentId,
-    clearError, setError, showToast,
+    engine,
+    code,
+    currentId,
+    diagrams,
+    setCode,
+    setEngine,
+    resetOutput,
+    createDiagram,
+    renameDiagram,
+    deleteDiagram,
+    setCurrentId,
+    clearError,
+    setError,
+    showToast,
   } = deps;
 
   const handleCopyCode = useCallback(async () => {

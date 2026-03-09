@@ -26,9 +26,24 @@ const TAB_ITEMS: Array<{
   icon: typeof Code2;
   activeClass: string;
 }> = [
-  { id: 'editor', label: '代码', icon: Code2, activeClass: 'rounded-xl bg-sky-50 text-sky-700 shadow-sm ring-1 ring-sky-100' },
-  { id: 'ai', label: 'AI 助手', icon: Zap, activeClass: 'rounded-xl bg-violet-50 text-violet-700 shadow-sm ring-1 ring-violet-100' },
-  { id: 'history', label: '历史', icon: Clock, activeClass: 'rounded-xl bg-amber-50 text-amber-700 shadow-sm ring-1 ring-amber-100' },
+  {
+    id: 'editor',
+    label: '代码',
+    icon: Code2,
+    activeClass: 'rounded-xl bg-sky-50 text-sky-700 shadow-sm ring-1 ring-sky-100',
+  },
+  {
+    id: 'ai',
+    label: 'AI 助手',
+    icon: Zap,
+    activeClass: 'rounded-xl bg-violet-50 text-violet-700 shadow-sm ring-1 ring-violet-100',
+  },
+  {
+    id: 'history',
+    label: '历史',
+    icon: Clock,
+    activeClass: 'rounded-xl bg-amber-50 text-amber-700 shadow-sm ring-1 ring-amber-100',
+  },
 ];
 
 export function SidebarTabs(props: SidebarTabsProps) {
@@ -62,7 +77,7 @@ export function SidebarTabs(props: SidebarTabsProps) {
       </div>
 
       {/* Tab 内容区 */}
-      <div className="flex-1 min-h-[360px] lg:min-h-0">
+      <div className="min-h-[360px] flex-1 lg:min-h-0">
         {activeTab === 'editor' && <EditorPanel {...editorProps} />}
         {activeTab === 'ai' && (
           <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">

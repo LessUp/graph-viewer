@@ -71,7 +71,11 @@ function toArrayBuffer(buf: Buffer): ArrayBuffer {
   return out;
 }
 
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -106,7 +110,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Invalid request body', code: 'INVALID_BODY' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid request body', code: 'INVALID_BODY' },
+        { status: 400 },
+      );
     }
 
     const { engine, format, code, binary, krokiBaseUrl } = body as {
@@ -118,16 +125,25 @@ export async function POST(req: NextRequest) {
     };
 
     if (!engine || !format || typeof code !== 'string') {
-      return NextResponse.json({ error: 'Missing required fields', code: 'MISSING_FIELDS' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields', code: 'MISSING_FIELDS' },
+        { status: 400 },
+      );
     }
 
     if (!isEngine(engine)) {
       console.warn('[render] Unsupported engine', { engine });
-      return NextResponse.json({ error: 'Unsupported engine', code: 'UNSUPPORTED_ENGINE' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Unsupported engine', code: 'UNSUPPORTED_ENGINE' },
+        { status: 400 },
+      );
     }
     if (!isFormat(format)) {
       console.warn('[render] Unsupported format', { format });
-      return NextResponse.json({ error: 'Unsupported format', code: 'UNSUPPORTED_FORMAT' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Unsupported format', code: 'UNSUPPORTED_FORMAT' },
+        { status: 400 },
+      );
     }
 
     if (code.length > MAX_CODE_LENGTH) {
@@ -151,18 +167,25 @@ export async function POST(req: NextRequest) {
     if (requestedBaseRaw) {
       const requested = normalizeKrokiBaseUrl(requestedBaseRaw);
       if (!requested) {
-        throw new RenderError(400, { error: 'Invalid krokiBaseUrl', code: 'INVALID_KROKI_BASE_URL' });
+        throw new RenderError(400, {
+          error: 'Invalid krokiBaseUrl',
+          code: 'INVALID_KROKI_BASE_URL',
+        });
       }
       const allowAny = (process.env.KROKI_ALLOW_CLIENT_BASE_URL || '').toLowerCase() === 'true';
       const allowlist = parseKrokiBaseUrlAllowlist(process.env.KROKI_CLIENT_BASE_URL_ALLOWLIST);
       if (!allowAny && !allowlist.has(requested)) {
-        throw new RenderError(400, { error: 'krokiBaseUrl not allowed', code: 'KROKI_BASE_URL_NOT_ALLOWED' });
+        throw new RenderError(400, {
+          error: 'krokiBaseUrl not allowed',
+          code: 'KROKI_BASE_URL_NOT_ALLOWED',
+        });
       }
       base = requested;
     }
 
     const url = `${base}/${type}/${format}`;
-    const accept = format === 'svg' ? 'image/svg+xml' : format === 'png' ? 'image/png' : 'application/pdf';
+    const accept =
+      format === 'svg' ? 'image/svg+xml' : format === 'png' ? 'image/png' : 'application/pdf';
 
     const now = Date.now();
     pruneCache(now);
@@ -226,7 +249,11 @@ export async function POST(req: NextRequest) {
               timeoutMs: KROKI_TIMEOUT_MS,
               length: code.length,
             });
-            throw new RenderError(504, { error: 'Kroki timeout', code: 'KROKI_TIMEOUT', krokiUrl: url });
+            throw new RenderError(504, {
+              error: 'Kroki timeout',
+              code: 'KROKI_TIMEOUT',
+              krokiUrl: url,
+            });
           }
           const errMsg = error instanceof Error ? error.message : '';
           console.error('[render] Kroki request failed', {

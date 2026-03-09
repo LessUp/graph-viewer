@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -25,20 +24,42 @@ import { Loader2 } from 'lucide-react';
 
 export default function Page() {
   const {
-    engine, format, code, codeStats, linkError,
-    diagrams, currentId, hasHydrated,
-    setEngine, setFormat, setCode, setCurrentId,
-    createDiagram, renameDiagram, deleteDiagram, importWorkspace,
+    engine,
+    format,
+    code,
+    codeStats,
+    linkError,
+    diagrams,
+    currentId,
+    hasHydrated,
+    setEngine,
+    setFormat,
+    setCode,
+    setCurrentId,
+    createDiagram,
+    renameDiagram,
+    deleteDiagram,
+    importWorkspace,
   } = useDiagramState(SAMPLES['mermaid']);
 
   const { settings, isLoaded: settingsLoaded, saveSettings, toggleSidebar } = useSettings();
 
   const {
-    svg, base64, contentType, loading, error,
-    canUseLocalRender, showPreview,
-    renderDiagram, clearError, setError, resetOutput,
+    svg,
+    base64,
+    contentType,
+    loading,
+    error,
+    canUseLocalRender,
+    showPreview,
+    renderDiagram,
+    clearError,
+    setError,
+    resetOutput,
   } = useDiagramRender(
-    engine, format, code,
+    engine,
+    format,
+    code,
     settings.useCustomServer ? settings.renderServerUrl : undefined,
   );
 
@@ -51,21 +72,37 @@ export default function Page() {
   // --- 组合 hooks ---
 
   const { livePreview, setLivePreview } = useLivePreview({
-    engine, code,
+    engine,
+    code,
     debounceMs: settings.debounceMs,
-    renderDiagram, resetOutput,
+    renderDiagram,
+    resetOutput,
   });
 
   const {
-    handleCopyCode, handleClearCode,
-    handleSelectDiagram, handleCreateDiagram,
-    handleRenameDiagram, handleDeleteDiagram,
-    handleExportWorkspace, handleEngineChange,
+    handleCopyCode,
+    handleClearCode,
+    handleSelectDiagram,
+    handleCreateDiagram,
+    handleRenameDiagram,
+    handleDeleteDiagram,
+    handleExportWorkspace,
+    handleEngineChange,
   } = useWorkspaceActions({
-    engine, code, currentId, diagrams,
-    setCode, setEngine, resetOutput,
-    createDiagram, renameDiagram, deleteDiagram, setCurrentId,
-    clearError, setError, showToast,
+    engine,
+    code,
+    currentId,
+    diagrams,
+    setCode,
+    setEngine,
+    resetOutput,
+    createDiagram,
+    renameDiagram,
+    deleteDiagram,
+    setCurrentId,
+    clearError,
+    setError,
+    showToast,
   });
 
   const {
@@ -75,28 +112,37 @@ export default function Page() {
     clearError: clearAIError,
     clearAnalysis: clearAIAnalysis,
     isConfigured: isAIConfigured,
-    analyzeCode, generateCode, fixCode,
+    analyzeCode,
+    generateCode,
+    fixCode,
   } = useAIAssistant(engine);
 
-  const {
-    handleAIAnalyze, handleAIFix,
-    handleAIGenerate, handleAIApplyCode,
-  } = useAIActions({
-    code, combinedError,
-    analyzeCode, fixCode, generateCode,
-    setCode, setSidebarTab, showToast,
+  const { handleAIAnalyze, handleAIFix, handleAIGenerate, handleAIApplyCode } = useAIActions({
+    code,
+    combinedError,
+    analyzeCode,
+    fixCode,
+    generateCode,
+    setCode,
+    setSidebarTab,
+    showToast,
   });
 
   const {
-    versions, isLoading: isVersionsLoading,
-    createVersion, deleteVersion, renameVersion, clearDiagramVersions,
+    versions,
+    isLoading: isVersionsLoading,
+    createVersion,
+    deleteVersion,
+    renameVersion,
+    clearDiagramVersions,
   } = useVersionHistory(currentId, code, engine);
 
-  const {
-    handleCreateSnapshot, handleRestoreVersion, handleClearVersions,
-  } = useVersionActions({
-    createVersion, clearDiagramVersions,
-    setCode, setEngine, showToast,
+  const { handleCreateSnapshot, handleRestoreVersion, handleClearVersions } = useVersionActions({
+    createVersion,
+    clearDiagramVersions,
+    setCode,
+    setEngine,
+    showToast,
   });
 
   // 水合加载状态
@@ -160,7 +206,11 @@ export default function Page() {
                   onTabChange={setSidebarTab}
                   versions={versions}
                   editorProps={{
-                    engine, format, code, codeStats, loading,
+                    engine,
+                    format,
+                    code,
+                    codeStats,
+                    loading,
                     error: combinedError,
                     canUseLocalRender,
                     livePreviewEnabled: livePreview,
@@ -203,7 +253,7 @@ export default function Page() {
           </div>
 
           {/* Right: Preview */}
-          <div className="flex-1 min-h-[420px] lg:h-full lg:min-h-0">
+          <div className="min-h-[420px] flex-1 lg:h-full lg:min-h-0">
             <PreviewPanel
               svg={svg}
               base64={base64}
