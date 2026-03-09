@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import type { Engine, Format } from '@/lib/diagramConfig';
-import { ENGINE_LABELS, ENGINE_CONFIGS, FORMAT_LABELS } from '@/lib/diagramConfig';
+import { ENGINE_LABELS, ENGINE_CONFIGS, ENGINE_CATEGORIES, FORMAT_LABELS } from '@/lib/diagramConfig';
 import { SAMPLES } from '@/lib/diagramSamples';
 import { CodeEditor } from '@/components/CodeEditor';
 import { PlayCircle, Loader2, Copy, AlertCircle } from 'lucide-react';
@@ -23,10 +23,9 @@ export type EditorPanelProps = {
   onRender: () => Promise<void> | void;
   onCopyCode: () => Promise<void> | void;
   onClearCode: () => void;
+  editorFontSize?: number;
 };
 
-// 常用引擎列表
-const COMMON_ENGINES: Engine[] = ['mermaid', 'plantuml', 'graphviz', 'flowchart'];
 
 function EditorPanelComponent(props: EditorPanelProps) {
   const {
@@ -45,6 +44,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
     onRender,
     onCopyCode,
     onClearCode,
+    editorFontSize = 13,
   } = props;
 
   // 切换引擎时自动加载示例代码
@@ -64,10 +64,14 @@ function EditorPanelComponent(props: EditorPanelProps) {
             onChange={(e) => handleEngineChange(e.target.value as Engine)}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
           >
-            {COMMON_ENGINES.map((eng) => (
-              <option key={eng} value={eng}>
-                {ENGINE_LABELS[eng]}
-              </option>
+            {Object.entries(ENGINE_CATEGORIES).map(([category, engines]) => (
+              <optgroup key={category} label={category}>
+                {engines.map((eng) => (
+                  <option key={eng} value={eng}>
+                    {ENGINE_LABELS[eng]}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <select
@@ -150,22 +154,22 @@ function EditorPanelComponent(props: EditorPanelProps) {
             )}
           </div>
           <div className="flex gap-3 text-[11px]">
-            <button 
-              onClick={() => onCodeChange(SAMPLES[engine])} 
+            <button
+              onClick={() => onCodeChange(SAMPLES[engine])}
               className="hover:text-sky-600 transition"
             >
               加载示例
             </button>
-            <button 
-              onClick={onClearCode} 
-              disabled={!code} 
+            <button
+              onClick={onClearCode}
+              disabled={!code}
               className="hover:text-rose-500 disabled:opacity-30 transition"
             >
               清空
             </button>
           </div>
         </div>
-        
+
         <div className="flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 min-h-0">
           <CodeEditor
             value={code}
@@ -173,6 +177,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
             disabled={loading}
             engine={engine}
             minHeight="100%"
+            fontSize={editorFontSize}
             onCtrlEnter={() => {
               if (!loading && code.trim()) {
                 void onRender();
@@ -180,7 +185,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
             }}
           />
         </div>
-        
+
         <div className="flex flex-col gap-2 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <span>{codeStats.lines} 行 · {codeStats.chars} 字符</span>
           <span className="flex items-center gap-1">

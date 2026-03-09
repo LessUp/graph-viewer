@@ -18,27 +18,27 @@ function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
-  
+
   // 不到1分钟
   if (diff < 60000) {
     return '刚刚';
   }
-  
+
   // 不到1小时
   if (diff < 3600000) {
     return `${Math.floor(diff / 60000)} 分钟前`;
   }
-  
+
   // 不到24小时
   if (diff < 86400000) {
     return `${Math.floor(diff / 3600000)} 小时前`;
   }
-  
+
   // 不到7天
   if (diff < 604800000) {
     return `${Math.floor(diff / 86400000)} 天前`;
   }
-  
+
   // 显示具体日期
   return date.toLocaleDateString('zh-CN', {
     month: 'short',
@@ -231,12 +231,10 @@ export function VersionHistoryPanel(props: VersionHistoryPanelProps) {
       {/* 底部统计 */}
       {versions.length > 0 && (
         <div className="px-4 py-2 border-t border-slate-200 text-[11px] text-slate-400">
-          共 {versions.length} 个版本 · 
+          共 {versions.length} 个版本 ·
           {versions.filter(v => !v.autoSave).length} 个手动保存
         </div>
       )}
     </div>
   );
 }
-
-export default VersionHistoryPanel;

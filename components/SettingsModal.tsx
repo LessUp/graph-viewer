@@ -75,7 +75,7 @@ export function SettingsModal({ isOpen, onClose, settings, onSave }: SettingsMod
                 <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-sky-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-100"></div>
               </label>
             </div>
-            
+
             {localSettings.useCustomServer && (
               <div className="space-y-3">
                 <div>
@@ -106,6 +106,43 @@ export function SettingsModal({ isOpen, onClose, settings, onSave }: SettingsMod
                 </div>
               </div>
             )}
+          </div>
+
+          {/* 编辑器配置 */}
+          <div className="rounded-xl border border-slate-200 p-4 space-y-4">
+            <h3 className="text-sm font-medium text-slate-700">编辑器</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  实时预览延迟 (ms)
+                </label>
+                <input
+                  type="number"
+                  min={200}
+                  max={3000}
+                  step={100}
+                  value={localSettings.debounceMs}
+                  onChange={(e) => setLocalSettings({ ...localSettings, debounceMs: Math.max(200, Math.min(3000, Number(e.target.value) || 800)) })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                />
+                <p className="mt-1 text-[10px] text-slate-400">停止输入后多久触发渲染</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  字体大小 (px)
+                </label>
+                <input
+                  type="number"
+                  min={10}
+                  max={24}
+                  step={1}
+                  value={localSettings.editorFontSize}
+                  onChange={(e) => setLocalSettings({ ...localSettings, editorFontSize: Math.max(10, Math.min(24, Number(e.target.value) || 13)) })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                />
+                <p className="mt-1 text-[10px] text-slate-400">代码编辑器字体大小</p>
+              </div>
+            </div>
           </div>
 
           {/* 关于 */}

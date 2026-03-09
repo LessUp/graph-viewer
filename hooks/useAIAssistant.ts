@@ -175,7 +175,7 @@ export function useAIAssistant(engine: Engine) {
 
     let endpoint: string;
     let headers: Record<string, string>;
-    let body: any;
+    let body: Record<string, unknown>;
 
     switch (provider) {
       case 'openai':
@@ -240,17 +240,22 @@ export function useAIAssistant(engine: Engine) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `API 请求失败: ${response.status}`);
+      const errorData = await response.json().catch(() => ({} as Record<string, unknown>));
+      const errObj = errorData?.error as Record<string, unknown> | undefined;
+      const errMsg = typeof errObj?.message === 'string' ? errObj.message : `API 请求失败: ${response.status}`;
+      throw new Error(errMsg);
     }
 
     const data = await response.json();
 
     // 根据不同提供商解析响应
     if (provider === 'anthropic') {
-      return data.content?.[0]?.text || '';
+      const content = Array.isArray(data?.content) ? data.content : [];
+      return typeof content[0]?.text === 'string' ? content[0].text : '';
     }
-    return data.choices?.[0]?.message?.content || '';
+    const choices = Array.isArray(data?.choices) ? data.choices : [];
+    const msg = choices[0]?.message;
+    return typeof msg?.content === 'string' ? msg.content : '';
   }, [config]);
 
   // 分析代码
@@ -289,15 +294,16 @@ export function useAIAssistant(engine: Engine) {
       }));
 
       return result;
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '分析失败';
       setState(prev => ({
         ...prev,
         isAnalyzing: false,
-        error: e.message || '分析失败',
+        error: msg,
       }));
       return {
         hasErrors: true,
-        errors: [{ message: e.message || '分析失败' }],
+        errors: [{ message: msg }],
         suggestions: [],
         explanation: '',
       };
@@ -322,11 +328,11 @@ export function useAIAssistant(engine: Engine) {
 
       setState(prev => ({ ...prev, isGenerating: false }));
       return cleanCode;
-    } catch (e: any) {
+    } catch (e: unknown) {
       setState(prev => ({
         ...prev,
         isGenerating: false,
-        error: e.message || '生成失败',
+        error: e instanceof Error ? e.message : '生成失败',
       }));
       return null;
     }
@@ -356,11 +362,11 @@ export function useAIAssistant(engine: Engine) {
 
       setState(prev => ({ ...prev, isAnalyzing: false }));
       return cleanCode;
-    } catch (e: any) {
+    } catch (e: unknown) {
       setState(prev => ({
         ...prev,
         isAnalyzing: false,
-        error: e.message || '修复失败',
+        error: e instanceof Error ? e.message : '修复失败',
       }));
       return null;
     }

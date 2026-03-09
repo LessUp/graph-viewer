@@ -22,6 +22,7 @@ type DiagramState = {
   linkError: string;
   diagrams: DiagramDoc[];
   currentId: string;
+  hasHydrated: boolean;
 };
 
 type DiagramStateControls = {
@@ -32,7 +33,7 @@ type DiagramStateControls = {
   createDiagram: (defaultCode?: string) => void;
   renameDiagram: (id: string, name: string) => void;
   deleteDiagram: (id: string) => void;
-  importWorkspace: (payload: { diagrams: DiagramDoc[]; currentId?: string }) => void;
+  importWorkspace: (payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => void;
 };
 
 function generateDiagramId(): string {
@@ -255,15 +256,30 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     });
   };
 
-  const importWorkspace = (payload: { diagrams: DiagramDoc[]; currentId?: string }) => {
-    const list = Array.isArray(payload?.diagrams) ? payload.diagrams : [];
+  const importWorkspace = (payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => {
+    const raw = Array.isArray(payload?.diagrams) ? payload.diagrams : [];
+    if (!raw.length) return;
+
+    const list: DiagramDoc[] = raw
+      .filter((d): d is Record<string, unknown> & { id: string; name: string; code: string } =>
+        typeof d?.id === 'string' && typeof d?.name === 'string' && typeof d?.code === 'string',
+      )
+      .map((d) => ({
+        id: d.id,
+        name: d.name,
+        engine: isEngine(d.engine) ? d.engine : 'mermaid',
+        format: isFormat(d.format) ? d.format : 'svg',
+        code: d.code,
+        updatedAt: typeof d.updatedAt === 'string' ? d.updatedAt : new Date().toISOString(),
+      }));
+
     if (!list.length) return;
 
     setDiagrams(list);
     const hasCurrent =
-      payload.currentId && list.some((d: DiagramDoc) => d.id === payload.currentId);
+      payload.currentId && list.some((d) => d.id === payload.currentId);
     const nextId = hasCurrent ? (payload.currentId as string) : list[0].id;
-    const nextDoc = list.find((d: DiagramDoc) => d.id === nextId) ?? list[0];
+    const nextDoc = list.find((d) => d.id === nextId) ?? list[0];
     setCurrentId(nextDoc.id);
     setEngine(nextDoc.engine);
     setFormat(nextDoc.format);
@@ -319,6 +335,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     linkError,
     diagrams,
     currentId,
+    hasHydrated,
     setEngine,
     setFormat,
     setCode,

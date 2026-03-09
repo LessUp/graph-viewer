@@ -1,7 +1,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { compressToEncodedURIComponent } from 'lz-string';
 import { exportSvg, exportPng, copyPngToClipboard, exportHtml, exportMarkdown, exportSourceCode } from '@/lib/exportUtils';
-import { ZoomIn, ZoomOut, RotateCcw, Maximize, Download, Loader2, Check, Copy } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Maximize, Download, Loader2, Check, Copy, Share2 } from 'lucide-react';
 
 interface PreviewToolbarProps {
   scale: number;
@@ -115,6 +116,28 @@ export function PreviewToolbar({
         )}
       </div>
 
+      {/* Share Link */}
+      <button
+        onClick={() => {
+          try {
+            const params = new URLSearchParams();
+            params.set('engine', engine);
+            const compressed = compressToEncodedURIComponent(code);
+            params.set('code', compressed);
+            params.set('encoded', '1');
+            const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+            navigator.clipboard.writeText(shareUrl).then(() => showCopySuccess());
+          } catch (e) {
+            console.error('Share link failed', e);
+          }
+        }}
+        disabled={!code}
+        className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+        title="复制分享链接"
+      >
+        <Share2 className="h-4 w-4" />
+      </button>
+
       {/* Copy Success Toast */}
       {copySuccess && (
         <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-1 ring-emerald-200">
@@ -166,9 +189,9 @@ export function PreviewToolbar({
               <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-100 text-[0.6rem] font-bold text-emerald-600">P</span>
               PNG 超清 (4x)
             </button>
-            
+
             <div className="my-1.5 h-px bg-slate-100" />
-            
+
             {/* 文档格式 */}
             <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">文档格式</div>
             <button
@@ -192,9 +215,9 @@ export function PreviewToolbar({
               <span className="flex h-5 w-5 items-center justify-center rounded bg-slate-100 text-[0.6rem] font-bold text-slate-600">C</span>
               源代码文件
             </button>
-            
+
             <div className="my-1.5 h-px bg-slate-100" />
-            
+
             {/* 复制 */}
             <button
               onClick={() => handleExport('copy')}

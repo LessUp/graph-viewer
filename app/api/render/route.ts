@@ -218,8 +218,8 @@ export async function POST(req: NextRequest) {
             },
             KROKI_TIMEOUT_MS,
           );
-        } catch (error: any) {
-          if (error?.name === 'AbortError') {
+        } catch (error: unknown) {
+          if (error instanceof Error && error.name === 'AbortError') {
             console.error('[render] Kroki request timed out', {
               engine,
               format,
@@ -228,16 +228,17 @@ export async function POST(req: NextRequest) {
             });
             throw new RenderError(504, { error: 'Kroki timeout', code: 'KROKI_TIMEOUT', krokiUrl: url });
           }
+          const errMsg = error instanceof Error ? error.message : '';
           console.error('[render] Kroki request failed', {
             engine,
             format,
             length: code.length,
-            message: error?.message || '',
+            message: errMsg,
           });
           throw new RenderError(502, {
             error: 'Kroki request failed',
             code: 'KROKI_NETWORK_ERROR',
-            message: error?.message || '',
+            message: errMsg,
             krokiUrl: url,
           });
         }
@@ -303,11 +304,12 @@ export async function POST(req: NextRequest) {
         'Content-Disposition': `attachment; filename=diagram.${format}`,
       },
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (e instanceof RenderError) {
       return NextResponse.json(e.payload, { status: e.status });
     }
-    console.error('[render] Unexpected server error', { message: e?.message || '' });
-    return NextResponse.json({ error: 'Server error', message: e?.message || '' }, { status: 500 });
+    const errMsg = e instanceof Error ? e.message : '';
+    console.error('[render] Unexpected server error', { message: errMsg });
+    return NextResponse.json({ error: 'Server error', message: errMsg }, { status: 500 });
   }
 }

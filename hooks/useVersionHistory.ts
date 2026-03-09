@@ -68,52 +68,55 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
   const createVersion = useCallback((label?: string, autoSave = false) => {
     if (!diagramId || !currentCode.trim()) return null;
 
-    // 检查是否与最新版本相同
-    const latestVersion = diagramVersions[0];
-    if (latestVersion && latestVersion.code === currentCode && latestVersion.engine === currentEngine) {
-      return null; // 代码没有变化，不创建新版本
-    }
-
-    // 自动保存时检查变化是否足够大
-    if (autoSave && latestVersion) {
-      const changeSize = Math.abs(currentCode.length - latestVersion.code.length);
-      if (changeSize < MIN_CHANGE_THRESHOLD) {
-        return null;
-      }
-    }
-
-    const newVersion: VersionRecord = {
-      id: generateVersionId(),
-      diagramId,
-      code: currentCode,
-      engine: currentEngine,
-      timestamp: new Date().toISOString(),
-      label,
-      autoSave,
-    };
+    let result: VersionRecord | null = null;
 
     setVersions(prev => {
-      // 获取当前图表的版本并限制数量
-      const diagramVersions = prev.filter(v => v.diagramId === diagramId);
+      // 在回调内计算当前图表的版本，避免 stale closure
+      const currentDiagramVersions = prev
+        .filter(v => v.diagramId === diagramId)
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       const otherVersions = prev.filter(v => v.diagramId !== diagramId);
-      
-      let newDiagramVersions = [newVersion, ...diagramVersions];
-      
+
+      // 检查是否与最新版本相同
+      const latestVersion = currentDiagramVersions[0];
+      if (latestVersion && latestVersion.code === currentCode && latestVersion.engine === currentEngine) {
+        return prev; // 代码没有变化，不创建新版本
+      }
+
+      // 自动保存时检查变化是否足够大
+      if (autoSave && latestVersion) {
+        const changeSize = Math.abs(currentCode.length - latestVersion.code.length);
+        if (changeSize < MIN_CHANGE_THRESHOLD) {
+          return prev;
+        }
+      }
+
+      const newVersion: VersionRecord = {
+        id: generateVersionId(),
+        diagramId,
+        code: currentCode,
+        engine: currentEngine,
+        timestamp: new Date().toISOString(),
+        label,
+        autoSave,
+      };
+
+      result = newVersion;
+
+      let newDiagramVersions = [newVersion, ...currentDiagramVersions];
+
       // 保留手动保存的版本，优先删除旧的自动保存版本
       if (newDiagramVersions.length > MAX_VERSIONS_PER_DIAGRAM) {
         const manualVersions = newDiagramVersions.filter(v => !v.autoSave);
         const autoVersions = newDiagramVersions.filter(v => v.autoSave);
-        
-        // 如果自动保存版本过多，删除旧的
+
         while (manualVersions.length + autoVersions.length > MAX_VERSIONS_PER_DIAGRAM && autoVersions.length > 5) {
           autoVersions.pop();
         }
-        
-        // 如果还是太多，删除旧的手动版本
         while (manualVersions.length + autoVersions.length > MAX_VERSIONS_PER_DIAGRAM) {
           manualVersions.pop();
         }
-        
+
         newDiagramVersions = [...manualVersions, ...autoVersions]
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       }
@@ -123,8 +126,8 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
       return newVersions;
     });
 
-    return newVersion;
-  }, [diagramId, currentCode, currentEngine, diagramVersions, saveVersionsToStorage]);
+    return result;
+  }, [diagramId, currentCode, currentEngine, saveVersionsToStorage]);
 
   // 删除版本
   const deleteVersion = useCallback((versionId: string) => {
@@ -138,7 +141,7 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
   // 重命名版本
   const renameVersion = useCallback((versionId: string, newLabel: string) => {
     setVersions(prev => {
-      const newVersions = prev.map(v => 
+      const newVersions = prev.map(v =>
         v.id === versionId ? { ...v, label: newLabel } : v
       );
       saveVersionsToStorage(newVersions);
@@ -170,7 +173,7 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
   const compareVersions = useCallback((versionId1: string, versionId2: string) => {
     const v1 = versions.find(v => v.id === versionId1);
     const v2 = versions.find(v => v.id === versionId2);
-    
+
     if (!v1 || !v2) return null;
 
     return {

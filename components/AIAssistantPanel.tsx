@@ -60,10 +60,10 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [activeTab, setActiveTab] = useState<'analyze' | 'generate'>('analyze');
 
-  const models = config.provider === 'openai' 
-    ? OPENAI_MODELS 
-    : config.provider === 'anthropic' 
-    ? ANTHROPIC_MODELS 
+  const models = config.provider === 'openai'
+    ? OPENAI_MODELS
+    : config.provider === 'anthropic'
+    ? ANTHROPIC_MODELS
     : [];
 
   const handleGenerate = () => {
@@ -389,5 +389,3 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
     </div>
   );
 }
-
-export default AIAssistantPanel;

@@ -4,7 +4,7 @@ import { useRef, type ChangeEvent } from 'react';
 import { Palette, Upload, Download, Settings, Github } from 'lucide-react';
 
 export type AppHeaderProps = {
-  onImportWorkspace: (data: { diagrams: any[]; currentId?: string }) => void;
+  onImportWorkspace: (data: { diagrams: Array<Record<string, unknown>>; currentId?: string }) => void;
   onExportWorkspace: () => void;
   onOpenSettings: () => void;
   onError: (message: string) => void;
@@ -30,13 +30,13 @@ export function AppHeader({
       const file = event.target.files?.[0];
       if (!file) return;
       const text = await file.text();
-      const data = JSON.parse(text) as { diagrams?: any; currentId?: string };
+      const data = JSON.parse(text) as { diagrams?: Record<string, unknown>[]; currentId?: string };
       if (!Array.isArray(data.diagrams) || data.diagrams.length === 0) {
         throw new Error('导入的文件中不包含有效的图列表。');
       }
       onImportWorkspace({ diagrams: data.diagrams, currentId: data.currentId });
-    } catch (e: any) {
-      onError(e?.message || '导入项目集失败');
+    } catch (e: unknown) {
+      onError(e instanceof Error ? e.message : '导入项目集失败');
     } finally {
       if (event.target) {
         event.target.value = '';

@@ -8,12 +8,17 @@ export interface AppSettings {
   useCustomServer: boolean;
   // 界面配置
   sidebarCollapsed: boolean;
+  // 编辑器配置
+  debounceMs: number;
+  editorFontSize: number;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   renderServerUrl: '',
   useCustomServer: false,
   sidebarCollapsed: false,
+  debounceMs: 800,
+  editorFontSize: 13,
 };
 
 const STORAGE_KEY = 'graphviewer-settings';

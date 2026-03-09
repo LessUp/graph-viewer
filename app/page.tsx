@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { EditorPanel } from '@/components/EditorPanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { SettingsModal } from '@/components/SettingsModal';
 import { Toast } from '@/components/Toast';
@@ -10,8 +9,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { DiagramList } from '@/components/DiagramList';
 import { CollapsedSidebar } from '@/components/CollapsedSidebar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { AIAssistantPanel } from '@/components/AIAssistantPanel';
-import { VersionHistoryPanel } from '@/components/VersionHistoryPanel';
+import { SidebarTabs, type SidebarTab } from '@/components/SidebarTabs';
 import { useDiagramState } from '@/hooks/useDiagramState';
 import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { useSettings } from '@/hooks/useSettings';
@@ -20,9 +18,7 @@ import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useVersionHistory, type VersionRecord } from '@/hooks/useVersionHistory';
 import { SAMPLES } from '@/lib/diagramSamples';
 import { isEngine } from '@/lib/diagramConfig';
-import { Code2, Zap, Clock } from 'lucide-react';
-
-type SidebarTab = 'editor' | 'ai' | 'history';
+import { Loader2 } from 'lucide-react';
 
 export default function Page() {
   const {
@@ -33,6 +29,7 @@ export default function Page() {
     linkError,
     diagrams,
     currentId,
+    hasHydrated,
     setEngine,
     setFormat,
     setCode,
@@ -43,7 +40,7 @@ export default function Page() {
     importWorkspace,
   } = useDiagramState(SAMPLES['mermaid']);
 
-  const { settings, saveSettings, toggleSidebar } = useSettings();
+  const { settings, isLoaded: settingsLoaded, saveSettings, toggleSidebar } = useSettings();
 
   const {
     svg,
@@ -109,14 +106,14 @@ export default function Page() {
       return;
     }
     if (debounceRef.current !== null) clearTimeout(debounceRef.current);
-    debounceRef.current = window.setTimeout(() => void renderDiagram(), 800);
+    debounceRef.current = window.setTimeout(() => void renderDiagram(), settings.debounceMs);
     return () => {
       if (debounceRef.current !== null) {
         clearTimeout(debounceRef.current);
         debounceRef.current = null;
       }
     };
-  }, [livePreview, engine, code, renderDiagram, resetOutput]);
+  }, [livePreview, engine, code, settings.debounceMs, renderDiagram, resetOutput]);
 
   // --- 事件处理 ---
 
@@ -129,8 +126,9 @@ export default function Page() {
       } else {
         window.prompt('请手动复制以下代码', code);
       }
-    } catch (e: any) {
-      setError(e?.message || '复制代码失败');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '复制代码失败';
+      setError(msg);
     }
   }, [code, clearError, setError, showToast]);
 
@@ -190,8 +188,9 @@ export default function Page() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e: any) {
-      setError(e?.message || '导出项目集失败');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '导出项目集失败';
+      setError(msg);
     }
   }, [currentId, diagrams, setError]);
 
@@ -262,6 +261,18 @@ export default function Page() {
     }
   }, [clearDiagramVersions, showToast]);
 
+  // 水合加载状态
+  if (!hasHydrated || !settingsLoaded) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
+          <span className="text-sm text-slate-500">加载中...</span>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1920px] flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:gap-4 lg:py-5">
@@ -306,102 +317,46 @@ export default function Page() {
                   onCollapseSidebar={toggleSidebar}
                 />
 
-                {/* Tab 切换栏 */}
-                <div className="flex overflow-hidden rounded-2xl border border-slate-200/70 bg-white/80 p-1 shadow-sm backdrop-blur">
-                  <button
-                    onClick={() => setSidebarTab('editor')}
-                    className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition ${
-                      sidebarTab === 'editor'
-                        ? 'rounded-xl bg-sky-50 text-sky-700 shadow-sm ring-1 ring-sky-100'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                    }`}
-                  >
-                    <Code2 className="h-3.5 w-3.5" />
-                    代码
-                  </button>
-                  <button
-                    onClick={() => setSidebarTab('ai')}
-                    className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition ${
-                      sidebarTab === 'ai'
-                        ? 'rounded-xl bg-violet-50 text-violet-700 shadow-sm ring-1 ring-violet-100'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                    }`}
-                  >
-                    <Zap className="h-3.5 w-3.5" />
-                    AI 助手
-                  </button>
-                  <button
-                    onClick={() => setSidebarTab('history')}
-                    className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition ${
-                      sidebarTab === 'history'
-                        ? 'rounded-xl bg-amber-50 text-amber-700 shadow-sm ring-1 ring-amber-100'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                    }`}
-                  >
-                    <Clock className="h-3.5 w-3.5" />
-                    历史
-                    {versions.length > 0 && (
-                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                        {versions.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
-
-                {/* Tab 内容区 */}
-                <div className="flex-1 min-h-[360px] lg:min-h-0">
-                  {sidebarTab === 'editor' && (
-                    <EditorPanel
-                      engine={engine}
-                      format={format}
-                      code={code}
-                      codeStats={codeStats}
-                      loading={loading}
-                      error={combinedError}
-                      canUseLocalRender={canUseLocalRender}
-                      livePreviewEnabled={livePreview}
-                      onLivePreviewChange={setLivePreview}
-                      onEngineChange={handleEngineChange}
-                      onFormatChange={setFormat}
-                      onCodeChange={setCode}
-                      onRender={renderDiagram}
-                      onCopyCode={handleCopyCode}
-                      onClearCode={handleClearCode}
-                    />
-                  )}
-                  {sidebarTab === 'ai' && (
-                    <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">
-                      <AIAssistantPanel
-                        config={aiConfig}
-                        isConfigured={isAIConfigured}
-                        isAnalyzing={aiState.isAnalyzing}
-                        isGenerating={aiState.isGenerating}
-                        lastAnalysis={aiState.lastAnalysis}
-                        error={aiState.error}
-                        onUpdateConfig={updateAIConfig}
-                        onAnalyze={handleAIAnalyze}
-                        onFix={handleAIFix}
-                        onGenerate={handleAIGenerate}
-                        onApplyCode={handleAIApplyCode}
-                        onClearError={clearAIError}
-                        onClearAnalysis={clearAIAnalysis}
-                      />
-                    </div>
-                  )}
-                  {sidebarTab === 'history' && (
-                    <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">
-                      <VersionHistoryPanel
-                        versions={versions}
-                        isLoading={isVersionsLoading}
-                        onRestore={handleRestoreVersion}
-                        onDelete={deleteVersion}
-                        onRename={renameVersion}
-                        onCreateSnapshot={handleCreateSnapshot}
-                        onClearAll={handleClearVersions}
-                      />
-                    </div>
-                  )}
-                </div>
+                <SidebarTabs
+                  activeTab={sidebarTab}
+                  onTabChange={setSidebarTab}
+                  engine={engine}
+                  format={format}
+                  code={code}
+                  codeStats={codeStats}
+                  loading={loading}
+                  error={combinedError}
+                  canUseLocalRender={canUseLocalRender}
+                  livePreviewEnabled={livePreview}
+                  onLivePreviewChange={setLivePreview}
+                  onEngineChange={handleEngineChange}
+                  onFormatChange={setFormat}
+                  onCodeChange={setCode}
+                  onRender={renderDiagram}
+                  onCopyCode={handleCopyCode}
+                  onClearCode={handleClearCode}
+                  editorFontSize={settings.editorFontSize}
+                  aiConfig={aiConfig}
+                  isAIConfigured={isAIConfigured}
+                  isAnalyzing={aiState.isAnalyzing}
+                  isGenerating={aiState.isGenerating}
+                  lastAnalysis={aiState.lastAnalysis}
+                  aiError={aiState.error}
+                  onUpdateAIConfig={updateAIConfig}
+                  onAIAnalyze={handleAIAnalyze}
+                  onAIFix={handleAIFix}
+                  onAIGenerate={handleAIGenerate}
+                  onAIApplyCode={handleAIApplyCode}
+                  onClearAIError={clearAIError}
+                  onClearAIAnalysis={clearAIAnalysis}
+                  versions={versions}
+                  isVersionsLoading={isVersionsLoading}
+                  onRestoreVersion={handleRestoreVersion}
+                  onDeleteVersion={deleteVersion}
+                  onRenameVersion={renameVersion}
+                  onCreateSnapshot={handleCreateSnapshot}
+                  onClearVersions={handleClearVersions}
+                />
               </>
             )}
           </div>
