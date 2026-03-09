@@ -34,15 +34,26 @@ Run these in order:
 
 ## Files to inspect if something breaks
 
+### Core logic
 - `app/page.tsx`
 - `components/EditorPanel.tsx`
 - `components/PreviewPanel.tsx`
+- `components/PreviewToolbar.tsx`
+- `components/CodeEditor.tsx`
 - `hooks/useDiagramState.ts`
 - `hooks/useDiagramRender.ts`
+- `hooks/useLivePreview.ts`
+- `hooks/useSettings.ts`
+- `lib/diagramConfig.ts`
+- `lib/exportUtils.ts`
+
+### API & deployment
 - `app/api/render/route.ts`
+- `app/api/healthz/route.ts`
 - `netlify.toml`
 - `Dockerfile`
 - `docker-compose.yml`
+- `next.config.js`
 
 # Release-focused questions
 

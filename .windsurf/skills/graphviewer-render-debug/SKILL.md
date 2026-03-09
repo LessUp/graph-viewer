@@ -18,7 +18,10 @@ Use this skill when:
 - `hooks/useDiagramRender.ts`
   - local Mermaid / Graphviz rendering
   - fallback to `/api/render`
-  - download behavior
+  - download behavior, `buildApiErrorMessage` helper
+- `hooks/useLivePreview.ts`
+  - debounced auto-render triggering
+  - depends on `useSettings` debounceMs
 - `app/api/render/route.ts`
   - Kroki proxying
   - timeout, cache, allowlist, error mapping
@@ -28,11 +31,17 @@ Use this skill when:
 - `components/PreviewPanel.tsx`
   - SVG / PNG / PDF preview logic
 - `components/PreviewToolbar.tsx`
-  - export entry points
+  - export entry points, share link generation
+- `components/CodeEditor.tsx`
+  - CodeMirror wrapper, syntax highlighting per engine
+- `components/ErrorBoundary.tsx`
+  - catches React render errors
 - `lib/exportUtils.ts`
   - SVG / PNG / HTML / Markdown / source export behavior
+- `lib/syntaxHighlight.ts`
+  - CodeMirror language mapping per engine
 - `hooks/useSettings.ts`
-  - custom Kroki server settings
+  - custom Kroki server settings, debounceMs, editorFontSize
 
 # Investigation flow
 
