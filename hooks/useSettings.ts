@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface AppSettings {
   // 渲染服务器配置
@@ -26,6 +26,8 @@ const STORAGE_KEY = 'graphviewer-settings';
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
+  const settingsRef = useRef(settings);
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
 
   // 从 localStorage 加载设置
   useEffect(() => {
@@ -58,18 +60,8 @@ export function useSettings() {
   }, []);
 
   const toggleSidebar = useCallback(() => {
-    setSettings((prev) => {
-      const updated = { ...prev, sidebarCollapsed: !prev.sidebarCollapsed };
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        } catch (e) {
-          console.error('Failed to save settings:', e);
-        }
-      }
-      return updated;
-    });
-  }, []);
+    saveSettings({ sidebarCollapsed: !settingsRef.current.sidebarCollapsed });
+  }, [saveSettings]);
 
   return {
     settings,

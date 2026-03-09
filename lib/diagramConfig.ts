@@ -1,7 +1,7 @@
-export type Engine = 
-  | 'mermaid' 
-  | 'plantuml' 
-  | 'graphviz' 
+export type Engine =
+  | 'mermaid'
+  | 'plantuml'
+  | 'graphviz'
   | 'flowchart'
   | 'd2'
   | 'nomnoml'
@@ -19,9 +19,9 @@ export type Engine =
 export type Format = 'svg' | 'png' | 'pdf';
 
 export const ENGINES: Engine[] = [
-  'mermaid', 
-  'plantuml', 
-  'graphviz', 
+  'mermaid',
+  'plantuml',
+  'graphviz',
   'flowchart',
   'd2',
   'nomnoml',
@@ -206,6 +206,49 @@ export const ENGINE_CONFIGS: Record<Engine, EngineConfig> = {
     docUrl: 'https://vega.github.io/vega-lite/',
   },
 };
+
+/** Markdown 代码块语言标签 */
+export const ENGINE_LANG_MAP: Record<Engine, string> = {
+  mermaid: 'mermaid',
+  flowchart: 'mermaid',
+  graphviz: 'dot',
+  plantuml: 'plantuml',
+  d2: 'd2',
+  blockdiag: 'blockdiag',
+  seqdiag: 'seqdiag',
+  actdiag: 'actdiag',
+  nwdiag: 'nwdiag',
+  erd: 'erd',
+  vega: 'json',
+  vegalite: 'json',
+  wavedrom: 'json',
+  ditaa: 'ditaa',
+  svgbob: 'svgbob',
+  nomnoml: 'nomnoml',
+};
+
+/** 源代码文件扩展名 */
+export const ENGINE_EXT_MAP: Record<Engine, string> = {
+  mermaid: 'mmd',
+  flowchart: 'mmd',
+  graphviz: 'dot',
+  plantuml: 'puml',
+  d2: 'd2',
+  blockdiag: 'diag',
+  seqdiag: 'diag',
+  actdiag: 'diag',
+  nwdiag: 'diag',
+  erd: 'er',
+  vega: 'vg.json',
+  vegalite: 'vl.json',
+  wavedrom: 'json',
+  ditaa: 'ditaa',
+  svgbob: 'bob',
+  nomnoml: 'nomnoml',
+};
+
+/** JSON 格式引擎集合（用于语法高亮等场景） */
+export const JSON_ENGINES: ReadonlySet<Engine> = new Set<Engine>(['vega', 'vegalite', 'wavedrom']);
 
 export function isEngine(value: unknown): value is Engine {
   return typeof value === 'string' && (ENGINE_SET as Set<string>).has(value);

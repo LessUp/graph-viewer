@@ -1,6 +1,6 @@
 # GraphViewer
 
-一站式图形语法可视化工具，支持 Mermaid、PlantUML、Graphviz 等，提供本地与服务端混合渲染、容器化部署与自动化测试。
+一站式图形语法可视化工具，支持 Mermaid、PlantUML、Graphviz、D2、Nomnoml、Ditaa、BlockDiag、NwDiag、ActDiag、SeqDiag、ERD、SVGBob、WaveDrom、Vega、Vega-Lite 等 16 种图表引擎，提供本地与服务端混合渲染、容器化部署与自动化测试。
 
 ## 新功能
 - 本地 Graphviz WASM 渲染（SVG）与 Mermaid 本地渲染，减少网络往返、提升响应速度。
@@ -14,6 +14,9 @@
   - `npm install`
   - `npm run dev`
   - 打开 `http://localhost:3000`
+- 类型检查与测试：
+  - `npm run typecheck`
+  - `npm test`
 
 ## 部署指南
 - 环境变量：
@@ -35,7 +38,7 @@
 - 健康检查端点：`/api/healthz`（app/api/healthz/route.ts）
 - 渲染 API：`/api/render`（app/api/render/route.ts）
 - 客户端渲染入口：`app/page.tsx`
- - 架构总览：
+- 架构总览：
    - 前端：`app/page.tsx` + `components/*` + `hooks/*`，负责编辑、预览与状态持久化。
    - 后端：`/api/render` 作为 Kroki 代理与缓存层，`/api/healthz` 用于健康检查。
    - 配置：`lib/diagramConfig.ts` 统一维护引擎/格式，`lib/diagramSamples.ts` 存放示例代码。
@@ -52,6 +55,8 @@
   - 如需更严格的安全隔离，可在反向代理或前置网关层增加额外访问控制和日志策略。
 
 ## 测试与基准
+- 单元测试：`npm test`
+- 类型检查：`npm run typecheck`
 - 冒烟测试：`npm run test:smoke`（默认访问 `http://localhost:3000`）
 - 基准测试：`npm run bench`（支持环境变量 `APP_URL`、`N`）
 

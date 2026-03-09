@@ -3,7 +3,7 @@
  * 接入大模型 API 进行代码分析、自动修正和智能建议
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
 
 export type AIProvider = 'openai' | 'anthropic' | 'local' | 'custom';
@@ -40,86 +40,27 @@ const DEFAULT_CONFIG: AIConfig = {
   model: 'gpt-4o-mini',
 };
 
-const DEFAULT_SYSTEM_PROMPT = `你是一个图表语法专家。你的任务是：
-1. 分析用户提供的图表代码，找出语法错误
-2. 提供修正建议和正确的代码
-3. 解释错误原因
-4. 给出改进建议
-
-请以 JSON 格式回复，包含以下字段：
+const ANALYSIS_JSON_SCHEMA = `请以 JSON 格式回复，包含以下字段：
 - hasErrors: boolean - 是否有错误
 - errors: array - 错误列表，每个错误包含 line(行号), message(错误描述), suggestion(修正建议)
 - correctedCode: string - 修正后的完整代码（如果有错误）
 - suggestions: array - 改进建议列表
 - explanation: string - 总体解释`;
 
-const SYSTEM_PROMPTS: Partial<Record<Engine, string>> = {
-  mermaid: `你是一个 Mermaid 图表语法专家。你的任务是：
-1. 分析用户提供的 Mermaid 代码，找出语法错误
+function buildAnalysisPrompt(engineName: string): string {
+  return `你是一个 ${engineName} 图表语法专家。你的任务是：
+1. 分析用户提供的 ${engineName} 代码，找出语法错误
 2. 提供修正建议和正确的代码
 3. 解释错误原因
 4. 给出改进建议
 
-请以 JSON 格式回复，包含以下字段：
-- hasErrors: boolean - 是否有错误
-- errors: array - 错误列表，每个错误包含 line(行号), message(错误描述), suggestion(修正建议)
-- correctedCode: string - 修正后的完整代码（如果有错误）
-- suggestions: array - 改进建议列表
-- explanation: string - 总体解释`,
+${ANALYSIS_JSON_SCHEMA}`;
+}
 
-  plantuml: `你是一个 PlantUML 图表语法专家。你的任务是：
-1. 分析用户提供的 PlantUML 代码，找出语法错误
-2. 提供修正建议和正确的代码
-3. 解释错误原因
-4. 给出改进建议
-
-请以 JSON 格式回复，包含以下字段：
-- hasErrors: boolean - 是否有错误
-- errors: array - 错误列表，每个错误包含 line(行号), message(错误描述), suggestion(修正建议)
-- correctedCode: string - 修正后的完整代码（如果有错误）
-- suggestions: array - 改进建议列表
-- explanation: string - 总体解释`,
-
-  graphviz: `你是一个 Graphviz DOT 语法专家。你的任务是：
-1. 分析用户提供的 Graphviz DOT 代码，找出语法错误
-2. 提供修正建议和正确的代码
-3. 解释错误原因
-4. 给出改进建议
-
-请以 JSON 格式回复，包含以下字段：
-- hasErrors: boolean - 是否有错误
-- errors: array - 错误列表，每个错误包含 line(行号), message(错误描述), suggestion(修正建议)
-- correctedCode: string - 修正后的完整代码（如果有错误）
-- suggestions: array - 改进建议列表
-- explanation: string - 总体解释`,
-
-  flowchart: `你是一个 Flowchart 图表语法专家。你的任务是：
-1. 分析用户提供的 Flowchart 代码，找出语法错误
-2. 提供修正建议和正确的代码
-3. 解释错误原因
-4. 给出改进建议
-
-请以 JSON 格式回复，包含以下字段：
-- hasErrors: boolean - 是否有错误
-- errors: array - 错误列表，每个错误包含 line(行号), message(错误描述), suggestion(修正建议)
-- correctedCode: string - 修正后的完整代码（如果有错误）
-- suggestions: array - 改进建议列表
-- explanation: string - 总体解释`,
-};
-
-const GENERATION_PROMPTS: Partial<Record<Engine, string>> = {
-  mermaid: `你是一个 Mermaid 图表生成专家。根据用户的描述，生成对应的 Mermaid 代码。
-只返回纯 Mermaid 代码，不要包含任何解释或 markdown 代码块标记。`,
-
-  plantuml: `你是一个 PlantUML 图表生成专家。根据用户的描述，生成对应的 PlantUML 代码。
-只返回纯 PlantUML 代码（包含 @startuml 和 @enduml），不要包含任何解释或 markdown 代码块标记。`,
-
-  graphviz: `你是一个 Graphviz DOT 图表生成专家。根据用户的描述，生成对应的 DOT 代码。
-只返回纯 DOT 代码，不要包含任何解释或 markdown 代码块标记。`,
-
-  flowchart: `你是一个 Flowchart 图表生成专家。根据用户的描述，生成对应的 Flowchart 代码。
-只返回纯代码，不要包含任何解释或 markdown 代码块标记。`,
-};
+function buildGenerationPrompt(engineName: string): string {
+  return `你是一个 ${engineName} 图表生成专家。根据用户的描述，生成对应的 ${engineName} 代码。
+只返回纯 ${engineName} 代码，不要包含任何解释或 markdown 代码块标记。`;
+}
 
 const CONFIG_STORAGE_KEY = 'graphviewer:ai-config:v1';
 
@@ -156,6 +97,10 @@ export function useAIAssistant(engine: Engine) {
     error: null,
   });
 
+  // 用 ref 保持 config 最新值，避免 callAI 重建导致 analyzeCode/generateCode/fixCode 级联失效
+  const configRef = useRef(config);
+  useEffect(() => { configRef.current = config; }, [config]);
+
   // 更新配置
   const updateConfig = useCallback((newConfig: Partial<AIConfig>) => {
     setConfig(prev => {
@@ -167,7 +112,7 @@ export function useAIAssistant(engine: Engine) {
 
   // 调用 AI API
   const callAI = useCallback(async (systemPrompt: string, userMessage: string): Promise<string> => {
-    const { provider, apiKey, apiEndpoint, model } = config;
+    const { provider, apiKey, apiEndpoint, model } = configRef.current;
 
     if (!apiKey) {
       throw new Error('请先配置 AI API Key');
@@ -256,14 +201,14 @@ export function useAIAssistant(engine: Engine) {
     const choices = Array.isArray(data?.choices) ? data.choices : [];
     const msg = choices[0]?.message;
     return typeof msg?.content === 'string' ? msg.content : '';
-  }, [config]);
+  }, []);
 
   // 分析代码
   const analyzeCode = useCallback(async (code: string): Promise<AIAnalysisResult> => {
     setState(prev => ({ ...prev, isAnalyzing: true, error: null }));
 
     try {
-      const systemPrompt = SYSTEM_PROMPTS[engine] || DEFAULT_SYSTEM_PROMPT;
+      const systemPrompt = buildAnalysisPrompt(engine);
       const userMessage = `请分析以下 ${engine} 代码：\n\n${code}`;
 
       const response = await callAI(systemPrompt, userMessage);
@@ -315,9 +260,7 @@ export function useAIAssistant(engine: Engine) {
     setState(prev => ({ ...prev, isGenerating: true, error: null }));
 
     try {
-      const systemPrompt =
-        GENERATION_PROMPTS[engine] ||
-        `你是一个图表生成专家。根据用户的描述，生成对应的 ${engine} 代码。\n只返回纯代码，不要包含任何解释或 markdown 代码块标记。`;
+      const systemPrompt = buildGenerationPrompt(engine);
       const response = await callAI(systemPrompt, description);
 
       // 清理可能的 markdown 代码块

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { isEngine, isFormat } from '@/lib/diagramConfig';
@@ -202,48 +202,53 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     return { lines, chars };
   }, [code]);
 
-  const handleSetCurrentId = (id: string) => {
+  const handleSetCurrentId = useCallback((id: string) => {
     if (!id) return;
-    const found = diagrams.find((d: DiagramDoc) => d.id === id);
-    setCurrentId(id);
-    if (found) {
-      setEngine(found.engine);
-      setFormat(found.format);
-      setCode(found.code);
-    }
-  };
+    setDiagrams((prev) => {
+      const found = prev.find((d) => d.id === id);
+      if (found) {
+        setCurrentId(id);
+        setEngine(found.engine);
+        setFormat(found.format);
+        setCode(found.code);
+      }
+      return prev;
+    });
+  }, []);
 
-  const createDiagram = (defaultCode?: string) => {
+  const createDiagram = useCallback((defaultCode?: string) => {
     const id = generateDiagramId();
     const now = new Date().toISOString();
-    const name = `未命名图 ${diagrams.length + 1}`;
     const newCode = defaultCode ?? '';
-    const doc: DiagramDoc = {
-      id,
-      name,
-      engine,
-      format,
-      code: newCode,
-      updatedAt: now,
-    };
-    setDiagrams([...diagrams, doc]);
+    setDiagrams((prev) => {
+      const name = `未命名图 ${prev.length + 1}`;
+      const doc: DiagramDoc = {
+        id,
+        name,
+        engine,
+        format,
+        code: newCode,
+        updatedAt: now,
+      };
+      return [...prev, doc];
+    });
     setCurrentId(id);
     setCode(newCode);
-  };
+  }, [engine, format]);
 
-  const renameDiagram = (id: string, name: string) => {
+  const renameDiagram = useCallback((id: string, name: string) => {
     if (!id) return;
-    setDiagrams((prev: DiagramDoc[]) => {
+    setDiagrams((prev) => {
       const next = prev.slice();
-      const idx = next.findIndex((d: DiagramDoc) => d.id === id);
+      const idx = next.findIndex((d) => d.id === id);
       if (idx === -1) return prev;
       const n = name && name.trim().length > 0 ? name.trim() : next[idx].name;
       next[idx] = { ...next[idx], name: n, updatedAt: new Date().toISOString() };
       return next;
     });
-  };
+  }, []);
 
-  const importWorkspace = (payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => {
+  const importWorkspace = useCallback((payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => {
     const raw = Array.isArray(payload?.diagrams) ? payload.diagrams : [];
     if (!raw.length) return;
 
@@ -271,12 +276,12 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     setEngine(nextDoc.engine);
     setFormat(nextDoc.format);
     setCode(nextDoc.code);
-  };
+  }, []);
 
-  const deleteDiagram = (id: string) => {
+  const deleteDiagram = useCallback((id: string) => {
     if (!id) return;
-    setDiagrams((prev: DiagramDoc[]) => {
-      const idx = prev.findIndex((d: DiagramDoc) => d.id === id);
+    setDiagrams((prev) => {
+      const idx = prev.findIndex((d) => d.id === id);
       if (idx === -1) return prev;
       const next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
 
@@ -312,7 +317,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       setCode(fallback.code);
       return next;
     });
-  };
+  }, [currentId]);
 
   return {
     engine,

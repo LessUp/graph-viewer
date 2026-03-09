@@ -3,7 +3,7 @@
  * 为每个图表提供版本历史记录和恢复功能
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
 
 export type VersionRecord = {
@@ -60,19 +60,29 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
     }
   }, []);
 
-  // 获取当前图表的版本历史
-  const diagramVersions = versions
-    .filter(v => v.diagramId === diagramId)
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  // 使用 ref 保持最新值，避免 createVersion / interval 被频繁重建
+  const codeRef = useRef(currentCode);
+  const engineRef = useRef(currentEngine);
+  useEffect(() => { codeRef.current = currentCode; }, [currentCode]);
+  useEffect(() => { engineRef.current = currentEngine; }, [currentEngine]);
 
-  // 创建新版本
+  // 获取当前图表的版本历史（memoize 避免每次渲染重新排序）
+  const diagramVersions = useMemo(
+    () => versions
+      .filter(v => v.diagramId === diagramId)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    [versions, diagramId],
+  );
+
+  // 创建新版本 —— 通过 ref 读取 code/engine，避免依赖数组包含高频变化值
   const createVersion = useCallback((label?: string, autoSave = false) => {
-    if (!diagramId || !currentCode.trim()) return null;
+    const code = codeRef.current;
+    const eng = engineRef.current;
+    if (!diagramId || !code.trim()) return null;
 
     let result: VersionRecord | null = null;
 
     setVersions(prev => {
-      // 在回调内计算当前图表的版本，避免 stale closure
       const currentDiagramVersions = prev
         .filter(v => v.diagramId === diagramId)
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -80,13 +90,13 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
 
       // 检查是否与最新版本相同
       const latestVersion = currentDiagramVersions[0];
-      if (latestVersion && latestVersion.code === currentCode && latestVersion.engine === currentEngine) {
-        return prev; // 代码没有变化，不创建新版本
+      if (latestVersion && latestVersion.code === code && latestVersion.engine === eng) {
+        return prev;
       }
 
       // 自动保存时检查变化是否足够大
       if (autoSave && latestVersion) {
-        const changeSize = Math.abs(currentCode.length - latestVersion.code.length);
+        const changeSize = Math.abs(code.length - latestVersion.code.length);
         if (changeSize < MIN_CHANGE_THRESHOLD) {
           return prev;
         }
@@ -95,8 +105,8 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
       const newVersion: VersionRecord = {
         id: generateVersionId(),
         diagramId,
-        code: currentCode,
-        engine: currentEngine,
+        code,
+        engine: eng,
         timestamp: new Date().toISOString(),
         label,
         autoSave,
@@ -128,7 +138,7 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
     });
 
     return result;
-  }, [diagramId, currentCode, currentEngine, saveVersionsToStorage]);
+  }, [diagramId, saveVersionsToStorage]);
 
   // 删除版本
   const deleteVersion = useCallback((versionId: string) => {
@@ -159,13 +169,7 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
     });
   }, [diagramId, saveVersionsToStorage]);
 
-  // 使用 ref 保持最新值，避免 interval 被频繁重建
-  const codeRef = useRef(currentCode);
-  const engineRef = useRef(currentEngine);
-  useEffect(() => { codeRef.current = currentCode; }, [currentCode]);
-  useEffect(() => { engineRef.current = currentEngine; }, [currentEngine]);
-
-  // 自动保存 —— 仅在 diagramId 变化时重建 interval
+  // 自动保存 —— 仅在 diagramId 变化时重建 interval（createVersion 现在稳定）
   useEffect(() => {
     if (!diagramId) return;
 
@@ -178,24 +182,6 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
     return () => clearInterval(timer);
   }, [diagramId, createVersion]);
 
-  // 比较两个版本
-  const compareVersions = useCallback((versionId1: string, versionId2: string) => {
-    const v1 = versions.find(v => v.id === versionId1);
-    const v2 = versions.find(v => v.id === versionId2);
-
-    if (!v1 || !v2) return null;
-
-    return {
-      version1: v1,
-      version2: v2,
-      // 简单的差异统计
-      diff: {
-        addedLines: v2.code.split('\n').length - v1.code.split('\n').length,
-        addedChars: v2.code.length - v1.code.length,
-      }
-    };
-  }, [versions]);
-
   return {
     versions: diagramVersions,
     isLoading,
@@ -203,7 +189,5 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
     deleteVersion,
     renameVersion,
     clearDiagramVersions,
-    compareVersions,
-    totalVersionCount: diagramVersions.length,
   };
 }

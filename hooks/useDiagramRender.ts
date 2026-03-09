@@ -96,6 +96,17 @@ async function renderGraphvizLocally(
   return false;
 }
 
+function triggerFileDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function buildApiErrorMessage(
   res: Response,
   json: Record<string, unknown> | null,
@@ -261,15 +272,7 @@ export function useDiagramRender(
     setErrorState('');
     try {
       if (canUseLocalRender && svg) {
-        const blob = new Blob([svg], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `diagram.${format}`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+        triggerFileDownload(new Blob([svg], { type: 'image/svg+xml' }), `diagram.${format}`);
         return;
       }
       if (abortRef.current) {
@@ -295,14 +298,7 @@ export function useDiagramRender(
         throw new Error(buildApiErrorMessage(res, j, '下载失败'));
       }
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `diagram.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      triggerFileDownload(blob, `diagram.${format}`);
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== 'AbortError') {
         setErrorState(e.message || '下载失败');

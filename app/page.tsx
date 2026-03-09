@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { SettingsModal } from '@/components/SettingsModal';
 import { Toast } from '@/components/Toast';
@@ -15,248 +15,89 @@ import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/hooks/useToast';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
-import { useVersionHistory, type VersionRecord } from '@/hooks/useVersionHistory';
+import { useVersionHistory } from '@/hooks/useVersionHistory';
+import { useWorkspaceActions } from '@/hooks/useWorkspaceActions';
+import { useLivePreview } from '@/hooks/useLivePreview';
+import { useAIActions } from '@/hooks/useAIActions';
+import { useVersionActions } from '@/hooks/useVersionActions';
 import { SAMPLES } from '@/lib/diagramSamples';
 import { Loader2 } from 'lucide-react';
 
 export default function Page() {
   const {
-    engine,
-    format,
-    code,
-    codeStats,
-    linkError,
-    diagrams,
-    currentId,
-    hasHydrated,
-    setEngine,
-    setFormat,
-    setCode,
-    setCurrentId,
-    createDiagram,
-    renameDiagram,
-    deleteDiagram,
-    importWorkspace,
+    engine, format, code, codeStats, linkError,
+    diagrams, currentId, hasHydrated,
+    setEngine, setFormat, setCode, setCurrentId,
+    createDiagram, renameDiagram, deleteDiagram, importWorkspace,
   } = useDiagramState(SAMPLES['mermaid']);
 
   const { settings, isLoaded: settingsLoaded, saveSettings, toggleSidebar } = useSettings();
 
   const {
-    svg,
-    base64,
-    contentType,
-    loading,
-    error,
-    canUseLocalRender,
-    showPreview,
-    renderDiagram,
-    clearError,
-    setError,
-    resetOutput,
+    svg, base64, contentType, loading, error,
+    canUseLocalRender, showPreview,
+    renderDiagram, clearError, setError, resetOutput,
   } = useDiagramRender(
-    engine,
-    format,
-    code,
+    engine, format, code,
     settings.useCustomServer ? settings.renderServerUrl : undefined,
   );
 
-  const [livePreview, setLivePreview] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('editor');
-  const debounceRef = useRef<number | null>(null);
   const { toast, showToast } = useToast();
 
-  // AI 助手
+  const combinedError = error || linkError;
+
+  // --- 组合 hooks ---
+
+  const { livePreview, setLivePreview } = useLivePreview({
+    engine, code,
+    debounceMs: settings.debounceMs,
+    renderDiagram, resetOutput,
+  });
+
+  const {
+    handleCopyCode, handleClearCode,
+    handleSelectDiagram, handleCreateDiagram,
+    handleRenameDiagram, handleDeleteDiagram,
+    handleExportWorkspace, handleEngineChange,
+  } = useWorkspaceActions({
+    engine, code, currentId, diagrams,
+    setCode, setEngine, resetOutput,
+    createDiagram, renameDiagram, deleteDiagram, setCurrentId,
+    clearError, setError, showToast,
+  });
+
   const {
     config: aiConfig,
     updateConfig: updateAIConfig,
     state: aiState,
-    analyzeCode,
-    generateCode,
-    fixCode,
     clearError: clearAIError,
     clearAnalysis: clearAIAnalysis,
     isConfigured: isAIConfigured,
+    analyzeCode, generateCode, fixCode,
   } = useAIAssistant(engine);
 
-  // 版本历史
   const {
-    versions,
-    isLoading: isVersionsLoading,
-    createVersion,
-    deleteVersion,
-    renameVersion,
-    clearDiagramVersions,
+    handleAIAnalyze, handleAIFix,
+    handleAIGenerate, handleAIApplyCode,
+  } = useAIActions({
+    code, combinedError,
+    analyzeCode, fixCode, generateCode,
+    setCode, setSidebarTab, showToast,
+  });
+
+  const {
+    versions, isLoading: isVersionsLoading,
+    createVersion, deleteVersion, renameVersion, clearDiagramVersions,
   } = useVersionHistory(currentId, code, engine);
 
-  const combinedError = error || linkError;
-
-  // 实时预览 debounce
-  useEffect(() => {
-    if (!livePreview) {
-      if (debounceRef.current !== null) {
-        clearTimeout(debounceRef.current);
-        debounceRef.current = null;
-      }
-      return;
-    }
-    if (!code.trim()) {
-      resetOutput();
-      return;
-    }
-    if (debounceRef.current !== null) clearTimeout(debounceRef.current);
-    debounceRef.current = window.setTimeout(() => void renderDiagram(), settings.debounceMs);
-    return () => {
-      if (debounceRef.current !== null) {
-        clearTimeout(debounceRef.current);
-        debounceRef.current = null;
-      }
-    };
-  }, [livePreview, engine, code, settings.debounceMs, renderDiagram, resetOutput]);
-
-  // --- 事件处理 ---
-
-  const handleCopyCode = useCallback(async () => {
-    clearError();
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(code);
-        showToast('代码已复制到剪贴板');
-      } else {
-        window.prompt('请手动复制以下代码', code);
-      }
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : '复制代码失败';
-      setError(msg);
-    }
-  }, [code, clearError, setError, showToast]);
-
-  const handleClearCode = useCallback(() => {
-    setCode('');
-    resetOutput();
-  }, [setCode, resetOutput]);
-
-  const handleSelectDiagram = useCallback(
-    (id: string) => {
-      if (id && id !== currentId) setCurrentId(id);
-    },
-    [currentId, setCurrentId],
-  );
-
-  const handleCreateDiagram = useCallback(() => {
-    createDiagram(SAMPLES[engine] || '');
-  }, [engine, createDiagram]);
-
-  const handleRenameDiagram = useCallback(
-    (id: string, currentName: string) => {
-      if (typeof window === 'undefined') return;
-      const next = window.prompt('请输入新的图名称', currentName || '');
-      const trimmed = next?.trim();
-      if (trimmed) renameDiagram(id, trimmed);
-    },
-    [renameDiagram],
-  );
-
-  const handleDeleteDiagram = useCallback(
-    (id: string, name: string) => {
-      if (typeof window === 'undefined') return;
-      const label = name?.trim() || '未命名图';
-      if (window.confirm(`确定要删除图「${label}」吗？此操作不可撤销。`)) {
-        deleteDiagram(id);
-      }
-    },
-    [deleteDiagram],
-  );
-
-  const handleExportWorkspace = useCallback(() => {
-    try {
-      const payload = {
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        currentId,
-        diagrams,
-      };
-      const json = JSON.stringify(payload, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
-      a.href = url;
-      a.download = `graphviewer-workspace-${ts}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : '导出项目集失败';
-      setError(msg);
-    }
-  }, [currentId, diagrams, setError]);
-
-  const handleEngineChange = useCallback(
-    (newEngine: typeof engine, loadSample?: boolean) => {
-      setEngine(newEngine);
-      if (loadSample) {
-        setCode(SAMPLES[newEngine] || '');
-        resetOutput();
-      }
-    },
-    [setEngine, setCode, resetOutput],
-  );
-
-  // --- AI 助手事件处理 ---
-  const handleAIAnalyze = useCallback(() => {
-    if (!code.trim()) return;
-    analyzeCode(code);
-  }, [code, analyzeCode]);
-
-  const handleAIFix = useCallback(async () => {
-    if (!code.trim()) return;
-    const fixed = await fixCode(code, combinedError || undefined);
-    if (fixed) {
-      setCode(fixed);
-      showToast('AI 已修复代码', 'success');
-    }
-  }, [code, combinedError, fixCode, setCode, showToast]);
-
-  const handleAIGenerate = useCallback(async (description: string) => {
-    const generated = await generateCode(description);
-    if (generated) {
-      setCode(generated);
-      setSidebarTab('editor');
-      showToast('代码已生成', 'success');
-    }
-  }, [generateCode, setCode, showToast]);
-
-  const handleAIApplyCode = useCallback((newCode: string) => {
-    setCode(newCode);
-    setSidebarTab('editor');
-    showToast('已应用修改', 'success');
-  }, [setCode, showToast]);
-
-  // --- 版本历史事件处理 ---
-  const handleCreateSnapshot = useCallback(() => {
-    const v = createVersion('手动快照');
-    if (v) {
-      showToast('快照已创建', 'success');
-    } else {
-      showToast('代码无变化，无需创建快照', 'info');
-    }
-  }, [createVersion, showToast]);
-
-  const handleRestoreVersion = useCallback((version: VersionRecord) => {
-    setCode(version.code);
-    setEngine(version.engine);
-    showToast('已恢复到该版本', 'success');
-  }, [setCode, setEngine, showToast]);
-
-  const handleClearVersions = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    if (window.confirm('确定要清空所有版本历史吗？此操作不可撤销。')) {
-      clearDiagramVersions();
-      showToast('版本历史已清空', 'info');
-    }
-  }, [clearDiagramVersions, showToast]);
+  const {
+    handleCreateSnapshot, handleRestoreVersion, handleClearVersions,
+  } = useVersionActions({
+    createVersion, clearDiagramVersions,
+    setCode, setEngine, showToast,
+  });
 
   // 水合加载状态
   if (!hasHydrated || !settingsLoaded) {
@@ -319,11 +160,7 @@ export default function Page() {
                   onTabChange={setSidebarTab}
                   versions={versions}
                   editorProps={{
-                    engine,
-                    format,
-                    code,
-                    codeStats,
-                    loading,
+                    engine, format, code, codeStats, loading,
                     error: combinedError,
                     canUseLocalRender,
                     livePreviewEnabled: livePreview,

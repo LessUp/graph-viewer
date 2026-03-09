@@ -8,5 +8,10 @@ coverage
 *.md
 docs
 scripts
+changelog
 Dockerfile
 docker-compose.yml
+.env*
+!.env.example
+.vscode
+.windsurf
