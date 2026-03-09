@@ -5,14 +5,17 @@ import { canUseLocalRender as canUseLocalRenderConfig } from '@/lib/diagramConfi
 const GRAPHVIZ_WASM_BASE_URL =
   process.env.NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL || 'https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist';
 
-let mermaidPromise: Promise<any> | null = null;
-let graphvizPromise: Promise<any> | null = null;
+type MermaidApi = { initialize?: (cfg: Record<string, unknown>) => void; render: (id: string, code: string) => Promise<{ svg: string }> };
+type GraphvizApi = { wasmFolder?: (url: string) => void; load?: () => Promise<void>; layout: (code: string, format: string, engine: string) => Promise<string> };
+
+let mermaidPromise: Promise<MermaidApi> | null = null;
+let graphvizPromise: Promise<GraphvizApi> | null = null;
 
 async function loadMermaid() {
   if (!mermaidPromise) {
     mermaidPromise = import('mermaid')
       .then((module) => {
-        const mermaid = module?.default ?? module;
+        const mermaid = (module?.default ?? module) as MermaidApi;
         if (mermaid?.initialize) {
           mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'strict' });
         }
@@ -30,7 +33,8 @@ async function loadGraphviz() {
   if (!graphvizPromise) {
     graphvizPromise = import('@hpcc-js/wasm')
       .then(async (module) => {
-        const g = (module as any).graphviz ?? module;
+        const mod = module as Record<string, unknown>;
+        const g = (mod.graphviz ?? module) as GraphvizApi;
         if (g?.wasmFolder) {
           g.wasmFolder(GRAPHVIZ_WASM_BASE_URL);
         }
@@ -313,7 +317,7 @@ export function useDiagramRender(
     base64,
     contentType,
     loading,
-    error: error,
+    error,
     canUseLocalRender,
     showPreview,
     renderDiagram,

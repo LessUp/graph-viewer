@@ -267,7 +267,7 @@ async function svgToCanvasUsingImage(
 
                 URL.revokeObjectURL(url);
                 resolve(canvas);
-            } catch (e) {
+            } catch (e: unknown) {
                 URL.revokeObjectURL(url);
                 reject(e);
             }

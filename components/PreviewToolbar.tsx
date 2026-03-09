@@ -1,7 +1,9 @@
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { compressToEncodedURIComponent } from 'lz-string';
 import { exportSvg, exportPng, copyPngToClipboard, exportHtml, exportMarkdown, exportSourceCode } from '@/lib/exportUtils';
+import type { Engine } from '@/lib/diagramConfig';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize, Download, Loader2, Check, Copy, Share2 } from 'lucide-react';
 
 interface PreviewToolbarProps {
@@ -12,7 +14,7 @@ interface PreviewToolbarProps {
   onFullscreen?: () => void;
   svgContent: string | null;
   code?: string;
-  engine?: string;
+  engine?: Engine;
   filename?: string;
 }
 

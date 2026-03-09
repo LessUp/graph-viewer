@@ -1,18 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { isEngine, isFormat } from '@/lib/diagramConfig';
+import type { DiagramDoc } from '@/lib/types';
 
 const LOCAL_STORAGE_KEY = 'graphviewer:state:v1';
-
-type DiagramDoc = {
-  id: string;
-  name: string;
-  engine: Engine;
-  format: Format;
-  code: string;
-  updatedAt: string;
-};
 
 type DiagramState = {
   engine: Engine;
@@ -138,66 +130,61 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     }
   }, []);
 
+  // 使用 functional update 同步当前编辑状态到 diagrams，避免 diagrams 出现在依赖数组中导致循环渲染
   useEffect(() => {
     if (!hasHydrated) return;
-    if (!diagrams.length && !currentId) {
-      const id = generateDiagramId();
-      const now = new Date().toISOString();
-      const name = '未命名图 1';
-      const first: DiagramDoc = {
-        id,
-        name,
-        engine,
-        format,
-        code,
-        updatedAt: now,
-      };
-      setDiagrams([first]);
-      setCurrentId(id);
-      return;
-    }
 
-    if (!currentId && diagrams.length > 0) {
-      setCurrentId(diagrams[0].id);
-      return;
-    }
+    setDiagrams((prev) => {
+      // 初始化：首次没有任何图表
+      if (!prev.length && !currentId) {
+        const id = generateDiagramId();
+        const doc: DiagramDoc = {
+          id,
+          name: '未命名图 1',
+          engine,
+          format,
+          code,
+          updatedAt: new Date().toISOString(),
+        };
+        setCurrentId(id);
+        return [doc];
+      }
 
-    if (!currentId) return;
+      if (!currentId) {
+        if (prev.length > 0) {
+          setCurrentId(prev[0].id);
+        }
+        return prev;
+      }
 
-    const idx = diagrams.findIndex((d: DiagramDoc) => d.id === currentId);
-    const now = new Date().toISOString();
+      const idx = prev.findIndex((d) => d.id === currentId);
 
-    if (idx === -1) {
-      const name = `未命名图 ${diagrams.length + 1}`;
-      const doc: DiagramDoc = {
-        id: currentId,
-        name,
-        engine,
-        format,
-        code,
-        updatedAt: now,
-      };
-      setDiagrams([...diagrams, doc]);
-      return;
-    }
+      if (idx === -1) {
+        const doc: DiagramDoc = {
+          id: currentId,
+          name: `未命名图 ${prev.length + 1}`,
+          engine,
+          format,
+          code,
+          updatedAt: new Date().toISOString(),
+        };
+        return [...prev, doc];
+      }
 
-    const current = diagrams[idx];
-    if (
-      current.engine !== engine ||
-      current.format !== format ||
-      current.code !== code
-    ) {
-      const next = diagrams.slice();
-      next[idx] = {
-        ...current,
-        engine,
-        format,
-        code,
-        updatedAt: now,
-      };
-      setDiagrams(next);
-    }
-  }, [engine, format, code, currentId, diagrams, hasHydrated]);
+      const current = prev[idx];
+      if (
+        current.engine === engine &&
+        current.format === format &&
+        current.code === code
+      ) {
+        return prev; // 无变化，不触发重新渲染
+      }
+
+      const next = prev.slice();
+      next[idx] = { ...current, engine, format, code, updatedAt: new Date().toISOString() };
+      return next;
+    });
+  }, [engine, format, code, currentId, hasHydrated]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !hasHydrated) return;

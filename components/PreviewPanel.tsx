@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
 import DOMPurify from 'dompurify';
 import { PreviewToolbar } from '@/components/PreviewToolbar';
 import { ENGINE_LABELS, FORMAT_LABELS, type Engine, type Format } from '@/lib/diagramConfig';
@@ -43,61 +43,50 @@ export function PreviewPanel(props: PreviewPanelProps) {
   }, [showPreview]);
 
   // 滚轮缩放
-  const handleWheel = (e: WheelEvent) => {
-    // 如果按住 Ctrl/Meta 键，或者只是普通的滚轮行为（为了方便，我们允许直接滚轮缩放）
-    // 这里为了避免与页面滚动冲突，我们还是建议配合 Ctrl，或者在全屏模式下直接缩放
-    // 但为了体验，如果是在这个区域内，我们可以拦截
+  const handleWheel = useCallback((e: WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       e.stopPropagation();
       const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      setZoom((z) => {
-        const newZoom = z * delta;
-        return Math.min(Math.max(newZoom, 0.1), 10);
-      });
+      setZoom((z) => Math.min(Math.max(z * delta, 0.1), 10));
     }
-  };
+  }, []);
 
   // 开始平移
-  const handleMouseDown = (e: MouseEvent) => {
-    // 中键 或者 按住空格+左键 (这里简化为直接左键拖拽，如果不是在选中文本的话)
-    // 为了避免冲突，我们设定：
-    // 1. 中键拖拽
-    // 2. 左键拖拽（如果是在空白处）
-    // 这里简单起见，允许左键直接拖拽，因为 SVG 通常不需要选中文本
+  const handleMouseDown = useCallback((e: MouseEvent) => {
     if (e.button === 0 || e.button === 1) {
       e.preventDefault();
       setIsPanning(true);
       lastMousePos.current = { x: e.clientX, y: e.clientY };
     }
-  };
+  }, []);
 
   // 移动中
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isPanning) return;
     e.preventDefault();
     const dx = e.clientX - lastMousePos.current.x;
     const dy = e.clientY - lastMousePos.current.y;
     lastMousePos.current = { x: e.clientX, y: e.clientY };
     setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
-  };
+  }, [isPanning]);
 
   // 结束平移
-  const endPan = () => {
+  const endPan = useCallback(() => {
     setIsPanning(false);
-  };
+  }, []);
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z * 1.25, 10));
-  const handleZoomOut = () => setZoom((z) => Math.max(z / 1.25, 0.1));
-  const handleResetZoom = () => {
+  const handleZoomIn = useCallback(() => setZoom((z) => Math.min(z * 1.25, 10)), []);
+  const handleZoomOut = useCallback(() => setZoom((z) => Math.max(z / 1.25, 0.1)), []);
+  const handleResetZoom = useCallback(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
-  };
+  }, []);
 
   // 全屏功能
-  const handleFullscreen = async () => {
+  const handleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
-    
+
     try {
       if (!document.fullscreenElement) {
         await containerRef.current.requestFullscreen();
@@ -106,10 +95,10 @@ export function PreviewPanel(props: PreviewPanelProps) {
         await document.exitFullscreen();
         setIsFullscreen(false);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Fullscreen error:', e);
     }
-  };
+  }, []);
 
   // 监听全屏变化
   useEffect(() => {
@@ -126,12 +115,12 @@ export function PreviewPanel(props: PreviewPanelProps) {
     format === 'svg' ? '支持无限缩放与矢量导出' : format === 'png' ? '适合截图分享与复制' : '适合文档交付与打印';
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`relative flex h-full min-h-[420px] w-full flex-col overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur ${isFullscreen ? 'rounded-none border-0' : ''}`}
     >
       {/* 背景网格 */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `
@@ -225,7 +214,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
               className="diagram-container pointer-events-none" // 禁止内部 SVG 的交互，由外层容器接管
             />
           )}
-          
+
           {format === 'png' && base64 && (
             <img
               src={`data:${contentType};base64,${base64}`}
@@ -234,7 +223,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
               draggable={false}
             />
           )}
-          
+
           {format === 'pdf' && base64 && (
             <iframe
               title="diagram preview"

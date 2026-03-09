@@ -1,7 +1,8 @@
 'use client';
 
-import type { Engine, Format } from '@/lib/diagramConfig';
-import type { AIConfig, AIAnalysisResult } from '@/hooks/useAIAssistant';
+import type { EditorPanelProps } from '@/components/EditorPanel';
+import type { AIAssistantPanelProps } from '@/components/AIAssistantPanel';
+import type { VersionHistoryPanelProps } from '@/components/VersionHistoryPanel';
 import type { VersionRecord } from '@/hooks/useVersionHistory';
 import { EditorPanel } from '@/components/EditorPanel';
 import { AIAssistantPanel } from '@/components/AIAssistantPanel';
@@ -13,45 +14,10 @@ export type SidebarTab = 'editor' | 'ai' | 'history';
 export type SidebarTabsProps = {
   activeTab: SidebarTab;
   onTabChange: (tab: SidebarTab) => void;
-  // Editor props
-  engine: Engine;
-  format: Format;
-  code: string;
-  codeStats: { lines: number; chars: number };
-  loading: boolean;
-  error: string;
-  canUseLocalRender: boolean;
-  livePreviewEnabled: boolean;
-  onLivePreviewChange: (enabled: boolean) => void;
-  onEngineChange: (engine: Engine, loadSample?: boolean) => void;
-  onFormatChange: (format: Format) => void;
-  onCodeChange: (code: string) => void;
-  onRender: () => Promise<void> | void;
-  onCopyCode: () => Promise<void> | void;
-  onClearCode: () => void;
-  editorFontSize?: number;
-  // AI props
-  aiConfig: AIConfig;
-  isAIConfigured: boolean;
-  isAnalyzing: boolean;
-  isGenerating: boolean;
-  lastAnalysis: AIAnalysisResult | null;
-  aiError: string | null;
-  onUpdateAIConfig: (config: Partial<AIConfig>) => void;
-  onAIAnalyze: () => void;
-  onAIFix: () => void;
-  onAIGenerate: (description: string) => void;
-  onAIApplyCode: (code: string) => void;
-  onClearAIError: () => void;
-  onClearAIAnalysis: () => void;
-  // Version history props
+  editorProps: EditorPanelProps;
+  aiProps: AIAssistantPanelProps;
+  historyProps: VersionHistoryPanelProps;
   versions: VersionRecord[];
-  isVersionsLoading: boolean;
-  onRestoreVersion: (version: VersionRecord) => void;
-  onDeleteVersion: (versionId: string) => void;
-  onRenameVersion: (versionId: string, newLabel: string) => void;
-  onCreateSnapshot: () => void;
-  onClearVersions: () => void;
 };
 
 const TAB_ITEMS: Array<{
@@ -66,7 +32,7 @@ const TAB_ITEMS: Array<{
 ];
 
 export function SidebarTabs(props: SidebarTabsProps) {
-  const { activeTab, onTabChange, versions } = props;
+  const { activeTab, onTabChange, editorProps, aiProps, historyProps, versions } = props;
 
   return (
     <>
@@ -97,56 +63,15 @@ export function SidebarTabs(props: SidebarTabsProps) {
 
       {/* Tab 内容区 */}
       <div className="flex-1 min-h-[360px] lg:min-h-0">
-        {activeTab === 'editor' && (
-          <EditorPanel
-            engine={props.engine}
-            format={props.format}
-            code={props.code}
-            codeStats={props.codeStats}
-            loading={props.loading}
-            error={props.error}
-            canUseLocalRender={props.canUseLocalRender}
-            livePreviewEnabled={props.livePreviewEnabled}
-            onLivePreviewChange={props.onLivePreviewChange}
-            onEngineChange={props.onEngineChange}
-            onFormatChange={props.onFormatChange}
-            onCodeChange={props.onCodeChange}
-            onRender={props.onRender}
-            onCopyCode={props.onCopyCode}
-            onClearCode={props.onClearCode}
-            editorFontSize={props.editorFontSize}
-          />
-        )}
+        {activeTab === 'editor' && <EditorPanel {...editorProps} />}
         {activeTab === 'ai' && (
           <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">
-            <AIAssistantPanel
-              config={props.aiConfig}
-              isConfigured={props.isAIConfigured}
-              isAnalyzing={props.isAnalyzing}
-              isGenerating={props.isGenerating}
-              lastAnalysis={props.lastAnalysis}
-              error={props.aiError}
-              onUpdateConfig={props.onUpdateAIConfig}
-              onAnalyze={props.onAIAnalyze}
-              onFix={props.onAIFix}
-              onGenerate={props.onAIGenerate}
-              onApplyCode={props.onAIApplyCode}
-              onClearError={props.onClearAIError}
-              onClearAnalysis={props.onClearAIAnalysis}
-            />
+            <AIAssistantPanel {...aiProps} />
           </div>
         )}
         {activeTab === 'history' && (
           <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">
-            <VersionHistoryPanel
-              versions={props.versions}
-              isLoading={props.isVersionsLoading}
-              onRestore={props.onRestoreVersion}
-              onDelete={props.onDeleteVersion}
-              onRename={props.onRenameVersion}
-              onCreateSnapshot={props.onCreateSnapshot}
-              onClearAll={props.onClearVersions}
-            />
+            <VersionHistoryPanel {...historyProps} />
           </div>
         )}
       </div>

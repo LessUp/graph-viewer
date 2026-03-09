@@ -73,10 +73,10 @@ const editorTheme = EditorView.theme({
 });
 
 function CodeEditorComponent(props: CodeEditorProps) {
-  const { 
-    value, 
-    onChange, 
-    disabled, 
+  const {
+    value,
+    onChange,
+    disabled,
     onCtrlEnter,
     engine = 'mermaid',
     minHeight = '300px',
@@ -90,7 +90,7 @@ function CodeEditorComponent(props: CodeEditorProps) {
       editorTheme,
       EditorView.lineWrapping,
     ];
-    
+
     // 安全地添加语言扩展
     try {
       const langExt = getLanguageExtension(engine);
@@ -100,7 +100,7 @@ function CodeEditorComponent(props: CodeEditorProps) {
     } catch (e) {
       console.warn('Language extension error:', e);
     }
-    
+
     return ext;
   }, [engine]);
 
@@ -117,9 +117,9 @@ function CodeEditorComponent(props: CodeEditorProps) {
   }, [onCtrlEnter]);
 
   return (
-    <div 
+    <div
       className="code-editor-wrapper w-full rounded-xl border border-slate-200/80 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-300"
-      style={{ 
+      style={{
         minHeight,
         maxHeight: maxHeight || undefined,
       }}
@@ -145,7 +145,7 @@ function CodeEditorComponent(props: CodeEditorProps) {
         }}
         theme="light"
         height="100%"
-        style={{ 
+        style={{
           fontSize: `${fontSize}px`,
           minHeight,
           maxHeight: maxHeight || undefined,
@@ -159,4 +159,3 @@ function CodeEditorComponent(props: CodeEditorProps) {
 
 // 使用 memo 优化性能
 export const CodeEditor = memo(CodeEditorComponent);
-export default CodeEditor;

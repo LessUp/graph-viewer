@@ -213,6 +213,4 @@ function EditorPanelComponent(props: EditorPanelProps) {
 }
 
 // 使用 memo 优化性能
-const EditorPanel = memo(EditorPanelComponent);
-export { EditorPanel };
-export default EditorPanel;
+export const EditorPanel = memo(EditorPanelComponent);

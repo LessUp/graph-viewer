@@ -58,8 +58,18 @@ export function useSettings() {
   }, []);
 
   const toggleSidebar = useCallback(() => {
-    saveSettings({ sidebarCollapsed: !settings.sidebarCollapsed });
-  }, [settings.sidebarCollapsed, saveSettings]);
+    setSettings((prev) => {
+      const updated = { ...prev, sidebarCollapsed: !prev.sidebarCollapsed };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        } catch (e) {
+          console.error('Failed to save settings:', e);
+        }
+      }
+      return updated;
+    });
+  }, []);
 
   return {
     settings,

@@ -3,13 +3,14 @@
  * 为每个图表提供版本历史记录和恢复功能
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import type { Engine } from '@/lib/diagramConfig';
 
 export type VersionRecord = {
   id: string;
   diagramId: string;
   code: string;
-  engine: string;
+  engine: Engine;
   timestamp: string;
   label?: string; // 可选的版本标签
   autoSave: boolean; // 是否是自动保存
@@ -29,7 +30,7 @@ function generateVersionId(): string {
   return `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-export function useVersionHistory(diagramId: string, currentCode: string, currentEngine: string) {
+export function useVersionHistory(diagramId: string, currentCode: string, currentEngine: Engine) {
   const [versions, setVersions] = useState<VersionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -158,16 +159,24 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
     });
   }, [diagramId, saveVersionsToStorage]);
 
-  // 自动保存
+  // 使用 ref 保持最新值，避免 interval 被频繁重建
+  const codeRef = useRef(currentCode);
+  const engineRef = useRef(currentEngine);
+  useEffect(() => { codeRef.current = currentCode; }, [currentCode]);
+  useEffect(() => { engineRef.current = currentEngine; }, [currentEngine]);
+
+  // 自动保存 —— 仅在 diagramId 变化时重建 interval
   useEffect(() => {
-    if (!diagramId || !currentCode.trim()) return;
+    if (!diagramId) return;
 
     const timer = setInterval(() => {
-      createVersion(undefined, true);
+      if (codeRef.current.trim()) {
+        createVersion(undefined, true);
+      }
     }, AUTO_SAVE_INTERVAL);
 
     return () => clearInterval(timer);
-  }, [diagramId, currentCode, createVersion]);
+  }, [diagramId, createVersion]);
 
   // 比较两个版本
   const compareVersions = useCallback((versionId1: string, versionId2: string) => {

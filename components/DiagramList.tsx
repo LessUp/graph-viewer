@@ -1,6 +1,6 @@
 'use client';
 
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import { useMemo, type MouseEvent as ReactMouseEvent } from 'react';
 import { Plus, ChevronsLeft, Layers, Pencil, Trash2 } from 'lucide-react';
 
 export type DiagramEntry = {
@@ -28,11 +28,15 @@ export function DiagramList({
   onDelete,
   onCollapseSidebar,
 }: DiagramListProps) {
-  const sortedDiagrams = [...diagrams].sort((a, b) => {
-    const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-    const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-    return tb - ta;
-  });
+  const sortedDiagrams = useMemo(
+    () =>
+      [...diagrams].sort((a, b) => {
+        const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return tb - ta;
+      }),
+    [diagrams],
+  );
 
   return (
     <div className="flex-shrink-0 overflow-hidden rounded-[24px] border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur">

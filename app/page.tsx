@@ -17,7 +17,6 @@ import { useToast } from '@/hooks/useToast';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useVersionHistory, type VersionRecord } from '@/hooks/useVersionHistory';
 import { SAMPLES } from '@/lib/diagramSamples';
-import { isEngine } from '@/lib/diagramConfig';
 import { Loader2 } from 'lucide-react';
 
 export default function Page() {
@@ -247,9 +246,7 @@ export default function Page() {
 
   const handleRestoreVersion = useCallback((version: VersionRecord) => {
     setCode(version.code);
-    if (isEngine(version.engine)) {
-      setEngine(version.engine);
-    }
+    setEngine(version.engine);
     showToast('已恢复到该版本', 'success');
   }, [setCode, setEngine, showToast]);
 
@@ -320,42 +317,49 @@ export default function Page() {
                 <SidebarTabs
                   activeTab={sidebarTab}
                   onTabChange={setSidebarTab}
-                  engine={engine}
-                  format={format}
-                  code={code}
-                  codeStats={codeStats}
-                  loading={loading}
-                  error={combinedError}
-                  canUseLocalRender={canUseLocalRender}
-                  livePreviewEnabled={livePreview}
-                  onLivePreviewChange={setLivePreview}
-                  onEngineChange={handleEngineChange}
-                  onFormatChange={setFormat}
-                  onCodeChange={setCode}
-                  onRender={renderDiagram}
-                  onCopyCode={handleCopyCode}
-                  onClearCode={handleClearCode}
-                  editorFontSize={settings.editorFontSize}
-                  aiConfig={aiConfig}
-                  isAIConfigured={isAIConfigured}
-                  isAnalyzing={aiState.isAnalyzing}
-                  isGenerating={aiState.isGenerating}
-                  lastAnalysis={aiState.lastAnalysis}
-                  aiError={aiState.error}
-                  onUpdateAIConfig={updateAIConfig}
-                  onAIAnalyze={handleAIAnalyze}
-                  onAIFix={handleAIFix}
-                  onAIGenerate={handleAIGenerate}
-                  onAIApplyCode={handleAIApplyCode}
-                  onClearAIError={clearAIError}
-                  onClearAIAnalysis={clearAIAnalysis}
                   versions={versions}
-                  isVersionsLoading={isVersionsLoading}
-                  onRestoreVersion={handleRestoreVersion}
-                  onDeleteVersion={deleteVersion}
-                  onRenameVersion={renameVersion}
-                  onCreateSnapshot={handleCreateSnapshot}
-                  onClearVersions={handleClearVersions}
+                  editorProps={{
+                    engine,
+                    format,
+                    code,
+                    codeStats,
+                    loading,
+                    error: combinedError,
+                    canUseLocalRender,
+                    livePreviewEnabled: livePreview,
+                    onLivePreviewChange: setLivePreview,
+                    onEngineChange: handleEngineChange,
+                    onFormatChange: setFormat,
+                    onCodeChange: setCode,
+                    onRender: renderDiagram,
+                    onCopyCode: handleCopyCode,
+                    onClearCode: handleClearCode,
+                    editorFontSize: settings.editorFontSize,
+                  }}
+                  aiProps={{
+                    config: aiConfig,
+                    isConfigured: isAIConfigured,
+                    isAnalyzing: aiState.isAnalyzing,
+                    isGenerating: aiState.isGenerating,
+                    lastAnalysis: aiState.lastAnalysis,
+                    error: aiState.error,
+                    onUpdateConfig: updateAIConfig,
+                    onAnalyze: handleAIAnalyze,
+                    onFix: handleAIFix,
+                    onGenerate: handleAIGenerate,
+                    onApplyCode: handleAIApplyCode,
+                    onClearError: clearAIError,
+                    onClearAnalysis: clearAIAnalysis,
+                  }}
+                  historyProps={{
+                    versions,
+                    isLoading: isVersionsLoading,
+                    onRestore: handleRestoreVersion,
+                    onDelete: deleteVersion,
+                    onRename: renameVersion,
+                    onCreateSnapshot: handleCreateSnapshot,
+                    onClearAll: handleClearVersions,
+                  }}
                 />
               </>
             )}
