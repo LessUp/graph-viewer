@@ -2,12 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* JetBrains Mono 字体通过 next/font 在 layout.tsx 中加载 */
-
 :root {
   color-scheme: light;
   --color-primary: #0ea5e9;
   --color-primary-dark: #0284c7;
+  --font-jetbrains-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
 html,

@@ -1,18 +1,30 @@
 import './globals.css';
-import { JetBrains_Mono } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  display: 'swap',
-  variable: '--font-jetbrains-mono',
-});
+const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+const siteUrl = 'https://lessup.github.io/graph-viewer/';
+const iconUrl = isGitHubPages ? '/graph-viewer/favicon.svg' : '/favicon.svg';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'GraphViewer',
   description: '支持 Mermaid、Graphviz、PlantUML 等多种语法的图表可视化工具',
-  icons: { icon: '/favicon.ico' },
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'GraphViewer',
+    description: '支持 Mermaid、Graphviz、PlantUML 等多种语法的图表可视化工具',
+    url: siteUrl,
+    siteName: 'GraphViewer',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'GraphViewer',
+    description: '支持 Mermaid、Graphviz、PlantUML 等多种语法的图表可视化工具',
+  },
+  icons: { icon: iconUrl },
 };
 
 export const viewport: Viewport = {
@@ -23,7 +35,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN" className={jetbrainsMono.variable}>
+    <html lang="zh-CN">
       <body className="min-h-screen text-gray-900 antialiased">{children}</body>
     </html>
   );
