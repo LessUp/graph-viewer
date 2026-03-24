@@ -16,6 +16,18 @@ type GraphvizApi = {
   layout: (code: string, format: string, engine: string) => Promise<string>;
 };
 
+type RenderOutputState = {
+  contentType: string;
+  svg: string;
+  base64: string;
+};
+
+const EMPTY_OUTPUT: RenderOutputState = {
+  contentType: '',
+  svg: '',
+  base64: '',
+};
+
 let mermaidPromise: Promise<MermaidApi> | null = null;
 let graphvizPromise: Promise<GraphvizApi> | null = null;
 
@@ -59,49 +71,41 @@ async function loadGraphviz() {
   return graphvizPromise;
 }
 
-async function renderMermaidLocally(
-  input: string,
-  setContentType: (v: string) => void,
-  setSvg: (v: string) => void,
-  setBase64: (v: string) => void,
-): Promise<boolean> {
+async function renderMermaidLocally(input: string): Promise<RenderOutputState | null> {
   try {
     const mermaid = await loadMermaid();
-    if (!mermaid?.render) return false;
+    if (!mermaid?.render) return null;
     const id = `mmd-${Date.now()}`;
     const result = await mermaid.render(id, input);
     if (result?.svg) {
-      setContentType('image/svg+xml');
-      setSvg(result.svg as string);
-      setBase64('');
-      return true;
+      return {
+        contentType: 'image/svg+xml',
+        svg: result.svg as string,
+        base64: '',
+      };
     }
   } catch {
     // ignore and let caller handle
   }
-  return false;
+  return null;
 }
 
-async function renderGraphvizLocally(
-  input: string,
-  setContentType: (v: string) => void,
-  setSvg: (v: string) => void,
-  setBase64: (v: string) => void,
-): Promise<boolean> {
+async function renderGraphvizLocally(input: string): Promise<RenderOutputState | null> {
   try {
     const gv = await loadGraphviz();
-    if (!gv?.layout) return false;
+    if (!gv?.layout) return null;
     const svgText = await gv.layout(input, 'svg', 'dot');
     if (svgText) {
-      setContentType('image/svg+xml');
-      setSvg(svgText as string);
-      setBase64('');
-      return true;
+      return {
+        contentType: 'image/svg+xml',
+        svg: svgText as string,
+        base64: '',
+      };
     }
   } catch {
     // ignore and let caller handle
   }
-  return false;
+  return null;
 }
 
 function triggerFileDownload(blob: Blob, filename: string): void {
@@ -166,13 +170,13 @@ export function useDiagramRender(
   format: Format,
   code: string,
   krokiBaseUrl?: string,
+  remoteRenderingEnabled = true,
 ): UseDiagramRenderResult {
-  const [svg, setSvg] = useState<string>('');
-  const [base64, setBase64] = useState<string>('');
-  const [contentType, setContentType] = useState<string>('');
+  const [output, setOutput] = useState<RenderOutputState>(EMPTY_OUTPUT);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setErrorState] = useState<string>('');
   const abortRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
 
   const canUseLocalRender = useMemo(
     () => canUseLocalRenderConfig(engine, format),
@@ -181,10 +185,10 @@ export function useDiagramRender(
 
   const showPreview = useMemo(() => {
     if (format === 'svg') {
-      return Boolean(svg);
+      return Boolean(output.svg);
     }
-    return Boolean(base64);
-  }, [format, svg, base64]);
+    return Boolean(output.base64);
+  }, [format, output]);
 
   useEffect(() => {
     if (engine === 'mermaid' || engine === 'flowchart') {
@@ -204,9 +208,7 @@ export function useDiagramRender(
   }, []);
 
   const resetOutput = useCallback(() => {
-    setSvg('');
-    setBase64('');
-    setContentType('');
+    setOutput(EMPTY_OUTPUT);
   }, []);
 
   const clearError = useCallback(() => {
@@ -217,10 +219,23 @@ export function useDiagramRender(
     setErrorState(message);
   }, []);
 
+  const applyOutputIfLatest = useCallback((requestId: number, nextOutput: RenderOutputState) => {
+    if (requestIdRef.current === requestId) {
+      setOutput(nextOutput);
+    }
+  }, []);
+
+  const tryLocalRender = useCallback(async (): Promise<RenderOutputState | null> => {
+    if (!canUseLocalRender) return null;
+    return engine === 'graphviz' ? renderGraphvizLocally(code) : renderMermaidLocally(code);
+  }, [canUseLocalRender, code, engine]);
+
   const renderDiagram = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setErrorState('');
     resetOutput();
+
     try {
       if (abortRef.current) {
         abortRef.current.abort();
@@ -228,14 +243,14 @@ export function useDiagramRender(
       abortRef.current = new AbortController();
       const { signal } = abortRef.current;
 
-      if (canUseLocalRender) {
-        const ok =
-          engine === 'graphviz'
-            ? await renderGraphvizLocally(code, setContentType, setSvg, setBase64)
-            : await renderMermaidLocally(code, setContentType, setSvg, setBase64);
-        if (ok) {
-          return;
-        }
+      const localResult = await tryLocalRender();
+      if (localResult) {
+        applyOutputIfLatest(requestId, localResult);
+        return;
+      }
+
+      if (!remoteRenderingEnabled) {
+        throw new Error('当前静态部署模式下不可用该渲染方式，请切换到 SVG 本地渲染或使用完整服务部署。');
       }
 
       const payload: Record<string, unknown> = { engine, format, code };
@@ -254,35 +269,44 @@ export function useDiagramRender(
         const j = await res.json().catch(() => null);
         throw new Error(buildApiErrorMessage(res, j, '渲染失败'));
       }
-      const data = await res.json();
-      setContentType(data.contentType || '');
-      if (data.svg) setSvg(data.svg);
-      if (data.base64) setBase64(data.base64);
+      const data = (await res.json()) as {
+        contentType?: string;
+        svg?: string;
+        base64?: string;
+      };
+      applyOutputIfLatest(requestId, {
+        contentType: data.contentType || '',
+        svg: data.svg || '',
+        base64: data.base64 || '',
+      });
     } catch (e: unknown) {
-      if (canUseLocalRender) {
-        const ok =
-          engine === 'graphviz'
-            ? await renderGraphvizLocally(code, setContentType, setSvg, setBase64)
-            : await renderMermaidLocally(code, setContentType, setSvg, setBase64);
-        if (ok) {
-          return;
-        }
+      if (e instanceof Error && e.name === 'AbortError') {
+        return;
       }
-      if (e instanceof Error && e.name !== 'AbortError') {
-        setErrorState(e.message || '渲染失败');
-      } else if (!(e instanceof Error)) {
-        setErrorState('渲染失败');
+      if (requestIdRef.current === requestId) {
+        setErrorState(e instanceof Error ? e.message || '渲染失败' : '渲染失败');
       }
     } finally {
-      setLoading(false);
+      if (requestIdRef.current === requestId) {
+        setLoading(false);
+      }
     }
-  }, [canUseLocalRender, code, engine, format, krokiBaseUrl, resetOutput]);
+  }, [
+    applyOutputIfLatest,
+    code,
+    engine,
+    format,
+    krokiBaseUrl,
+    remoteRenderingEnabled,
+    resetOutput,
+    tryLocalRender,
+  ]);
 
   const downloadDiagram = useCallback(async () => {
     setErrorState('');
     try {
-      if (canUseLocalRender && svg) {
-        triggerFileDownload(new Blob([svg], { type: 'image/svg+xml' }), `diagram.${format}`);
+      if (canUseLocalRender && output.svg) {
+        triggerFileDownload(new Blob([output.svg], { type: 'image/svg+xml' }), `diagram.${format}`);
         return;
       }
       if (abortRef.current) {
@@ -290,6 +314,10 @@ export function useDiagramRender(
       }
       abortRef.current = new AbortController();
       const { signal } = abortRef.current;
+
+      if (!remoteRenderingEnabled) {
+        throw new Error('当前静态部署模式下不可下载该渲染格式，请使用完整服务部署。');
+      }
 
       const payload: Record<string, unknown> = { engine, format, code, binary: true };
       const customBaseUrl = typeof krokiBaseUrl === 'string' ? krokiBaseUrl.trim() : '';
@@ -310,18 +338,17 @@ export function useDiagramRender(
       const blob = await res.blob();
       triggerFileDownload(blob, `diagram.${format}`);
     } catch (e: unknown) {
-      if (e instanceof Error && e.name !== 'AbortError') {
-        setErrorState(e.message || '下载失败');
-      } else if (!(e instanceof Error)) {
-        setErrorState('下载失败');
+      if (e instanceof Error && e.name === 'AbortError') {
+        return;
       }
+      setErrorState(e instanceof Error ? e.message || '下载失败' : '下载失败');
     }
-  }, [canUseLocalRender, code, engine, format, krokiBaseUrl, svg]);
+  }, [canUseLocalRender, code, engine, format, krokiBaseUrl, output.svg, remoteRenderingEnabled]);
 
   return {
-    svg,
-    base64,
-    contentType,
+    svg: output.svg,
+    base64: output.base64,
+    contentType: output.contentType,
     loading,
     error,
     canUseLocalRender,

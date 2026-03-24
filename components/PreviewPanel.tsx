@@ -9,6 +9,7 @@ import {
   type MouseEvent,
   type WheelEvent,
 } from 'react';
+import Image from 'next/image';
 import DOMPurify from 'dompurify';
 import { PreviewToolbar } from '@/components/PreviewToolbar';
 import { ENGINE_LABELS, FORMAT_LABELS, type Engine, type Format } from '@/lib/diagramConfig';
@@ -236,14 +237,23 @@ export function PreviewPanel(props: PreviewPanelProps) {
           {format === 'svg' && svg && (
             <div
               dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
-              className="diagram-container pointer-events-none" // 禁止内部 SVG 的交互，由外层容器接管
+              className={`diagram-container ${isPanning ? 'pointer-events-none' : 'pointer-events-auto'}`}
             />
           )}
 
+          {format === 'svg' && showPreview && (
+            <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-slate-900/70 px-3 py-1 text-[11px] text-white shadow-sm backdrop-blur">
+              按住 Ctrl/⌘ + 滚轮缩放，拖拽空白区域平移
+            </div>
+          )}
+
           {format === 'png' && base64 && (
-            <img
+            <Image
               src={`data:${contentType};base64,${base64}`}
               alt="diagram preview"
+              width={1600}
+              height={1200}
+              unoptimized
               className="max-h-full max-w-full rounded-2xl bg-white shadow-lg ring-1 ring-slate-900/5"
               draggable={false}
             />

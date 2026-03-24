@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { isEngine, isFormat } from '@/lib/diagramConfig';
 import type { DiagramDoc } from '@/lib/types';
 
 const LOCAL_STORAGE_KEY = 'graphviewer:state:v1';
+const STORAGE_WRITE_DEBOUNCE_MS = 250;
 
 type DiagramState = {
   engine: Engine;
@@ -28,6 +29,14 @@ type DiagramStateControls = {
   importWorkspace: (payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => void;
 };
 
+type PersistedWorkspace = {
+  diagrams?: DiagramDoc[];
+  currentId?: string;
+  engine?: string;
+  format?: string;
+  code?: string;
+};
+
 function generateDiagramId(): string {
   return `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -46,6 +55,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       setHasHydrated(true);
       return;
     }
+
     try {
       const params = new URLSearchParams(window.location.search);
       const qsEngine = params.get('engine');
@@ -78,9 +88,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
             if (typeof decompressed === 'string' && decompressed.length > 0) {
               codeFromQuery = decompressed;
             } else {
-              setLinkError(
-                (prev: string) => prev || '分享链接中的代码解压后为空，已使用原始内容。',
-              );
+              setLinkError((prev: string) => prev || '分享链接中的代码解压后为空，已使用原始内容。');
             }
           } catch {
             setLinkError((prev: string) => prev || '分享链接中的代码解压失败，已使用原始内容。');
@@ -92,40 +100,10 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
         appliedFromQuery = true;
       }
 
-      // 无论是否来自分享链接，都从 localStorage 恢复图表列表
       const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (appliedFromQuery) {
-        // 分享链接场景：恢复已有图表，但 engine/format/code 使用链接中的值
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw) as { diagrams?: DiagramDoc[] };
-            if (Array.isArray(parsed.diagrams) && parsed.diagrams.length > 0) {
-              setDiagrams(parsed.diagrams);
-            }
-          } catch {
-            // ignore
-          }
-        }
-        return;
-      }
-
       if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        engine?: string;
-        format?: string;
-        code?: string;
-        diagrams?: DiagramDoc[];
-        currentId?: string;
-      };
-      if (parsed.engine && isEngine(parsed.engine)) {
-        setEngine(parsed.engine);
-      }
-      if (parsed.format && isFormat(parsed.format)) {
-        setFormat(parsed.format);
-      }
-      if (typeof parsed.code === 'string') {
-        setCode(parsed.code);
-      }
+
+      const parsed = JSON.parse(raw) as PersistedWorkspace;
       if (Array.isArray(parsed.diagrams) && parsed.diagrams.length > 0) {
         setDiagrams(parsed.diagrams);
         const nextId =
@@ -133,6 +111,26 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
             ? parsed.currentId
             : parsed.diagrams[0].id;
         setCurrentId(nextId);
+
+        if (!appliedFromQuery) {
+          const currentDiagram = parsed.diagrams.find((d: DiagramDoc) => d.id === nextId) ?? parsed.diagrams[0];
+          setEngine(currentDiagram.engine);
+          setFormat(currentDiagram.format);
+          setCode(currentDiagram.code);
+        }
+        return;
+      }
+
+      if (!appliedFromQuery) {
+        if (parsed.engine && isEngine(parsed.engine)) {
+          setEngine(parsed.engine);
+        }
+        if (parsed.format && isFormat(parsed.format)) {
+          setFormat(parsed.format);
+        }
+        if (typeof parsed.code === 'string') {
+          setCode(parsed.code);
+        }
       }
     } catch {
       // ignore
@@ -141,12 +139,11 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     }
   }, []);
 
-  // 使用 functional update 同步当前编辑状态到 diagrams，避免 diagrams 出现在依赖数组中导致循环渲染
+  // 同步当前编辑状态到 diagrams，避免顶层状态和工作区文档重复漂移
   useEffect(() => {
     if (!hasHydrated) return;
 
     setDiagrams((prev) => {
-      // 初始化：首次没有任何图表
       if (!prev.length && !currentId) {
         const id = generateDiagramId();
         const doc: DiagramDoc = {
@@ -169,7 +166,6 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       }
 
       const idx = prev.findIndex((d) => d.id === currentId);
-
       if (idx === -1) {
         const doc: DiagramDoc = {
           id: currentId,
@@ -184,7 +180,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
 
       const current = prev[idx];
       if (current.engine === engine && current.format === format && current.code === code) {
-        return prev; // 无变化，不触发重新渲染
+        return prev;
       }
 
       const next = prev.slice();
@@ -193,15 +189,26 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
     });
   }, [engine, format, code, currentId, hasHydrated]);
 
+  // 仅持久化 diagrams/currentId，避免与顶层 engine/format/code 重复写入
   useEffect(() => {
     if (typeof window === 'undefined' || !hasHydrated) return;
-    try {
-      const payload = JSON.stringify({ engine, format, code, diagrams, currentId });
-      window.localStorage.setItem(LOCAL_STORAGE_KEY, payload);
-    } catch {
-      // ignore
-    }
-  }, [engine, format, code, diagrams, currentId, hasHydrated]);
+
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify({
+            diagrams,
+            currentId,
+          }),
+        );
+      } catch {
+        // ignore
+      }
+    }, STORAGE_WRITE_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [diagrams, currentId, hasHydrated]);
 
   const codeStats = useMemo(() => {
     const lines = code.split('\n').length;
@@ -299,12 +306,10 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
         if (idx === -1) return prev;
         const next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
 
-        // If deleting a non-current diagram, just return the new list.
         if (id !== currentId) {
           return next;
         }
 
-        // Deleted the current diagram.
         if (next.length === 0) {
           const newId = generateDiagramId();
           const now = new Date().toISOString();

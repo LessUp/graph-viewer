@@ -9,9 +9,18 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: AppSettings;
   onSave: (settings: Partial<AppSettings>) => void;
+  remoteRenderingEnabled: boolean;
+  isStaticExport: boolean;
 }
 
-export function SettingsModal({ isOpen, onClose, settings, onSave }: SettingsModalProps) {
+export function SettingsModal({
+  isOpen,
+  onClose,
+  settings,
+  onSave,
+  remoteRenderingEnabled,
+  isStaticExport,
+}: SettingsModalProps) {
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
 
   useEffect(() => {
@@ -66,11 +75,17 @@ export function SettingsModal({ isOpen, onClose, settings, onSave }: SettingsMod
                 <p className="mt-0.5 text-xs text-slate-400">
                   使用自建的 Kroki 服务器获得更好的渲染效果
                 </p>
+                {!remoteRenderingEnabled && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    当前为静态导出模式，远程渲染设置已禁用。
+                  </p>
+                )}
               </div>
               <label className="relative inline-flex cursor-pointer items-center">
                 <input
                   type="checkbox"
-                  checked={localSettings.useCustomServer}
+                  checked={remoteRenderingEnabled && localSettings.useCustomServer}
+                  disabled={!remoteRenderingEnabled}
                   onChange={(e) =>
                     setLocalSettings({ ...localSettings, useCustomServer: e.target.checked })
                   }
@@ -80,7 +95,7 @@ export function SettingsModal({ isOpen, onClose, settings, onSave }: SettingsMod
               </label>
             </div>
 
-            {localSettings.useCustomServer && (
+            {remoteRenderingEnabled && localSettings.useCustomServer && (
               <div className="space-y-3">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-slate-600">
@@ -162,6 +177,12 @@ export function SettingsModal({ isOpen, onClose, settings, onSave }: SettingsMod
           </div>
 
           {/* 关于 */}
+          {isStaticExport && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700">
+              当前构建为静态导出模式：仅本地 SVG 渲染可用，依赖服务端的远程渲染能力不可用。
+            </div>
+          )}
+
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-indigo-500">

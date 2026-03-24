@@ -13,7 +13,7 @@ import { useDiagramState } from '@/hooks/useDiagramState';
 import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/hooks/useToast';
-import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { getAIBoundaryNotice, useAIAssistant } from '@/hooks/useAIAssistant';
 import { useVersionHistory } from '@/hooks/useVersionHistory';
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions';
 import { useLivePreview } from '@/hooks/useLivePreview';
@@ -21,6 +21,19 @@ import { useAIActions } from '@/hooks/useAIActions';
 import { useVersionActions } from '@/hooks/useVersionActions';
 import { SAMPLES } from '@/lib/diagramSamples';
 import { Loader2 } from 'lucide-react';
+
+const isStaticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true';
+
+function LoadingScreen() {
+  return (
+    <main className="flex min-h-screen items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
+        <span className="text-sm text-slate-500">加载中...</span>
+      </div>
+    </main>
+  );
+}
 
 export default function Page() {
   const {
@@ -44,6 +57,8 @@ export default function Page() {
 
   const { settings, isLoaded: settingsLoaded, saveSettings, toggleSidebar } = useSettings();
 
+  const remoteRenderingEnabled = !isStaticExport;
+
   const {
     svg,
     base64,
@@ -61,13 +76,14 @@ export default function Page() {
     format,
     code,
     settings.useCustomServer ? settings.renderServerUrl : undefined,
+    remoteRenderingEnabled,
   );
 
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('editor');
   const { toast, showToast } = useToast();
 
-  const combinedError = error || linkError;
+  const pageError = error || linkError;
 
   // --- 组合 hooks ---
 
@@ -119,7 +135,7 @@ export default function Page() {
 
   const { handleAIAnalyze, handleAIFix, handleAIGenerate, handleAIApplyCode } = useAIActions({
     code,
-    combinedError,
+    combinedError: pageError,
     analyzeCode,
     fixCode,
     generateCode,
@@ -147,33 +163,114 @@ export default function Page() {
 
   // 水合加载状态
   if (!hasHydrated || !settingsLoaded) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
-          <span className="text-sm text-slate-500">加载中...</span>
-        </div>
-      </main>
-    );
+    return <LoadingScreen />;
   }
+
+  const editorProps = {
+    engine,
+    format,
+    code,
+    codeStats,
+    loading,
+    error: pageError,
+    canUseLocalRender,
+    livePreviewEnabled: livePreview,
+    onLivePreviewChange: setLivePreview,
+    onEngineChange: handleEngineChange,
+    onFormatChange: setFormat,
+    onCodeChange: setCode,
+    onRender: renderDiagram,
+    onCopyCode: handleCopyCode,
+    onClearCode: handleClearCode,
+    editorFontSize: settings.editorFontSize,
+  };
+
+  const aiProps = {
+    config: aiConfig,
+    isConfigured: isAIConfigured,
+    isAnalyzing: aiState.isAnalyzing,
+    isGenerating: aiState.isGenerating,
+    lastAnalysis: aiState.lastAnalysis,
+    error: aiState.error,
+    boundaryNotice: getAIBoundaryNotice(),
+    onUpdateConfig: updateAIConfig,
+    onAnalyze: handleAIAnalyze,
+    onFix: handleAIFix,
+    onGenerate: handleAIGenerate,
+    onApplyCode: handleAIApplyCode,
+    onClearError: clearAIError,
+    onClearAnalysis: clearAIAnalysis,
+  };
+
+  const historyProps = {
+    versions,
+    isLoading: isVersionsLoading,
+    onRestore: handleRestoreVersion,
+    onDelete: deleteVersion,
+    onRename: renameVersion,
+    onCreateSnapshot: handleCreateSnapshot,
+    onClearAll: handleClearVersions,
+  };
+
+  const previewProps = {
+    svg,
+    base64,
+    contentType,
+    loading,
+    showPreview,
+    format,
+    code,
+    engine,
+  };
+
+  const settingsModalProps = {
+    isOpen: showSettings,
+    onClose: () => setShowSettings(false),
+    settings,
+    onSave: saveSettings,
+    remoteRenderingEnabled,
+    isStaticExport,
+  };
+
+  const headerProps = {
+    onImportWorkspace: importWorkspace,
+    onExportWorkspace: handleExportWorkspace,
+    onOpenSettings: () => setShowSettings(true),
+    onError: setError,
+  };
+
+  const diagramListProps = {
+    diagrams,
+    currentId,
+    onSelect: handleSelectDiagram,
+    onCreate: handleCreateDiagram,
+    onRename: handleRenameDiagram,
+    onDelete: handleDeleteDiagram,
+    onCollapseSidebar: toggleSidebar,
+  };
+
+  const collapsedSidebarProps = {
+    diagramCount: diagrams.length,
+    onExpand: toggleSidebar,
+    onCreate: handleCreateDiagram,
+  };
+
+  const sidebarTabsProps = {
+    activeTab: sidebarTab,
+    onTabChange: setSidebarTab,
+    versions,
+    editorProps,
+    aiProps,
+    historyProps,
+  };
 
   return (
     <ErrorBoundary>
       <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1920px] flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:gap-4 lg:py-5">
         <Toast toast={toast} />
-        <SettingsModal
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-          settings={settings}
-          onSave={saveSettings}
-        />
+        <SettingsModal {...settingsModalProps} />
 
-        <AppHeader
-          onImportWorkspace={importWorkspace}
-          onExportWorkspace={handleExportWorkspace}
-          onOpenSettings={() => setShowSettings(true)}
-          onError={setError}
-        />
+        <AppHeader {...headerProps} />
 
         {/* Workspace Section */}
         <div className="flex flex-col gap-4 lg:h-[calc(100vh-150px)] lg:flex-row lg:items-stretch lg:gap-5">
@@ -184,86 +281,19 @@ export default function Page() {
             }`}
           >
             {settings.sidebarCollapsed ? (
-              <CollapsedSidebar
-                diagramCount={diagrams.length}
-                onExpand={toggleSidebar}
-                onCreate={handleCreateDiagram}
-              />
+              <CollapsedSidebar {...collapsedSidebarProps} />
             ) : (
               <>
-                <DiagramList
-                  diagrams={diagrams}
-                  currentId={currentId}
-                  onSelect={handleSelectDiagram}
-                  onCreate={handleCreateDiagram}
-                  onRename={handleRenameDiagram}
-                  onDelete={handleDeleteDiagram}
-                  onCollapseSidebar={toggleSidebar}
-                />
+                <DiagramList {...diagramListProps} />
 
-                <SidebarTabs
-                  activeTab={sidebarTab}
-                  onTabChange={setSidebarTab}
-                  versions={versions}
-                  editorProps={{
-                    engine,
-                    format,
-                    code,
-                    codeStats,
-                    loading,
-                    error: combinedError,
-                    canUseLocalRender,
-                    livePreviewEnabled: livePreview,
-                    onLivePreviewChange: setLivePreview,
-                    onEngineChange: handleEngineChange,
-                    onFormatChange: setFormat,
-                    onCodeChange: setCode,
-                    onRender: renderDiagram,
-                    onCopyCode: handleCopyCode,
-                    onClearCode: handleClearCode,
-                    editorFontSize: settings.editorFontSize,
-                  }}
-                  aiProps={{
-                    config: aiConfig,
-                    isConfigured: isAIConfigured,
-                    isAnalyzing: aiState.isAnalyzing,
-                    isGenerating: aiState.isGenerating,
-                    lastAnalysis: aiState.lastAnalysis,
-                    error: aiState.error,
-                    onUpdateConfig: updateAIConfig,
-                    onAnalyze: handleAIAnalyze,
-                    onFix: handleAIFix,
-                    onGenerate: handleAIGenerate,
-                    onApplyCode: handleAIApplyCode,
-                    onClearError: clearAIError,
-                    onClearAnalysis: clearAIAnalysis,
-                  }}
-                  historyProps={{
-                    versions,
-                    isLoading: isVersionsLoading,
-                    onRestore: handleRestoreVersion,
-                    onDelete: deleteVersion,
-                    onRename: renameVersion,
-                    onCreateSnapshot: handleCreateSnapshot,
-                    onClearAll: handleClearVersions,
-                  }}
-                />
+                <SidebarTabs {...sidebarTabsProps} />
               </>
             )}
           </div>
 
           {/* Right: Preview */}
           <div className="min-h-[420px] flex-1 lg:h-full lg:min-h-0">
-            <PreviewPanel
-              svg={svg}
-              base64={base64}
-              contentType={contentType}
-              loading={loading}
-              showPreview={showPreview}
-              format={format}
-              code={code}
-              engine={engine}
-            />
+            <PreviewPanel {...previewProps} />
           </div>
         </div>
       </main>
