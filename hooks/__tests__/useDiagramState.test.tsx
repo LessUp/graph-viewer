@@ -36,11 +36,27 @@ describe('useDiagramState', () => {
     });
   });
 
+  it('persists workspace using diagrams and currentId only after hydration', async () => {
+    const { result } = renderHook(() => useDiagramState('seed'));
+
+    await waitFor(() => {
+      expect(result.current.diagrams).toHaveLength(1);
+    });
+
+    await waitFor(() => {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      expect(raw).toBeTruthy();
+      const parsed = JSON.parse(raw || '{}');
+      expect(parsed.currentId).toBe(result.current.currentId);
+      expect(parsed.diagrams).toHaveLength(1);
+      expect(parsed.engine).toBeUndefined();
+      expect(parsed.format).toBeUndefined();
+      expect(parsed.code).toBeUndefined();
+    });
+  });
+
   it('restores persisted state from localStorage without overwriting it on first mount', async () => {
     const persisted = {
-      engine: 'graphviz',
-      format: 'svg',
-      code: 'digraph G { A -> B }',
       currentId: 'd-2',
       diagrams: [
         {
@@ -84,11 +100,17 @@ describe('useDiagramState', () => {
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        engine: 'mermaid',
-        format: 'svg',
-        code: 'graph TD\nOld-->State',
-        diagrams: [],
-        currentId: '',
+        currentId: 'persisted',
+        diagrams: [
+          {
+            id: 'persisted',
+            name: 'Persisted',
+            engine: 'mermaid',
+            format: 'svg',
+            code: 'graph TD\nOld-->State',
+            updatedAt: '2024-01-01T00:00:00.000Z',
+          },
+        ],
       }),
     );
     setSearch('engine=graphviz&format=png&code=digraph%20G%20%7B%20A%20-%3E%20B%20%7D');
@@ -103,9 +125,8 @@ describe('useDiagramState', () => {
     expect(result.current.format).toBe('png');
     expect(result.current.code).toBe('digraph G { A -> B }');
     expect(result.current.diagrams[0]).toMatchObject({
-      engine: 'graphviz',
-      format: 'png',
-      code: 'digraph G { A -> B }',
+      id: 'persisted',
+      name: 'Persisted',
     });
   });
 

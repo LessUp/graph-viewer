@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { AIConfig, AIProvider, AIAnalysisResult } from '@/hooks/useAIAssistant';
+import {
+  getVisibleAIProviders,
+  isCustomAIProvider,
+  type AIConfig,
+  type AIProvider,
+  type AIAnalysisResult,
+} from '@/hooks/useAIAssistant';
 import {
   Zap,
   Loader2,
@@ -20,6 +26,7 @@ export type AIAssistantPanelProps = {
   isGenerating: boolean;
   lastAnalysis: AIAnalysisResult | null;
   error: string | null;
+  boundaryNotice: string;
   onUpdateConfig: (config: Partial<AIConfig>) => void;
   onAnalyze: () => void;
   onFix: () => void;
@@ -29,11 +36,15 @@ export type AIAssistantPanelProps = {
   onClearAnalysis: () => void;
 };
 
-const PROVIDERS: Array<{ id: AIProvider; name: string; description: string }> = [
+const ALL_PROVIDERS: Array<{ id: AIProvider; name: string; description: string }> = [
   { id: 'openai', name: 'OpenAI', description: 'GPT-4, GPT-3.5 等模型' },
   { id: 'anthropic', name: 'Anthropic', description: 'Claude 系列模型' },
   { id: 'custom', name: '自定义', description: '自定义 API 端点' },
 ];
+
+const PROVIDERS: Array<{ id: AIProvider; name: string; description: string }> = ALL_PROVIDERS.filter(
+  (provider) => getVisibleAIProviders().includes(provider.id),
+);
 
 const OPENAI_MODELS = [
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini (推荐)' },
@@ -56,6 +67,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
     isGenerating,
     lastAnalysis,
     error,
+    boundaryNotice,
     onUpdateConfig,
     onAnalyze,
     onFix,
@@ -103,6 +115,10 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
       {/* 配置面板 */}
       {showConfig && (
         <div className="space-y-4 border-b border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-[11px] text-amber-700">
+            {boundaryNotice}
+          </div>
+
           {/* 提供商选择 */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-600">AI 服务提供商</label>
@@ -157,7 +173,7 @@ export function AIAssistantPanel(props: AIAssistantPanelProps) {
           )}
 
           {/* 自定义端点 */}
-          {config.provider === 'custom' && (
+          {isCustomAIProvider(config.provider) && (
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-600">API 端点</label>
               <input

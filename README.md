@@ -34,6 +34,14 @@ npm test
 - **Deploy Script**: `ENV=prod ./scripts/deploy.sh`
 - **Health Check**: `curl -fsS http://localhost:3000/api/healthz`
 
+### Deployment modes
+
+- **Full-service mode**: default `npm run build`, includes `/api/render` and `/api/healthz`.
+- **Static export mode**: `npm run build:static`, used for GitHub Pages.
+  - Remote rendering is unavailable in this mode.
+  - Only local SVG rendering paths remain available.
+  - The build no longer deletes `app/api`; instead the app detects static mode explicitly.
+
 ## Architecture
 
 - **Frontend**: `app/page.tsx` + `components/*` + `hooks/*` — editing, preview, state persistence

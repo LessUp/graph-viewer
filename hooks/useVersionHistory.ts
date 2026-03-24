@@ -12,35 +12,69 @@ export type VersionRecord = {
   code: string;
   engine: Engine;
   timestamp: string;
-  label?: string; // 可选的版本标签
-  autoSave: boolean; // 是否是自动保存
-};
-
-type VersionHistoryState = {
-  versions: VersionRecord[];
-  currentVersionId: string | null;
+  label?: string;
+  autoSave: boolean;
 };
 
 const STORAGE_KEY = 'graphviewer:versions:v1';
-const MAX_VERSIONS_PER_DIAGRAM = 50; // 每个图表最多保存50个版本
-const AUTO_SAVE_INTERVAL = 30000; // 自动保存间隔（30秒）
-const MIN_CHANGE_THRESHOLD = 10; // 最小变化字符数才触发自动保存
+const MAX_VERSIONS_PER_DIAGRAM = 50;
+const AUTO_SAVE_INTERVAL = 30000;
+const MAX_AUTO_SAVE_PER_DIAGRAM = 10;
+const STORAGE_WRITE_DEBOUNCE_MS = 250;
 
 function generateVersionId(): string {
   return `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
+function normalizeCodeForComparison(code: string): string {
+  return code.replace(/\r\n/g, '\n').trim();
+}
+
+function hasMeaningfulContentChange(nextCode: string, previousCode: string): boolean {
+  return normalizeCodeForComparison(nextCode) !== normalizeCodeForComparison(previousCode);
+}
+
+function sortVersions(records: VersionRecord[]): VersionRecord[] {
+  return [...records].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
+function trimDiagramVersions(records: VersionRecord[]): VersionRecord[] {
+  if (records.length <= MAX_VERSIONS_PER_DIAGRAM) {
+    return records;
+  }
+
+  const manualVersions = records.filter((v) => !v.autoSave);
+  const autoVersions = records.filter((v) => v.autoSave).slice(0, MAX_AUTO_SAVE_PER_DIAGRAM);
+
+  return sortVersions([...manualVersions, ...autoVersions]).slice(0, MAX_VERSIONS_PER_DIAGRAM);
+}
+
 export function useVersionHistory(diagramId: string, currentCode: string, currentEngine: Engine) {
   const [versions, setVersions] = useState<VersionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const versionsRef = useRef<VersionRecord[]>([]);
+  const codeRef = useRef(currentCode);
+  const engineRef = useRef(currentEngine);
 
-  // 加载版本历史
+  useEffect(() => {
+    versionsRef.current = versions;
+  }, [versions]);
+
+  useEffect(() => {
+    codeRef.current = currentCode;
+  }, [currentCode]);
+
+  useEffect(() => {
+    engineRef.current = currentEngine;
+  }, [currentEngine]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const allVersions: VersionRecord[] = JSON.parse(raw);
+        versionsRef.current = allVersions;
         setVersions(allVersions);
       }
     } catch (e: unknown) {
@@ -50,152 +84,97 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
     }
   }, []);
 
-  // 保存版本历史到 localStorage
-  const saveVersionsToStorage = useCallback((newVersions: VersionRecord[]) => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(newVersions));
-    } catch (e: unknown) {
-      console.error('保存版本历史失败:', e);
-    }
-  }, []);
-
-  // 使用 ref 保持最新值，避免 createVersion / interval 被频繁重建
-  const codeRef = useRef(currentCode);
-  const engineRef = useRef(currentEngine);
   useEffect(() => {
-    codeRef.current = currentCode;
-  }, [currentCode]);
-  useEffect(() => {
-    engineRef.current = currentEngine;
-  }, [currentEngine]);
+    if (typeof window === 'undefined' || isLoading) return;
 
-  // 获取当前图表的版本历史（memoize 避免每次渲染重新排序）
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
+      } catch (e: unknown) {
+        console.error('保存版本历史失败:', e);
+      }
+    }, STORAGE_WRITE_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [versions, isLoading]);
+
   const diagramVersions = useMemo(
-    () =>
-      versions
-        .filter((v) => v.diagramId === diagramId)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    () => sortVersions(versions.filter((v) => v.diagramId === diagramId)),
     [versions, diagramId],
   );
 
-  // 创建新版本 —— 通过 ref 读取 code/engine，避免依赖数组包含高频变化值
   const createVersion = useCallback(
     (label?: string, autoSave = false) => {
       const code = codeRef.current;
-      const eng = engineRef.current;
+      const engine = engineRef.current;
       if (!diagramId || !code.trim()) return null;
 
-      let result: VersionRecord | null = null;
+      const currentDiagramVersions = sortVersions(
+        versionsRef.current.filter((v) => v.diagramId === diagramId),
+      );
+      const otherVersions = versionsRef.current.filter((v) => v.diagramId !== diagramId);
+      const latestVersion = currentDiagramVersions[0];
 
-      setVersions((prev) => {
-        const currentDiagramVersions = prev
-          .filter((v) => v.diagramId === diagramId)
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        const otherVersions = prev.filter((v) => v.diagramId !== diagramId);
+      if (
+        latestVersion &&
+        latestVersion.engine === engine &&
+        !hasMeaningfulContentChange(code, latestVersion.code)
+      ) {
+        return null;
+      }
 
-        // 检查是否与最新版本相同
-        const latestVersion = currentDiagramVersions[0];
-        if (latestVersion && latestVersion.code === code && latestVersion.engine === eng) {
-          return prev;
-        }
+      const newVersion: VersionRecord = {
+        id: generateVersionId(),
+        diagramId,
+        code,
+        engine,
+        timestamp: new Date().toISOString(),
+        label,
+        autoSave,
+      };
 
-        // 自动保存时检查变化是否足够大
-        if (autoSave && latestVersion) {
-          const changeSize = Math.abs(code.length - latestVersion.code.length);
-          if (changeSize < MIN_CHANGE_THRESHOLD) {
-            return prev;
-          }
-        }
+      const nextVersions = [
+        ...trimDiagramVersions([newVersion, ...currentDiagramVersions]),
+        ...otherVersions,
+      ];
 
-        const newVersion: VersionRecord = {
-          id: generateVersionId(),
-          diagramId,
-          code,
-          engine: eng,
-          timestamp: new Date().toISOString(),
-          label,
-          autoSave,
-        };
-
-        result = newVersion;
-
-        let newDiagramVersions = [newVersion, ...currentDiagramVersions];
-
-        // 保留手动保存的版本，优先删除旧的自动保存版本
-        if (newDiagramVersions.length > MAX_VERSIONS_PER_DIAGRAM) {
-          const manualVersions = newDiagramVersions.filter((v) => !v.autoSave);
-          const autoVersions = newDiagramVersions.filter((v) => v.autoSave);
-
-          while (
-            manualVersions.length + autoVersions.length > MAX_VERSIONS_PER_DIAGRAM &&
-            autoVersions.length > 5
-          ) {
-            autoVersions.pop();
-          }
-          while (manualVersions.length + autoVersions.length > MAX_VERSIONS_PER_DIAGRAM) {
-            manualVersions.pop();
-          }
-
-          newDiagramVersions = [...manualVersions, ...autoVersions].sort(
-            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-          );
-        }
-
-        const newVersions = [...newDiagramVersions, ...otherVersions];
-        saveVersionsToStorage(newVersions);
-        return newVersions;
-      });
-
-      return result;
+      versionsRef.current = nextVersions;
+      setVersions(nextVersions);
+      return newVersion;
     },
-    [diagramId, saveVersionsToStorage],
+    [diagramId],
   );
 
-  // 删除版本
-  const deleteVersion = useCallback(
-    (versionId: string) => {
-      setVersions((prev) => {
-        const newVersions = prev.filter((v) => v.id !== versionId);
-        saveVersionsToStorage(newVersions);
-        return newVersions;
-      });
-    },
-    [saveVersionsToStorage],
-  );
+  const deleteVersion = useCallback((versionId: string) => {
+    const nextVersions = versionsRef.current.filter((v) => v.id !== versionId);
+    versionsRef.current = nextVersions;
+    setVersions(nextVersions);
+  }, []);
 
-  // 重命名版本
-  const renameVersion = useCallback(
-    (versionId: string, newLabel: string) => {
-      setVersions((prev) => {
-        const newVersions = prev.map((v) => (v.id === versionId ? { ...v, label: newLabel } : v));
-        saveVersionsToStorage(newVersions);
-        return newVersions;
-      });
-    },
-    [saveVersionsToStorage],
-  );
+  const renameVersion = useCallback((versionId: string, newLabel: string) => {
+    const nextVersions = versionsRef.current.map((v) =>
+      v.id === versionId ? { ...v, label: newLabel } : v,
+    );
+    versionsRef.current = nextVersions;
+    setVersions(nextVersions);
+  }, []);
 
-  // 清除图表的所有版本历史
   const clearDiagramVersions = useCallback(() => {
-    setVersions((prev) => {
-      const newVersions = prev.filter((v) => v.diagramId !== diagramId);
-      saveVersionsToStorage(newVersions);
-      return newVersions;
-    });
-  }, [diagramId, saveVersionsToStorage]);
+    const nextVersions = versionsRef.current.filter((v) => v.diagramId !== diagramId);
+    versionsRef.current = nextVersions;
+    setVersions(nextVersions);
+  }, [diagramId]);
 
-  // 自动保存 —— 仅在 diagramId 变化时重建 interval（createVersion 现在稳定）
   useEffect(() => {
     if (!diagramId) return;
 
-    const timer = setInterval(() => {
+    const timer = window.setInterval(() => {
       if (codeRef.current.trim()) {
         createVersion(undefined, true);
       }
     }, AUTO_SAVE_INTERVAL);
 
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
   }, [diagramId, createVersion]);
 
   return {

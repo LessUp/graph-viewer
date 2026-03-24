@@ -41,6 +41,16 @@
   - test 环境：`ENV=test ./scripts/deploy.sh`
   - prod 环境：`ENV=prod ./scripts/deploy.sh`
 
+### 部署模式
+
+- **完整服务模式**：默认 `npm run build`，包含 `/api/render` 和 `/api/healthz`。
+- **静态导出模式**：`npm run build:static`，用于 GitHub Pages。
+  - 该模式下远程渲染不可用。
+  - 仅保留本地 SVG 渲染路径。
+  - 构建不再删除 `app/api` 目录，而是由应用显式识别静态模式。
+
+## 配置说明
+
 ## 配置说明
 
 - Next.js 独立输出：`next.config.js` 中启用 `output: 'standalone'`，构建产物用于最小化镜像。
