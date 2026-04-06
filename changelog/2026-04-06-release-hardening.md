@@ -10,7 +10,9 @@
 - 为编辑器新增 `Ctrl+S` / `⌘+S` 快捷键，支持直接导出当前图表源码。
 - 完善 `README.md` 与 `README.zh-CN.md`：补充单文件测试命令、分享链接压缩原理与长度限制、实时预览性能建议、代码风格约定、docker-compose 推荐流程。
 - 补齐 `PreviewPanel` 的 PNG/PDF 预览失败态与降级提示，让远程渲染失败时界面反馈更明确。
+- 将 CI workflow 扩展为构建后启动生产服务并执行 smoke test，同时在 CI 中注入本地 mock Kroki，避免校验链路依赖公网环境。
 - 将 `package.json` 版本提升为 `1.0.0`，并同步更新 `/api/render` 请求头中的 GraphViewer 版本标识。
+- 将 `start` 脚本调整为 `node .next/standalone/server.js`，与 `output: 'standalone'` 的生产构建方式保持一致。
 - 更新 `TODO.md` 与 `CHANGELOG.md`，同步已完成事项与版本摘要。
 
 ## 背景

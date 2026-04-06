@@ -4,7 +4,7 @@
 
 ## [2026-04-06] 发布前加固与文档补完
 
-统一 CI Node 版本到 22，补齐 `/api/render` 与 `useDiagramRender` 测试覆盖，增加 `Ctrl+S` 源码导出快捷键，并补完 README 中的分享链接、实时预览、代码风格与 docker-compose 使用说明。
+统一 CI Node 版本到 22，补齐 `/api/render` 与 `useDiagramRender` 测试覆盖，增加 `Ctrl+S` 源码导出快捷键，补完 README 中的分享链接、实时预览、代码风格与 docker-compose 使用说明，并将 smoke test 接入 CI 生产启动校验。
 
 → [详情](./changelog/2026-04-06-release-hardening.md)
 
