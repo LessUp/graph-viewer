@@ -28,6 +28,7 @@ export type EditorPanelProps = {
   onRender: () => Promise<void> | void;
   onCopyCode: () => Promise<void> | void;
   onClearCode: () => void;
+  onExportSourceCode: () => Promise<void> | void;
   editorFontSize?: number;
 };
 
@@ -48,6 +49,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
     onRender,
     onCopyCode,
     onClearCode,
+    onExportSourceCode,
     editorFontSize = 13,
   } = props;
 
@@ -187,6 +189,11 @@ function EditorPanelComponent(props: EditorPanelProps) {
                 void onRender();
               }
             }}
+            onCtrlS={() => {
+              if (!loading && code.trim()) {
+                void onExportSourceCode();
+              }
+            }}
           />
         </div>
 
@@ -201,6 +208,14 @@ function EditorPanelComponent(props: EditorPanelProps) {
             <span>+</span>
             <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[9px]">Enter</kbd>
             <span>渲染</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[9px]">Ctrl</kbd>
+            <span>/</span>
+            <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[9px]">⌘</kbd>
+            <span>+</span>
+            <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[9px]">S</kbd>
+            <span>导出源码</span>
           </span>
         </div>
       </div>

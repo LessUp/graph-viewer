@@ -36,13 +36,13 @@
 
 - [x] [P2][frontend] 在 UI 中增加"实时预览"开关
 - [x] [P2][frontend] 实现基于防抖（如 500–1000 ms）的自动渲染逻辑
-- [ ] [P3][frontend] 在 README 或 docs 中说明实时预览的性能影响和建议使用方式
+- [x] [P3][frontend] 在 README 或 docs 中说明实时预览的性能影响和建议使用方式
 
 ### 1.5 分享链接与状态
 
 - [x] [P1][frontend] 使用压缩方案（如 LZ + Base64）缩短 URL 中 `code` 的长度
 - [x] [P2][frontend] 为无法解析分享链接的情况增加友好错误提示
-- [ ] [P2][docs] 在 README 中补充"分享链接长度与限制、压缩原理简单说明"
+- [x] [P2][docs] 在 README 中补充"分享链接长度与限制、压缩原理简单说明"
 
 ---
 
@@ -63,7 +63,7 @@
 - [x] [P1][devops] 引入 ESLint（Next.js 官方推荐规则）
 - [x] [P1][devops] 引入 Prettier，并与 ESLint 协调（避免规则冲突）
 - [x] [P1][devops] 在 `package.json` 中新增脚本 `lint` 和 `lint:fix`
-- [ ] [P2][devops] 在文档中简要说明代码风格（如何运行 lint、格式化）
+- [x] [P2][devops] 在文档中简要说明代码风格（如何运行 lint、格式化）
 
 ### 2.3 部署与脚本优化
 
@@ -106,7 +106,7 @@
 
 ### 4.1 CI / CD
 
-- [ ] [P2][devops] 使用 GitHub Actions / GitLab CI 搭建基础流水线：
+- [x] [P2][devops] 使用 GitHub Actions / GitLab CI 搭建基础流水线：
   - 安装依赖 → lint → test
 - [ ] [P2][devops] 在 CI 流程中增加对测试环境的冒烟测试（使用 `scripts/smoke-test.js`）
 
@@ -118,7 +118,7 @@
 ### 4.3 安全增强
 
 - [x] [P3][frontend] 调研并实现可选的 SVG 清洗逻辑（白名单标签/属性）
-- [ ] [P3][docs] 在 README 中补充安全说明：
+- [x] [P3][docs] 在 README 中补充安全说明：
   - 当前默认适用于自用/内部环境
   - 如需在公网开放，建议开启额外安全措施（反向代理、限流、鉴权等）
 

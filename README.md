@@ -25,9 +25,40 @@ npm run dev
 ```bash
 npm run typecheck
 npm test
+npx vitest run path/to/file.test.ts
+npm run lint
+npm run format
 ```
 
+## Share Links
+
+- Share links store `engine`, `format`, and compressed `code` in the URL query string.
+- Code is compressed with `lz-string` via `compressToEncodedURIComponent`, then restored with `decompressFromEncodedURIComponent`.
+- This reduces URL length significantly, but browser / chat tool / proxy limits still apply. Large diagrams can still produce links that are too long to paste reliably.
+- If compressed content cannot be decoded, the app falls back to the raw query value and shows a friendly warning.
+
+## Live Preview
+
+- Live preview is debounced and intended for small to medium diagrams.
+- For large diagrams or slower remote renderers, disable live preview and use manual render (`Ctrl+Enter`) to avoid unnecessary requests.
+- Source export is available with `Ctrl+S` inside the editor.
+
+## Code Style
+
+- Run `npm run lint` before submitting changes.
+- Run `npm run format` to normalize formatting.
+- Prefer small edits to the existing state / render / action hook layers instead of adding parallel flows.
+
 ## Deployment
+
+### Local docker-compose flow
+
+- Dev: `docker compose --profile dev up --build`
+- Test: `docker compose --profile test up --build`
+- Prod: `docker compose --profile prod up --build -d`
+- Smoke test after startup: `npm run test:smoke`
+
+### Service deployment
 
 - **Environment Variables**: `KROKI_BASE_URL` (default `https://kroki.io`), `PORT` (default `3000`)
 - **Docker**: `docker compose --profile prod build && docker compose --profile prod up -d`

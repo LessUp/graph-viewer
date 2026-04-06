@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
 import type { DiagramDoc } from '@/lib/types';
 import { SAMPLES } from '@/lib/diagramSamples';
+import { exportSourceCode } from '@/lib/exportUtils';
 
 type WorkspaceActionsDeps = {
   engine: Engine;
@@ -90,6 +91,17 @@ export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
     [deleteDiagram],
   );
 
+  const handleExportSourceCode = useCallback(() => {
+    try {
+      if (!code.trim()) return;
+      exportSourceCode(code, engine, 'diagram');
+      showToast('源码文件已导出');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '导出源码失败';
+      setError(msg);
+    }
+  }, [code, engine, setError, showToast]);
+
   const handleExportWorkspace = useCallback(() => {
     try {
       const payload = {
@@ -134,6 +146,7 @@ export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
     handleRenameDiagram,
     handleDeleteDiagram,
     handleExportWorkspace,
+    handleExportSourceCode,
     handleEngineChange,
   };
 }

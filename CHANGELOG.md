@@ -2,6 +2,13 @@
 
 所有重要变更按时间倒序记录。详细内容见 [`changelog/`](./changelog/) 目录。
 
+## [2026-04-06] 发布前加固与文档补完
+
+统一 CI Node 版本到 22，补齐 `/api/render` 与 `useDiagramRender` 测试覆盖，增加 `Ctrl+S` 源码导出快捷键，并补完 README 中的分享链接、实时预览、代码风格与 docker-compose 使用说明。
+
+→ [详情](./changelog/2026-04-06-release-hardening.md)
+
+
 ## [2025-02-25] 清理、基础设施与架构重构
 
 阶段 1 清理死文件、统一图标系统（lucide-react）、优化字体加载、提取 Toast 组件、添加 ESLint + Prettier 配置。阶段 2 拆分 AppHeader / DiagramList / CollapsedSidebar / ErrorBoundary 组件，page.tsx 精简约 40%。

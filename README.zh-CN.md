@@ -24,8 +24,39 @@
 - 类型检查与测试：
   - `npm run typecheck`
   - `npm test`
+  - `npx vitest run path/to/file.test.ts`
+  - `npm run lint`
+  - `npm run format`
+
+## 分享链接
+
+- 分享链接会在查询参数中保存 `engine`、`format` 与压缩后的 `code`。
+- 代码使用 `lz-string` 的 `compressToEncodedURIComponent` 压缩，并通过 `decompressFromEncodedURIComponent` 恢复。
+- 该方案可以明显缩短链接，但浏览器、聊天工具、反向代理仍然可能对超长 URL 做截断，因此大型图表依然可能超过可稳定分享的长度。
+- 如果压缩内容无法解码，应用会回退到原始查询值，并给出友好提示。
+
+## 实时预览
+
+- 实时预览采用防抖触发，适合中小型图表。
+- 对于大型图表或较慢的远程渲染服务，建议关闭实时预览，改用 `Ctrl+Enter` 手动渲染。
+- 编辑器内支持 `Ctrl+S` / `⌘+S` 直接导出当前图表源码。
+
+## 代码风格
+
+- 提交前运行 `npm run lint` 检查问题。
+- 使用 `npm run format` 统一格式。
+- 优先在既有的状态层、渲染层、动作层基础上做小步修改，避免引入并行数据流。
 
 ## 部署指南
+
+### 本地 docker-compose 流程
+
+- 开发：`docker compose --profile dev up --build`
+- 测试：`docker compose --profile test up --build`
+- 生产：`docker compose --profile prod up --build -d`
+- 启动后冒烟测试：`npm run test:smoke`
+
+### 服务部署
 
 - 环境变量：
   - `KROKI_BASE_URL`：远程渲染服务地址（默认 `https://kroki.io`）
@@ -51,7 +82,6 @@
 
 ## 配置说明
 
-## 配置说明
 
 - Next.js 独立输出：`next.config.js` 中启用 `output: 'standalone'`，构建产物用于最小化镜像。
 - 健康检查端点：`/api/healthz`（app/api/healthz/route.ts）
