@@ -108,7 +108,7 @@
 
 - [x] [P2][devops] 使用 GitHub Actions / GitLab CI 搭建基础流水线：
   - 安装依赖 → lint → test
-- [ ] [P2][devops] 在 CI 流程中增加对测试环境的冒烟测试（使用 `scripts/smoke-test.js`）
+- [x] [P2][devops] 在 CI 流程中增加对测试环境的冒烟测试（使用 `scripts/smoke-test.js`）
 
 ### 4.2 监控与日志
 
