@@ -9,6 +9,7 @@
 - 扩展 `hooks/__tests__/useDiagramRender.test.tsx`，补充 Graphviz 本地渲染、远程错误提示、二进制下载与并发请求仅保留最新结果的行为验证。
 - 为编辑器新增 `Ctrl+S` / `⌘+S` 快捷键，支持直接导出当前图表源码。
 - 完善 `README.md` 与 `README.zh-CN.md`：补充单文件测试命令、分享链接压缩原理与长度限制、实时预览性能建议、代码风格约定、docker-compose 推荐流程。
+- 补齐 `PreviewPanel` 的 PNG/PDF 预览失败态与降级提示，让远程渲染失败时界面反馈更明确。
 - 将 `package.json` 版本提升为 `1.0.0`，并同步更新 `/api/render` 请求头中的 GraphViewer 版本标识。
 - 更新 `TODO.md` 与 `CHANGELOG.md`，同步已完成事项与版本摘要。
 

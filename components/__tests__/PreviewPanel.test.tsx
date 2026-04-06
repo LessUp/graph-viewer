@@ -27,6 +27,73 @@ describe('PreviewPanel', () => {
     );
 
     expect(screen.getByText('预览区域')).toBeInTheDocument();
+    expect(screen.getByText('编辑代码后自动渲染')).toBeInTheDocument();
+  });
+
+  it('renders png empty-state guidance before output is available', () => {
+    render(
+      <PreviewPanel
+        svg=""
+        base64=""
+        contentType=""
+        loading={false}
+        showPreview={false}
+        format="png"
+      />,
+    );
+
+    expect(screen.getByText('渲染成功后会在这里显示 PNG 预览')).toBeInTheDocument();
+  });
+
+  it('renders binary preview error state for png failures', () => {
+    render(
+      <PreviewPanel
+        svg=""
+        base64=""
+        contentType=""
+        loading={false}
+        showPreview={false}
+        format="png"
+        error="远程渲染服务超时"
+      />,
+    );
+
+    expect(screen.getByText('PNG 预览加载失败')).toBeInTheDocument();
+    expect(screen.getByText('远程渲染服务超时')).toBeInTheDocument();
+    expect(screen.getByText('请检查远程渲染配置，或切换到 SVG 继续预览。')).toBeInTheDocument();
+  });
+
+  it('renders binary preview error state for pdf failures', () => {
+    render(
+      <PreviewPanel
+        svg=""
+        base64=""
+        contentType=""
+        loading={false}
+        showPreview={false}
+        format="pdf"
+        error="当前静态部署模式下不可用该渲染方式"
+      />,
+    );
+
+    expect(screen.getByText('PDF 预览加载失败')).toBeInTheDocument();
+    expect(screen.getByText('当前静态部署模式下不可用该渲染方式')).toBeInTheDocument();
+    expect(screen.getByText('当前 PDF 预览依赖远程渲染结果，建议检查服务状态后重试。')).toBeInTheDocument();
+  });
+
+  it('renders pdf previews', () => {
+    render(
+      <PreviewPanel
+        svg=""
+        base64="abc123"
+        contentType="application/pdf"
+        loading={false}
+        showPreview={true}
+        format="pdf"
+      />,
+    );
+
+    expect(screen.getByTitle('diagram preview')).toHaveAttribute('src', 'data:application/pdf;base64,abc123');
   });
 
   it('renders sanitized svg content and interaction hint', () => {
