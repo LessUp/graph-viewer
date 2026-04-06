@@ -22,6 +22,7 @@ export type PreviewPanelProps = {
   loading: boolean;
   showPreview: boolean;
   format: Format;
+  error?: string;
   code?: string;
   engine?: Engine;
 };
@@ -34,6 +35,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
     loading,
     showPreview,
     format,
+    error = '',
     code = '',
     engine = 'mermaid',
   } = props;
@@ -139,6 +141,16 @@ export function PreviewPanel(props: PreviewPanelProps) {
         ? '适合截图分享与复制'
         : '适合文档交付与打印';
 
+  const isBinaryPreview = format === 'png' || format === 'pdf';
+  const hasPreviewContent = format === 'svg' ? Boolean(sanitizedSvg) : Boolean(base64);
+  const showBinaryErrorState = !loading && isBinaryPreview && Boolean(error) && !hasPreviewContent;
+  const emptyStateDescription =
+    format === 'png'
+      ? '渲染成功后会在这里显示 PNG 预览'
+      : format === 'pdf'
+        ? '渲染成功后会在这里显示 PDF 预览'
+        : '编辑代码后自动渲染';
+
   return (
     <div
       ref={containerRef}
@@ -206,14 +218,34 @@ export function PreviewPanel(props: PreviewPanelProps) {
       )}
 
       {/* Empty State */}
-      {!showPreview && !loading && (
+      {!showPreview && !loading && !showBinaryErrorState && (
         <div className="flex h-full flex-col items-center justify-center gap-4 text-slate-400">
           <div className="rounded-2xl bg-slate-50 p-5">
             <ImageIcon className="h-12 w-12 text-slate-300" strokeWidth={1.5} />
           </div>
           <div className="text-center">
             <p className="text-sm font-medium text-slate-500">预览区域</p>
-            <p className="mt-0.5 text-xs text-slate-400">编辑代码后自动渲染</p>
+            <p className="mt-0.5 text-xs text-slate-400">{emptyStateDescription}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Binary Preview Error State */}
+      {showBinaryErrorState && (
+        <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+          <div className="rounded-2xl bg-rose-50 p-5 ring-1 ring-rose-100">
+            <X className="h-12 w-12 text-rose-400" strokeWidth={1.5} />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-rose-600">
+              {format === 'png' ? 'PNG 预览加载失败' : 'PDF 预览加载失败'}
+            </p>
+            <p className="text-xs leading-5 text-slate-500">{error}</p>
+            <p className="text-xs text-slate-400">
+              {format === 'png'
+                ? '请检查远程渲染配置，或切换到 SVG 继续预览。'
+                : '当前 PDF 预览依赖远程渲染结果，建议检查服务状态后重试。'}
+            </p>
           </div>
         </div>
       )}

@@ -221,6 +221,7 @@ export default function Page() {
     loading,
     showPreview,
     format,
+    error: pageError,
     code,
     engine,
   };
