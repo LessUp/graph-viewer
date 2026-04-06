@@ -11,6 +11,7 @@ export type CodeEditorProps = {
   onChange: (value: string) => void;
   disabled?: boolean;
   onCtrlEnter?: () => void;
+  onCtrlS?: () => void;
   engine?: Engine;
   minHeight?: string;
   maxHeight?: string;
@@ -79,6 +80,7 @@ function CodeEditorComponent(props: CodeEditorProps) {
     onChange,
     disabled,
     onCtrlEnter,
+    onCtrlS,
     engine = 'mermaid',
     minHeight = '300px',
     maxHeight,
@@ -115,9 +117,14 @@ function CodeEditorComponent(props: CodeEditorProps) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && onCtrlEnter) {
         e.preventDefault();
         onCtrlEnter();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's' && onCtrlS) {
+        e.preventDefault();
+        onCtrlS();
       }
     },
-    [onCtrlEnter],
+    [onCtrlEnter, onCtrlS],
   );
 
   return (

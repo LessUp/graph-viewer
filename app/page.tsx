@@ -103,6 +103,7 @@ export default function Page() {
     handleRenameDiagram,
     handleDeleteDiagram,
     handleExportWorkspace,
+    handleExportSourceCode,
     handleEngineChange,
   } = useWorkspaceActions({
     engine,
@@ -182,6 +183,7 @@ export default function Page() {
     onRender: renderDiagram,
     onCopyCode: handleCopyCode,
     onClearCode: handleClearCode,
+    onExportSourceCode: handleExportSourceCode,
     editorFontSize: settings.editorFontSize,
   };
 
