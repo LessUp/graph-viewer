@@ -1,41 +1,42 @@
-# GraphViewer 文档中心
+# GraphViewer Documentation / GraphViewer 文档
 
-## 快速导航
+> **文档已重构 / Documentation Restructured**
+> 
+> This documentation has been restructured to provide better bilingual support.
+> 
+> 本文档已重构，以提供更好的双语支持。
 
-| 文档 | 说明 |
-|------|------|
-| [DEVELOPMENT.md](DEVELOPMENT.md) | 开发与架构指南 |
-| [TESTING_GUIDE.md](TESTING_GUIDE.md) | 测试指南 |
-| [EXPORT_IMPROVEMENTS.md](EXPORT_IMPROVEMENTS.md) | 导出能力说明 |
-| [kroki-self-hosting.md](kroki-self-hosting.md) | Kroki 自建方案 |
+## 📚 Quick Navigation / 快速导航
 
-## 按场景查找
+| Language | Path | Description |
+|----------|------|-------------|
+| 🇺🇸 English | [docs/en/README.md](en/README.md) | Complete English documentation |
+| 🇨🇳 中文 | [docs/zh-CN/README.md](zh-CN/README.md) | 完整中文文档 |
 
-### 我想快速了解项目
+## 📁 New Structure / 新结构
 
-→ 阅读 [DEVELOPMENT.md](DEVELOPMENT.md)，了解目录结构、核心数据流和常用命令。
+```
+docs/
+├── en/                    # English Documentation / 英文文档
+│   ├── 01-getting-started/
+│   ├── 02-development/
+│   ├── 03-deployment/
+│   ├── 04-features/
+│   └── 05-reference/
+├── zh-CN/                 # Chinese Documentation / 中文文档
+│   ├── 01-getting-started/
+│   ├── 02-development/
+│   ├── 03-deployment/
+│   ├── 04-features/
+│   └── 05-reference/
+└── archive/               # Historical Documents / 历史文档
+    ├── refactor-plan-2025-11-18.md
+    └── remediation-plan-2025-12-15.md
+```
 
-### 我想运行、调试和测试
+---
 
-→ 阅读 [DEVELOPMENT.md](DEVELOPMENT.md) + [TESTING_GUIDE.md](TESTING_GUIDE.md)
+## 🚀 Choose Your Language / 选择您的语言
 
-### 我想了解导出能力
-
-→ 阅读 [EXPORT_IMPROVEMENTS.md](EXPORT_IMPROVEMENTS.md)
-
-### 我想自建 Kroki 服务
-
-→ 阅读 [kroki-self-hosting.md](kroki-self-hosting.md)
-
-## 历史文档
-
-以下文档用于了解历史背景，不作为当前实现说明：
-
-- `refactor-plan-2025-11-18.md` - 历史重构设计方案
-- `remediation-plan-2025-12-15.md` - 历史整改计划
-
-## 文档维护原则
-
-1. **以代码为准** - 文档中的脚本、端口、环境变量必须与仓库实现一致
-2. **先更新现有文档** - 优先维护核心文档，避免新增重复说明
-3. **历史文档明确标注** - 规划、整改类文档需说明是历史背景
+- **[English →](en/README.md)**
+- **[中文 →](zh-CN/README.md)**
