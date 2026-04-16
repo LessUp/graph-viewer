@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { SettingsModal } from '@/components/SettingsModal';
 import { Toast } from '@/components/Toast';
@@ -9,6 +9,7 @@ import { DiagramList } from '@/components/DiagramList';
 import { CollapsedSidebar } from '@/components/CollapsedSidebar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SidebarTabs, type SidebarTab } from '@/components/SidebarTabs';
+import { ConfirmDialog, PromptDialog, AlertDialog } from '@/components/Dialogs';
 import { useDiagramState } from '@/hooks/useDiagramState';
 import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { useSettings } from '@/hooks/useSettings';
@@ -83,6 +84,47 @@ export default function Page() {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('editor');
   const { toast, showToast } = useToast();
 
+  // 对话框状态
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    options: { title: string; message: string; variant?: 'default' | 'danger' };
+    resolve: (value: boolean) => void;
+  } | null>(null);
+
+  const [promptDialog, setPromptDialog] = useState<{
+    isOpen: boolean;
+    options: { title: string; message: string; defaultValue: string };
+    resolve: (value: string | null) => void;
+  } | null>(null);
+
+  const [alertDialog, setAlertDialog] = useState<{
+    isOpen: boolean;
+    options: { title: string; message: string };
+  } | null>(null);
+
+  // 对话框回调函数
+  const showConfirm = useCallback(
+    (options: { title: string; message: string; variant?: 'default' | 'danger' }): Promise<boolean> => {
+      return new Promise((resolve) => {
+        setConfirmDialog({ isOpen: true, options, resolve });
+      });
+    },
+    [],
+  );
+
+  const showPrompt = useCallback(
+    (options: { title: string; message: string; defaultValue: string }): Promise<string | null> => {
+      return new Promise((resolve) => {
+        setPromptDialog({ isOpen: true, options, resolve });
+      });
+    },
+    [],
+  );
+
+  const showAlertDialog = useCallback((options: { title: string; message: string }) => {
+    setAlertDialog({ isOpen: true, options });
+  }, []);
+
   const pageError = error || linkError;
 
   // --- 组合 hooks ---
@@ -120,6 +162,8 @@ export default function Page() {
     clearError,
     setError,
     showToast,
+    showPrompt,
+    showConfirm,
   });
 
   const {
@@ -160,6 +204,7 @@ export default function Page() {
     setCode,
     setEngine,
     showToast,
+    showConfirm,
   });
 
   // 水合加载状态
@@ -224,6 +269,7 @@ export default function Page() {
     error: pageError,
     code,
     engine,
+    onExportError: (message: string) => showAlertDialog({ title: '导出失败', message }),
   };
 
   const settingsModalProps = {
@@ -272,6 +318,37 @@ export default function Page() {
       <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1920px] flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:gap-4 lg:py-5">
         <Toast toast={toast} />
         <SettingsModal {...settingsModalProps} />
+
+        {/* 对话框 */}
+        <ConfirmDialog
+          isOpen={confirmDialog?.isOpen ?? false}
+          options={confirmDialog?.options ?? { title: '', message: '' }}
+          onConfirm={() => {
+            confirmDialog?.resolve(true);
+            setConfirmDialog(null);
+          }}
+          onCancel={() => {
+            confirmDialog?.resolve(false);
+            setConfirmDialog(null);
+          }}
+        />
+        <PromptDialog
+          isOpen={promptDialog?.isOpen ?? false}
+          options={promptDialog?.options ?? { title: '', message: '', defaultValue: '' }}
+          onConfirm={(value) => {
+            promptDialog?.resolve(value);
+            setPromptDialog(null);
+          }}
+          onCancel={() => {
+            promptDialog?.resolve(null);
+            setPromptDialog(null);
+          }}
+        />
+        <AlertDialog
+          isOpen={alertDialog?.isOpen ?? false}
+          options={alertDialog?.options ?? { title: '', message: '' }}
+          onClose={() => setAlertDialog(null)}
+        />
 
         <AppHeader {...headerProps} />
 

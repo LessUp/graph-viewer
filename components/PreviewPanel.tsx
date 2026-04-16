@@ -14,6 +14,7 @@ import DOMPurify from 'dompurify';
 import { PreviewToolbar } from '@/components/PreviewToolbar';
 import { ENGINE_LABELS, FORMAT_LABELS, type Engine, type Format } from '@/lib/diagramConfig';
 import { Loader2, X, Image as ImageIcon } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 export type PreviewPanelProps = {
   svg: string;
@@ -25,6 +26,7 @@ export type PreviewPanelProps = {
   error?: string;
   code?: string;
   engine?: Engine;
+  onExportError?: (message: string) => void;
 };
 
 export function PreviewPanel(props: PreviewPanelProps) {
@@ -38,6 +40,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
     error = '',
     code = '',
     engine = 'mermaid',
+    onExportError,
   } = props;
 
   const sanitizedSvg = useMemo(() => {
@@ -119,7 +122,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
         setIsFullscreen(false);
       }
     } catch (e: unknown) {
-      console.error('Fullscreen error:', e);
+      logger.error('fullscreen', { error: e instanceof Error ? e.message : 'Unknown error' });
     }
   }, []);
 
@@ -203,6 +206,7 @@ export function PreviewPanel(props: PreviewPanelProps) {
           code={code}
           engine={engine}
           format={format}
+          onExportError={onExportError}
         />
       )}
 
