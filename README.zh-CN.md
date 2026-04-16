@@ -102,6 +102,18 @@ npm run format             # Prettier 格式化
 
 ## 📚 文档
 
+### 📖 规范文档
+
+本项目遵循**规范驱动开发（SDD）**。所有实现细节定义在 `/specs` 目录中：
+
+- [产品路线图](specs/product/roadmap.md) — 开发阶段与规划
+- [产品待办清单](specs/product/todo.md) — 任务 backlog 与优先级
+- [核心架构 RFC](specs/rfc/0001-core-architecture.md) — 技术架构决策
+- [API 设计 RFC](specs/rfc/0002-api-design.md) — API 设计决策
+- [OpenAPI 规范](specs/api/openapi.yaml) — 机器可读的 API 定义
+- [数据库模式](specs/db/schema-v1.dbml) — 数据模型与 localStorage 模式
+- [测试规范](specs/testing/diagram-render.feature) — BDD 测试规范
+
 ### 📖 中文文档
 
 - [文档中心](docs/zh-CN/README.md)
