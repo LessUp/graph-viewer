@@ -2,6 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Philosophy: Spec-Driven Development (SDD)
+
+This project follows the **Spec-Driven Development (SDD)** paradigm. All code implementations must use the `/specs` directory as the Single Source of Truth.
+
+### Spec Directory Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `/specs/product/` | Product feature definitions, acceptance criteria, roadmap, TODO |
+| `/specs/rfc/` | Technical design documents and architecture decisions |
+| `/specs/api/` | API interface definitions |
+| `/specs/db/` | Database schema definitions |
+| `/specs/testing/` | BDD test specifications |
+
+### AI Workflow: Review Specs → Update Specs → Implement → Test
+
+1. **Review**: Before coding, read relevant specs in `/specs/`.
+2. **Spec-First**: For new features or interface changes, propose spec updates first.
+3. **Implement**: Code must 100% comply with spec definitions.
+4. **Test**: Write tests based on acceptance criteria in `/specs/testing/`.
+
+See `AGENTS.md` for the complete SDD workflow specification.
+
 ## Commands
 
 ```bash
