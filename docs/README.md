@@ -1,46 +1,41 @@
 # GraphViewer 文档中心
 
-## 先看哪一份
+## 快速导航
 
-- **想快速理解项目结构**
-  - 看 `DEVELOPMENT.md`
-- **想运行、调试和测试项目**
-  - 看 `DEVELOPMENT.md`
-  - 再看 `TESTING_GUIDE.md`
-- **想了解导出能力和限制**
-  - 看 `EXPORT_IMPROVEMENTS.md`
-- **想自建或接入 Kroki**
-  - 看 `kroki-self-hosting.md`
+| 文档 | 说明 |
+|------|------|
+| [DEVELOPMENT.md](DEVELOPMENT.md) | 开发与架构指南 |
+| [TESTING_GUIDE.md](TESTING_GUIDE.md) | 测试指南 |
+| [EXPORT_IMPROVEMENTS.md](EXPORT_IMPROVEMENTS.md) | 导出能力说明 |
+| [kroki-self-hosting.md](kroki-self-hosting.md) | Kroki 自建方案 |
 
-## 当前有效文档
+## 按场景查找
 
-- **`DEVELOPMENT.md`**
-  - 当前开发与架构指南
-  - 包含目录结构、渲染链路、环境变量、常用命令
-- **`TESTING_GUIDE.md`**
-  - 当前测试指南
-  - 包含自动化测试、冒烟测试、手工回归检查
-- **`EXPORT_IMPROVEMENTS.md`**
-  - 当前导出能力说明
-  - 包含 SVG / PNG / HTML / Markdown / 源码导出与剪贴板能力
-- **`kroki-self-hosting.md`**
-  - Kroki 自建与接入说明
-  - 包含固定服务端配置和前端自定义服务器配置约束
+### 我想快速了解项目
 
-## 历史 / 归档文档
+→ 阅读 [DEVELOPMENT.md](DEVELOPMENT.md)，了解目录结构、核心数据流和常用命令。
 
-- **`refactor-plan-2025-11-18.md`**
-  - 历史重构设计方案
-  - 用于了解架构演进背景，不作为当前实现说明
-- **`remediation-plan-2025-12-15.md`**
-  - 历史整改计划
-  - 用于了解曾经的问题清单与修复方向，不作为当前行为说明
+### 我想运行、调试和测试
 
-## 使用原则
+→ 阅读 [DEVELOPMENT.md](DEVELOPMENT.md) + [TESTING_GUIDE.md](TESTING_GUIDE.md)
 
-- **以代码为准**
-  - 文档中的脚本、端口、环境变量、文件路径必须与仓库当前实现一致
-- **先更新现有文档**
-  - 优先维护当前这几份核心文档，而不是新增功能重复的说明文件
-- **历史文档要明确标注**
-  - 规划、整改、设计类文档如果继续保留，必须说明它们是历史背景而不是当前规范
+### 我想了解导出能力
+
+→ 阅读 [EXPORT_IMPROVEMENTS.md](EXPORT_IMPROVEMENTS.md)
+
+### 我想自建 Kroki 服务
+
+→ 阅读 [kroki-self-hosting.md](kroki-self-hosting.md)
+
+## 历史文档
+
+以下文档用于了解历史背景，不作为当前实现说明：
+
+- `refactor-plan-2025-11-18.md` - 历史重构设计方案
+- `remediation-plan-2025-12-15.md` - 历史整改计划
+
+## 文档维护原则
+
+1. **以代码为准** - 文档中的脚本、端口、环境变量必须与仓库实现一致
+2. **先更新现有文档** - 优先维护核心文档，避免新增重复说明
+3. **历史文档明确标注** - 规划、整改类文档需说明是历史背景
