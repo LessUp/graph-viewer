@@ -1,115 +1,126 @@
 # GraphViewer
 
-[![App](https://img.shields.io/badge/App-GitHub%20Pages-blue?logo=github)](https://lessup.github.io/graph-viewer/)
+[![CI](https://github.com/LessUp/graph-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/graph-viewer/actions/workflows/ci.yml)
+[![Deploy](https://github.com/LessUp/graph-viewer/actions/workflows/pages.yml/badge.svg)](https://github.com/LessUp/graph-viewer/actions/workflows/pages.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [English](README.md) | 简体中文
 
-一站式图形语法可视化工具，支持 Mermaid、PlantUML、Graphviz、D2、Nomnoml、Ditaa、BlockDiag、NwDiag、ActDiag、SeqDiag、ERD、SVGBob、WaveDrom、Vega、Vega-Lite 等 16 种图表引擎，提供本地与服务端混合渲染、容器化部署与自动化测试。
+一站式图形语法可视化工具，支持 **16 种图表引擎**，提供本地与服务端混合渲染。
 
-## 新功能
+## 支持的引擎
 
-- 本地 Graphviz WASM 渲染（SVG）与 Mermaid 本地渲染，减少网络往返、提升响应速度。
-- 服务端渲染结果短期缓存，降低重复渲染延迟与外部依赖压力。
-- 容器化部署（多阶段构建、独立输出、健康检查），支持 dev/test/prod 多环境。
-- 一键部署脚本与健康探针。
-- 自动化冒烟测试与性能基准测试脚本。
+| 分类 | 引擎 |
+|------|------|
+| 常用 | Mermaid, PlantUML, Graphviz (DOT), D2 |
+| 流程图系列 | Flowchart.js, BlockDiag, ActDiag |
+| 时序与网络 | SeqDiag, NwDiag |
+| 数据可视化 | Vega, Vega-Lite, WaveDrom |
+| ASCII 艺术 | Ditaa, SVGBob, Nomnoml |
+| 数据建模 | ERD |
+
+## 功能特性
+
+- **混合渲染**：本地 Mermaid/Graphviz WASM 渲染保证速度 + 远程 Kroki 支持更多格式
+- **多格式导出**：SVG、PNG (2x/4x)、PDF、HTML、Markdown、源代码
+- **实时预览**：防抖实时预览，支持手动渲染
+- **分享链接**：使用 LZ-string 压缩的 URL 分享
+- **多图工作区**：管理多个图表，本地持久化
+- **版本历史**：自动保存快照，支持恢复
+- **AI 助手**：可选的 AI 代码分析与生成
 
 ## 快速开始
 
-- 开发模式：
-  - `npm install`
-  - `npm run dev`
-  - 打开 `http://localhost:3000`
-- 类型检查与测试：
-  - `npm run typecheck`
-  - `npm test`
-  - `npx vitest run path/to/file.test.ts`
-  - `npm run lint`
-  - `npm run format`
+```bash
+# 安装依赖
+npm install
 
-## 分享链接
+# 启动开发服务器
+npm run dev
 
-- 分享链接会在查询参数中保存 `engine`、`format` 与压缩后的 `code`。
-- 代码使用 `lz-string` 的 `compressToEncodedURIComponent` 压缩，并通过 `decompressFromEncodedURIComponent` 恢复。
-- 该方案可以明显缩短链接，但浏览器、聊天工具、反向代理仍然可能对超长 URL 做截断，因此大型图表依然可能超过可稳定分享的长度。
-- 如果压缩内容无法解码，应用会回退到原始查询值，并给出友好提示。
+# 打开 http://localhost:3000
+```
 
-## 实时预览
+## 常用命令
 
-- 实时预览采用防抖触发，适合中小型图表。
-- 对于大型图表或较慢的远程渲染服务，建议关闭实时预览，改用 `Ctrl+Enter` 手动渲染。
-- 编辑器内支持 `Ctrl+S` / `⌘+S` 直接导出当前图表源码。
+```bash
+# 开发
+npm run dev              # 启动开发服务器（端口 3000）
 
-## 代码风格
+# 构建
+npm run build            # 生产构建（包含 API 路由）
+npm run build:static     # 静态导出（用于 GitHub Pages）
 
-- 提交前运行 `npm run lint` 检查问题。
-- 使用 `npm run format` 统一格式。
-- 优先在既有的状态层、渲染层、动作层基础上做小步修改，避免引入并行数据流。
+# 测试
+npm run test             # 运行单元测试
+npm run test:watch       # 监听模式
+npm run test:smoke       # 冒烟测试（端点可用性）
 
-## 部署指南
+# 代码质量
+npm run lint             # ESLint 检查
+npm run typecheck        # TypeScript 类型检查
+npm run format           # Prettier 格式化
+```
 
-### 本地 docker-compose 流程
+## 部署
 
-- 开发：`docker compose --profile dev up --build`
-- 测试：`docker compose --profile test up --build`
-- 生产：`docker compose --profile prod up --build -d`
-- 启动后冒烟测试：`npm run test:smoke`
+### Docker
 
-### 服务部署
+```bash
+# 生产环境
+docker compose --profile prod up --build -d
 
-- 环境变量：
-  - `KROKI_BASE_URL`：远程渲染服务地址（默认 `https://kroki.io`）
-  - `PORT`：服务端口（默认 `3000`）
+# 开发环境
+docker compose --profile dev up --build
 
-- 容器构建与运行：
-  - 构建：`docker compose --profile prod build`
-  - 启动：`docker compose --profile prod up -d`
-  - 健康检查：`curl -fsS http://localhost:3000/api/healthz`
+# 搭配自建 Kroki
+docker compose --profile prod --profile kroki up -d
+```
 
-- 一键部署脚本：
-  - dev 环境：`ENV=dev ./scripts/deploy.sh`
-  - test 环境：`ENV=test ./scripts/deploy.sh`
-  - prod 环境：`ENV=prod ./scripts/deploy.sh`
+### GitHub Pages
 
-### 部署模式
+静态导出模式用于 GitHub Pages 部署。该模式下远程渲染不可用。
 
-- **完整服务模式**：默认 `npm run build`，包含 `/api/render` 和 `/api/healthz`。
-- **静态导出模式**：`npm run build:static`，用于 GitHub Pages。
-  - 该模式下远程渲染不可用。
-  - 仅保留本地 SVG 渲染路径。
-  - 构建不再删除 `app/api` 目录，而是由应用显式识别静态模式。
+### 环境变量
 
-## 配置说明
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `KROKI_BASE_URL` | `https://kroki.io` | 远程渲染服务地址 |
+| `PORT` | `3000` | 服务端口 |
+| `NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL` | CDN URL | Graphviz WASM 资源地址 |
 
+## 架构
 
-- Next.js 独立输出：`next.config.js` 中启用 `output: 'standalone'`，构建产物用于最小化镜像。
-- 健康检查端点：`/api/healthz`（app/api/healthz/route.ts）
-- 渲染 API：`/api/render`（app/api/render/route.ts）
-- 客户端渲染入口：`app/page.tsx`
-- 架构总览：
-  - 前端：`app/page.tsx` + `components/*` + `hooks/*`，负责编辑、预览与状态持久化。
-  - 后端：`/api/render` 作为 Kroki 代理与缓存层，`/api/healthz` 用于健康检查。
-  - 配置：`lib/diagramConfig.ts` 统一维护引擎/格式，`lib/diagramSamples.ts` 存放示例代码。
+```
+├── app/
+│   ├── page.tsx              # 主页面组合
+│   ├── api/
+│   │   ├── render/route.ts   # Kroki 代理（带缓存）
+│   │   └── healthz/route.ts  # 健康检查端点
+├── components/               # React 组件
+├── hooks/                    # 自定义 React Hooks
+│   ├── useDiagramState.ts    # 工作区状态管理
+│   ├── useDiagramRender.ts   # 渲染逻辑
+│   └── useLivePreview.ts     # 防抖预览
+├── lib/
+│   ├── diagramConfig.ts      # 引擎/格式定义
+│   ├── diagramSamples.ts     # 示例代码
+│   └── exportUtils.ts        # 导出工具
+```
 
-## 安全说明
+## 文档
 
-- 本地渲染：
-  - Mermaid 使用 `securityLevel: 'strict'` 初始化，仅在浏览器内渲染 SVG，不向服务端发送代码。
-  - Graphviz WASM 在浏览器侧执行，依赖 `@hpcc-js/wasm` 官方实现。
-- 远程渲染：
-  - `/api/render` 会将图形代码转发到 `KROKI_BASE_URL` 指定的 Kroki 实例（默认 `https://kroki.io`），并在内存中短期缓存结果；缓存仅用于性能优化，不做持久化存储。
-  - 服务端日志不会记录原始代码内容，仅记录引擎、格式、长度和错误状态等摘要信息，用于排查故障。
-- 使用建议：
-  - 在涉及敏感业务逻辑或机密信息时，优先使用本地渲染（Mermaid / Graphviz），或配置自建 Kroki 实例替代公共服务。
-  - 如需更严格的安全隔离，可在反向代理或前置网关层增加额外访问控制和日志策略。
+- [开发指南](docs/DEVELOPMENT.md) - 架构与开发说明
+- [测试指南](docs/TESTING_GUIDE.md) - 测试策略
+- [导出改进](docs/EXPORT_IMPROVEMENTS.md) - 导出能力说明
+- [Kroki 自建](docs/kroki-self-hosting.md) - 自建 Kroki 方案
 
-## 测试与基准
+## 安全
 
-- 单元测试：`npm test`
-- 类型检查：`npm run typecheck`
-- 冒烟测试：`npm run test:smoke`（默认访问 `http://localhost:3000`）
-- 基准测试：`npm run bench`（支持环境变量 `APP_URL`、`N`）
+- **本地渲染**：Mermaid 使用 `securityLevel: 'strict'`；Graphviz WASM 在浏览器中执行
+- **远程渲染**：`/api/render` 转发到 Kroki，内存缓存
+- **SVG 清洗**：DOMPurify 在渲染前清洗所有 SVG 内容
+- **建议**：敏感内容使用本地渲染，或自建 Kroki
 
 ## 许可
 
