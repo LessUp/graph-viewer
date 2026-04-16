@@ -35,3 +35,14 @@ tsconfig.tsbuildinfo
 # OS
 .DS_Store
 Thumbs.db
+
+# Local environment
+*.local
+
+# Cache directories
+.npm/
+.vitest/
+.eslintcache
+
+# Package archives
+*.tgz
