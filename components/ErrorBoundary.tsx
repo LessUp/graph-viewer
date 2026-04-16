@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 type Props = { children: ReactNode };
 type State = { hasError: boolean; error: Error | null };
@@ -17,7 +18,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[ErrorBoundary]', error, info.componentStack);
+    logger.error('error-boundary', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: info.componentStack,
+    });
   }
 
   handleReset = () => {

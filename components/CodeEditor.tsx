@@ -5,6 +5,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { getLanguageExtension } from '@/lib/syntaxHighlight';
 import type { Engine } from '@/lib/diagramConfig';
+import { logger } from '@/lib/logger';
 
 export type CodeEditorProps = {
   value: string;
@@ -98,7 +99,7 @@ function CodeEditorComponent(props: CodeEditorProps) {
         ext.push(...langExt);
       }
     } catch (e: unknown) {
-      console.warn('Language extension error:', e);
+      logger.warn('language-extension', { error: e instanceof Error ? e.message : 'Unknown error' });
     }
 
     return ext;

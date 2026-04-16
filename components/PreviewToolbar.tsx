@@ -11,6 +11,7 @@ import {
   exportSourceCode,
 } from '@/lib/exportUtils';
 import type { Engine } from '@/lib/diagramConfig';
+import { logger } from '@/lib/logger';
 import {
   ZoomIn,
   ZoomOut,
@@ -34,6 +35,7 @@ interface PreviewToolbarProps {
   engine?: Engine;
   format?: string;
   filename?: string;
+  onExportError?: (message: string) => void;
 }
 
 export function PreviewToolbar({
@@ -47,6 +49,7 @@ export function PreviewToolbar({
   engine = 'mermaid',
   format = 'svg',
   filename = 'diagram',
+  onExportError,
 }: PreviewToolbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -94,8 +97,10 @@ export function PreviewToolbar({
         exportSourceCode(code, engine, filename);
       }
     } catch (e: unknown) {
-      console.error('Export failed', e);
-      alert('导出失败，请重试');
+      logger.error('export', { error: e instanceof Error ? e.message : 'Unknown error' });
+      if (onExportError) {
+        onExportError('导出失败，请重试');
+      }
     } finally {
       setIsExporting(false);
     }
@@ -153,7 +158,7 @@ export function PreviewToolbar({
             const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
             navigator.clipboard.writeText(shareUrl).then(() => showCopySuccess());
           } catch (e: unknown) {
-            console.error('Share link failed', e);
+            logger.error('share-link', { error: e instanceof Error ? e.message : 'Unknown error' });
           }
         }}
         disabled={!code}
