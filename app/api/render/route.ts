@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getKrokiType, isEngine, isFormat } from '@/lib/diagramConfig';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -132,14 +133,14 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isEngine(engine)) {
-      console.warn('[render] Unsupported engine', { engine });
+      logger.warn('render', { message: 'Unsupported engine', engine });
       return NextResponse.json(
         { error: 'Unsupported engine', code: 'UNSUPPORTED_ENGINE' },
         { status: 400 },
       );
     }
     if (!isFormat(format)) {
-      console.warn('[render] Unsupported format', { format });
+      logger.warn('render', { message: 'Unsupported format', format });
       return NextResponse.json(
         { error: 'Unsupported format', code: 'UNSUPPORTED_FORMAT' },
         { status: 400 },
@@ -147,7 +148,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (code.length > MAX_CODE_LENGTH) {
-      console.error('[render] Code too long', { engine, format, length: code.length });
+      logger.error('render', { message: 'Code too long', engine, format, length: code.length });
       return NextResponse.json(
         { error: 'Code too long', code: 'PAYLOAD_TOO_LARGE', maxLength: MAX_CODE_LENGTH },
         { status: 413 },
@@ -172,15 +173,31 @@ export async function POST(req: NextRequest) {
           code: 'INVALID_KROKI_BASE_URL',
         });
       }
+
+      // 安全策略：
+      // 1. 如果 KROKI_ALLOW_CLIENT_BASE_URL=true，允许任意 URL（不推荐，仅用于开发测试）
+      // 2. 否则，检查 KROKI_CLIENT_BASE_URL_ALLOWLIST 白名单
+      // 3. 如果白名单为空，默认只允许 KROKI_BASE_URL
       const allowAny = (process.env.KROKI_ALLOW_CLIENT_BASE_URL || '').toLowerCase() === 'true';
       const allowlist = parseKrokiBaseUrlAllowlist(process.env.KROKI_CLIENT_BASE_URL_ALLOWLIST);
-      if (!allowAny && !allowlist.has(requested)) {
+
+      if (allowAny) {
+        // 允许任意 URL（生产环境不推荐）
+        logger.warn('render', { message: 'Allowing arbitrary Kroki URL', requested });
+        base = requested;
+      } else if (allowlist.has(requested)) {
+        // URL 在白名单中
+        base = requested;
+      } else if (requested === envBase) {
+        // URL 与默认的 KROKI_BASE_URL 相同
+        base = requested;
+      } else {
+        // 拒绝其他 URL
         throw new RenderError(400, {
-          error: 'krokiBaseUrl not allowed',
+          error: 'krokiBaseUrl not allowed. Configure KROKI_CLIENT_BASE_URL_ALLOWLIST to allow custom URLs.',
           code: 'KROKI_BASE_URL_NOT_ALLOWED',
         });
       }
-      base = requested;
     }
 
     const url = `${base}/${type}/${format}`;
@@ -243,12 +260,7 @@ export async function POST(req: NextRequest) {
           );
         } catch (error: unknown) {
           if (error instanceof Error && error.name === 'AbortError') {
-            console.error('[render] Kroki request timed out', {
-              engine,
-              format,
-              timeoutMs: KROKI_TIMEOUT_MS,
-              length: code.length,
-            });
+            logger.error('render', { message: 'Kroki timeout', engine, format, timeoutMs: KROKI_TIMEOUT_MS, length: code.length });
             throw new RenderError(504, {
               error: 'Kroki timeout',
               code: 'KROKI_TIMEOUT',
@@ -256,12 +268,7 @@ export async function POST(req: NextRequest) {
             });
           }
           const errMsg = error instanceof Error ? error.message : '';
-          console.error('[render] Kroki request failed', {
-            engine,
-            format,
-            length: code.length,
-            message: errMsg,
-          });
+          logger.error('render', { message: 'Kroki network error', engine, format, length: code.length, error: errMsg });
           throw new RenderError(502, {
             error: 'Kroki request failed',
             code: 'KROKI_NETWORK_ERROR',
@@ -272,12 +279,7 @@ export async function POST(req: NextRequest) {
 
         if (!krokiResp.ok) {
           const text = await krokiResp.text().catch(() => '');
-          console.error('[render] Kroki render error', {
-            engine,
-            format,
-            status: krokiResp.status,
-            length: code.length,
-          });
+          logger.error('render', { message: 'Kroki render error', engine, format, status: krokiResp.status, length: code.length });
           throw new RenderError(502, {
             error: 'Kroki render error',
             status: krokiResp.status,
@@ -336,7 +338,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(e.payload, { status: e.status });
     }
     const errMsg = e instanceof Error ? e.message : '';
-    console.error('[render] Unexpected server error', { message: errMsg });
+    logger.error('render', { message: 'Unexpected server error', error: errMsg });
     return NextResponse.json({ error: 'Server error', message: errMsg }, { status: 500 });
   }
 }
