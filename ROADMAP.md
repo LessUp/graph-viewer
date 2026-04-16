@@ -1,75 +1,8 @@
-# GraphViewer 开发路线图
+# Roadmap & TODO
 
-> 本文档描述 GraphViewer 的开发规划，帮助有序推进功能和工程化建设。
+> The detailed roadmap and TODO have been migrated to the specs directory following Spec-Driven Development.
 
-## 项目愿景
+- [Product Roadmap](specs/product/roadmap.md) — Development phases and planning
+- [Product TODO](specs/product/todo.md) — Task backlog with priorities
 
-做一个「开箱即用、轻量但不简陋」的一站式图形语法可视化工具，支持 Mermaid / PlantUML / Graphviz 等主流语法，适合个人及小团队日常文档和架构设计。
-
-**核心特点**：
-
-- 本地 + 远程混合渲染，兼顾性能与安全
-- 支持容器化部署和一键脚本
-- 有基础测试与基准能力
-
-## 目标用户
-
-- **个人开发者 / 技术写作者**：写技术博客、文档、架构图
-- **团队内部文档维护者**：在 Wiki / Confluence / Notion 等平台嵌入生成的内容
-- **开源用户**：希望用一个简单好部署的图形语法工具
-
-## 完成情况
-
-### 阶段 1：编辑器与预览体验 ✅ 完成
-
-- [x] CodeMirror 代码编辑器集成
-- [x] 语法高亮（Mermaid / PlantUML / Graphviz 等）
-- [x] 快捷键支持（Ctrl+Enter 渲染、Ctrl+S 导出）
-- [x] SVG 预览缩放与平移
-- [x] 实时预览（防抖）
-- [x] 分享链接压缩
-
-### 阶段 2：稳定性与工程化 ✅ 完成
-
-- [x] Vitest 单元测试框架
-- [x] ESLint + Prettier 代码规范
-- [x] GitHub Actions CI/CD
-- [x] Docker 多环境部署
-- [x] 冒烟测试
-
-### 阶段 3：高级功能 🔄 进行中
-
-- [x] 多图工作区管理
-- [x] 版本历史
-- [x] 多格式导出（SVG/PNG/PDF/HTML/MD）
-- [ ] 模板库入口
-- [ ] 短链接分享
-
-### 阶段 4：运维与安全 📋 规划中
-
-- [ ] 结构化日志
-- [ ] 错误追踪集成
-- [ ] 监控告警
-
-## 后续规划
-
-### 短期（1-2 周）
-
-1. 完善"从模板新建"入口
-2. 优化大图渲染性能
-
-### 中期（1-2 月）
-
-1. 短链接分享功能
-2. 结构化日志
-
-### 长期
-
-1. 协作功能
-2. 自定义主题
-3. 插件系统
-
-## 使用本路线图
-
-- 每次迭代前，从待办清单选出一小批任务，控制在 1-2 周内完成
-- 开发中如有调整，更新本文档并标注日期和原因
+These documents are the single source of truth for product planning.
