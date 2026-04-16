@@ -20,7 +20,7 @@ describe('useDiagramState', () => {
 
     await waitFor(() => {
       expect(result.current.diagrams).toHaveLength(1);
-      expect(result.current.currentId).toBe(result.current.diagrams[0].id);
+      expect(result.current.currentId).toBe(result.current.diagrams[0]?.id);
     });
 
     expect(result.current.engine).toBe('mermaid');
@@ -215,7 +215,7 @@ describe('useDiagramState', () => {
       expect(result.current.code).toBe('');
     });
 
-    expect(result.current.currentId).toBe(result.current.diagrams[0].id);
+    expect(result.current.currentId).toBe(result.current.diagrams[0]?.id);
     expect(result.current.diagrams[0]).toMatchObject({
       name: '未命名图 1',
       engine: 'mermaid',

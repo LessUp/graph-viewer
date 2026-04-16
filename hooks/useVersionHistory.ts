@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
+import { logger } from '@/lib/logger';
 
 export type VersionRecord = {
   id: string;
@@ -78,7 +79,7 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
         setVersions(allVersions);
       }
     } catch (e: unknown) {
-      console.error('加载版本历史失败:', e);
+      logger.error('load-version-history', { error: e instanceof Error ? e.message : 'Unknown error' });
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +92,7 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
       try {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
       } catch (e: unknown) {
-        console.error('保存版本历史失败:', e);
+        logger.error('save-version-history', { error: e instanceof Error ? e.message : 'Unknown error' });
       }
     }, STORAGE_WRITE_DEBOUNCE_MS);
 

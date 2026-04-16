@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { canUseLocalRender as canUseLocalRenderConfig } from '@/lib/diagramConfig';
+import { logger } from '@/lib/logger';
 
 const GRAPHVIZ_WASM_BASE_URL =
   process.env.NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL ||
@@ -84,8 +85,8 @@ async function renderMermaidLocally(input: string): Promise<RenderOutputState | 
         base64: '',
       };
     }
-  } catch {
-    // ignore and let caller handle
+  } catch (e: unknown) {
+    logger.warn('render-mermaid-local', { error: e instanceof Error ? e.message : 'Unknown error' });
   }
   return null;
 }
@@ -102,8 +103,8 @@ async function renderGraphvizLocally(input: string): Promise<RenderOutputState |
         base64: '',
       };
     }
-  } catch {
-    // ignore and let caller handle
+  } catch (e: unknown) {
+    logger.warn('render-graphviz-local', { error: e instanceof Error ? e.message : 'Unknown error' });
   }
   return null;
 }

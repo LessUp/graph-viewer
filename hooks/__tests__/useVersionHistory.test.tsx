@@ -76,7 +76,7 @@ describe('useVersionHistory', () => {
     await waitFor(() => {
       expect(result.current.versions).toHaveLength(2);
     });
-    expect(result.current.versions[0].autoSave).toBe(true);
+    expect(result.current.versions[0]?.autoSave).toBe(true);
   });
 
   it('renames and deletes versions', async () => {
@@ -100,7 +100,7 @@ describe('useVersionHistory', () => {
       result.current.renameVersion(versionId, '重命名快照');
     });
     await waitFor(() => {
-      expect(result.current.versions[0].label).toBe('重命名快照');
+      expect(result.current.versions[0]?.label).toBe('重命名快照');
     });
 
     act(() => {

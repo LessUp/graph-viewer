@@ -19,6 +19,9 @@ type WorkspaceActionsDeps = {
   clearError: () => void;
   setError: (msg: string) => void;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  // 对话框回调（可选，用于替代 window.prompt/confirm）
+  showPrompt?: (options: { title: string; message: string; defaultValue: string }) => Promise<string | null>;
+  showConfirm?: (options: { title: string; message: string; variant?: 'default' | 'danger' }) => Promise<boolean>;
 };
 
 export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
@@ -37,6 +40,8 @@ export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
     clearError,
     setError,
     showToast,
+    showPrompt,
+    showConfirm,
   } = deps;
 
   const handleCopyCode = useCallback(async () => {
@@ -46,13 +51,22 @@ export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
         await navigator.clipboard.writeText(code);
         showToast('代码已复制到剪贴板');
       } else {
-        window.prompt('请手动复制以下代码', code);
+        // 降级：使用对话框显示代码
+        if (showPrompt) {
+          await showPrompt({
+            title: '手动复制代码',
+            message: '请选择并复制以下代码：',
+            defaultValue: code,
+          });
+        } else {
+          window.prompt('请手动复制以下代码', code);
+        }
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : '复制代码失败';
       setError(msg);
     }
-  }, [code, clearError, setError, showToast]);
+  }, [code, clearError, setError, showToast, showPrompt]);
 
   const handleClearCode = useCallback(() => {
     setCode('');
@@ -71,24 +85,49 @@ export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
   }, [engine, createDiagram]);
 
   const handleRenameDiagram = useCallback(
-    (id: string, currentName: string) => {
+    async (id: string, currentName: string) => {
       if (typeof window === 'undefined') return;
-      const next = window.prompt('请输入新的图名称', currentName || '');
-      const trimmed = next?.trim();
+
+      let trimmed: string | undefined;
+      if (showPrompt) {
+        const result = await showPrompt({
+          title: '重命名图',
+          message: '请输入新的图名称：',
+          defaultValue: currentName || '',
+        });
+        trimmed = result?.trim();
+      } else {
+        const next = window.prompt('请输入新的图名称', currentName || '');
+        trimmed = next?.trim();
+      }
+
       if (trimmed) renameDiagram(id, trimmed);
     },
-    [renameDiagram],
+    [renameDiagram, showPrompt],
   );
 
   const handleDeleteDiagram = useCallback(
-    (id: string, name: string) => {
+    async (id: string, name: string) => {
       if (typeof window === 'undefined') return;
+
       const label = name?.trim() || '未命名图';
-      if (window.confirm(`确定要删除图「${label}」吗？此操作不可撤销。`)) {
+      let confirmed: boolean;
+
+      if (showConfirm) {
+        confirmed = await showConfirm({
+          title: '删除确认',
+          message: `确定要删除图「${label}」吗？此操作不可撤销。`,
+          variant: 'danger',
+        });
+      } else {
+        confirmed = window.confirm(`确定要删除图「${label}」吗？此操作不可撤销。`);
+      }
+
+      if (confirmed) {
         deleteDiagram(id);
       }
     },
-    [deleteDiagram],
+    [deleteDiagram, showConfirm],
   );
 
   const handleExportSourceCode = useCallback(() => {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
+import { logger } from '@/lib/logger';
 
 type LivePreviewDeps = {
   engine: Engine;
@@ -27,7 +28,13 @@ export function useLivePreview(deps: LivePreviewDeps) {
       return;
     }
     if (debounceRef.current !== null) clearTimeout(debounceRef.current);
-    debounceRef.current = window.setTimeout(() => void renderDiagram(), debounceMs);
+    debounceRef.current = window.setTimeout(async () => {
+      try {
+        await renderDiagram();
+      } catch (e: unknown) {
+        logger.warn('live-preview', { error: e instanceof Error ? e.message : 'Unknown error' });
+      }
+    }, debounceMs);
     return () => {
       if (debounceRef.current !== null) {
         clearTimeout(debounceRef.current);

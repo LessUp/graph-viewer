@@ -8,10 +8,12 @@ type VersionActionsDeps = {
   setCode: (code: string) => void;
   setEngine: (engine: Engine) => void;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  // 对话框回调（可选，用于替代 window.confirm）
+  showConfirm?: (options: { title: string; message: string; variant?: 'default' | 'danger' }) => Promise<boolean>;
 };
 
 export function useVersionActions(deps: VersionActionsDeps) {
-  const { createVersion, clearDiagramVersions, setCode, setEngine, showToast } = deps;
+  const { createVersion, clearDiagramVersions, setCode, setEngine, showToast, showConfirm } = deps;
 
   const handleCreateSnapshot = useCallback(() => {
     const v = createVersion('手动快照');
@@ -31,13 +33,25 @@ export function useVersionActions(deps: VersionActionsDeps) {
     [setCode, setEngine, showToast],
   );
 
-  const handleClearVersions = useCallback(() => {
+  const handleClearVersions = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    if (window.confirm('确定要清空所有版本历史吗？此操作不可撤销。')) {
+
+    let confirmed: boolean;
+    if (showConfirm) {
+      confirmed = await showConfirm({
+        title: '清空版本历史',
+        message: '确定要清空所有版本历史吗？此操作不可撤销。',
+        variant: 'danger',
+      });
+    } else {
+      confirmed = window.confirm('确定要清空所有版本历史吗？此操作不可撤销。');
+    }
+
+    if (confirmed) {
       clearDiagramVersions();
       showToast('版本历史已清空', 'info');
     }
-  }, [clearDiagramVersions, showToast]);
+  }, [clearDiagramVersions, showToast, showConfirm]);
 
   return {
     handleCreateSnapshot,
