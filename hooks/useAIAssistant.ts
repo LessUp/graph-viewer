@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
+import { logger } from '@/lib/logger';
 
 export type AIProvider = 'openai' | 'anthropic' | 'local' | 'custom';
 
@@ -129,7 +130,7 @@ function loadConfig(): AIConfig {
       return normalizeAIConfig({ ...DEFAULT_CONFIG, ...JSON.parse(raw) });
     }
   } catch (e: unknown) {
-    console.error('加载 AI 配置失败:', e);
+    logger.error('load-ai-config', { error: e instanceof Error ? e.message : 'Unknown error' });
   }
   return DEFAULT_CONFIG;
 }
@@ -140,7 +141,7 @@ function saveConfig(config: AIConfig) {
     const { apiKey, ...rest } = config;
     window.localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(rest));
   } catch (e: unknown) {
-    console.error('保存 AI 配置失败:', e);
+    logger.error('save-ai-config', { error: e instanceof Error ? e.message : 'Unknown error' });
   }
 }
 

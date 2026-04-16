@@ -3,6 +3,8 @@ import { decompressFromEncodedURIComponent } from 'lz-string';
 import type { Engine, Format } from '@/lib/diagramConfig';
 import { isEngine, isFormat } from '@/lib/diagramConfig';
 import type { DiagramDoc } from '@/lib/types';
+import { isPersistedWorkspace, type PersistedWorkspaceData } from '@/lib/typeGuards';
+import { logger } from '@/lib/logger';
 
 const LOCAL_STORAGE_KEY = 'graphviewer:state:v1';
 const STORAGE_WRITE_DEBOUNCE_MS = 250;
@@ -29,13 +31,7 @@ type DiagramStateControls = {
   importWorkspace: (payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => void;
 };
 
-type PersistedWorkspace = {
-  diagrams?: DiagramDoc[];
-  currentId?: string;
-  engine?: string;
-  format?: string;
-  code?: string;
-};
+type PersistedWorkspace = PersistedWorkspaceData;
 
 function generateDiagramId(): string {
   return `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -103,37 +99,32 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
       if (!raw) return;
 
-      const parsed = JSON.parse(raw) as PersistedWorkspace;
-      if (Array.isArray(parsed.diagrams) && parsed.diagrams.length > 0) {
+      const parsed = JSON.parse(raw);
+      if (!isPersistedWorkspace(parsed)) {
+        logger.warn('hydrate-state', { message: 'Invalid persisted workspace data' });
+        return;
+      }
+
+      if (parsed.diagrams.length > 0) {
         setDiagrams(parsed.diagrams);
         const nextId =
           parsed.currentId && parsed.diagrams.some((d: DiagramDoc) => d.id === parsed.currentId)
             ? parsed.currentId
-            : parsed.diagrams[0].id;
+            : (parsed.diagrams[0]?.id ?? '');
         setCurrentId(nextId);
 
         if (!appliedFromQuery) {
           const currentDiagram = parsed.diagrams.find((d: DiagramDoc) => d.id === nextId) ?? parsed.diagrams[0];
-          setEngine(currentDiagram.engine);
-          setFormat(currentDiagram.format);
-          setCode(currentDiagram.code);
+          if (currentDiagram) {
+            setEngine(currentDiagram.engine);
+            setFormat(currentDiagram.format);
+            setCode(currentDiagram.code);
+          }
         }
         return;
       }
-
-      if (!appliedFromQuery) {
-        if (parsed.engine && isEngine(parsed.engine)) {
-          setEngine(parsed.engine);
-        }
-        if (parsed.format && isFormat(parsed.format)) {
-          setFormat(parsed.format);
-        }
-        if (typeof parsed.code === 'string') {
-          setCode(parsed.code);
-        }
-      }
-    } catch {
-      // ignore
+    } catch (e: unknown) {
+      logger.warn('hydrate-state', { error: e instanceof Error ? e.message : 'Unknown error' });
     } finally {
       setHasHydrated(true);
     }
@@ -160,7 +151,8 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
 
       if (!currentId) {
         if (prev.length > 0) {
-          setCurrentId(prev[0].id);
+          const first = prev[0];
+          if (first) setCurrentId(first.id);
         }
         return prev;
       }
@@ -179,6 +171,8 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       }
 
       const current = prev[idx];
+      if (!current) return prev;
+
       if (current.engine === engine && current.format === format && current.code === code) {
         return prev;
       }
@@ -202,8 +196,8 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
             currentId,
           }),
         );
-      } catch {
-        // ignore
+      } catch (e: unknown) {
+        logger.warn('persist-state', { error: e instanceof Error ? e.message : 'Unknown error' });
       }
     }, STORAGE_WRITE_DEBOUNCE_MS);
 
@@ -259,8 +253,10 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       const next = prev.slice();
       const idx = next.findIndex((d) => d.id === id);
       if (idx === -1) return prev;
-      const n = name && name.trim().length > 0 ? name.trim() : next[idx].name;
-      next[idx] = { ...next[idx], name: n, updatedAt: new Date().toISOString() };
+      const existing = next[idx];
+      if (!existing) return prev;
+      const n = name && name.trim().length > 0 ? name.trim() : existing.name;
+      next[idx] = { ...existing, name: n, updatedAt: new Date().toISOString() };
       return next;
     });
   }, []);
@@ -288,8 +284,9 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
 
       setDiagrams(list);
       const hasCurrent = payload.currentId && list.some((d) => d.id === payload.currentId);
-      const nextId = hasCurrent ? (payload.currentId as string) : list[0].id;
+      const nextId = hasCurrent ? (payload.currentId as string) : (list[0]?.id ?? '');
       const nextDoc = list.find((d) => d.id === nextId) ?? list[0];
+      if (!nextDoc) return;
       setCurrentId(nextDoc.id);
       setEngine(nextDoc.engine);
       setFormat(nextDoc.format);
@@ -330,6 +327,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
 
         const fallbackIndex = idx - 1 >= 0 ? idx - 1 : 0;
         const fallback = next[fallbackIndex];
+        if (!fallback) return next;
         setCurrentId(fallback.id);
         setEngine(fallback.engine);
         setFormat(fallback.format);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/lib/logger';
 
 export interface AppSettings {
   // 渲染服务器配置
@@ -41,7 +42,7 @@ export function useSettings() {
         setSettings({ ...DEFAULT_SETTINGS, ...parsed });
       }
     } catch (e: unknown) {
-      console.error('Failed to load settings:', e);
+      logger.error('load-settings', { error: e instanceof Error ? e.message : 'Unknown error' });
     }
     setIsLoaded(true);
   }, []);
@@ -54,7 +55,7 @@ export function useSettings() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         } catch (e: unknown) {
-          console.error('Failed to save settings:', e);
+          logger.error('save-settings', { error: e instanceof Error ? e.message : 'Unknown error' });
         }
       }
       return updated;

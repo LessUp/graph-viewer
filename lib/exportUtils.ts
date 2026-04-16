@@ -5,6 +5,7 @@
 import html2canvas from 'html2canvas';
 import type { Engine } from './diagramConfig';
 import { ENGINE_LANG_MAP, ENGINE_EXT_MAP } from './diagramConfig';
+import { logger } from './logger';
 
 export type ExportFormat = 'svg' | 'png' | 'jpeg' | 'webp' | 'pdf' | 'html' | 'md';
 
@@ -105,10 +106,10 @@ function preprocessSvg(svgContent: string, options: ExportOptions = {}): string 
       const parts = viewBox.split(/\s+/);
       if (parts.length === 4) {
         if (!svgElement.hasAttribute('width')) {
-          svgElement.setAttribute('width', parts[2]);
+          svgElement.setAttribute('width', parts[2] ?? '800');
         }
         if (!svgElement.hasAttribute('height')) {
-          svgElement.setAttribute('height', parts[3]);
+          svgElement.setAttribute('height', parts[3] ?? '600');
         }
       }
     }
@@ -118,7 +119,8 @@ function preprocessSvg(svgContent: string, options: ExportOptions = {}): string 
   if (options.padding && options.padding > 0) {
     const viewBox = svgElement.getAttribute('viewBox');
     if (viewBox) {
-      const [minX, minY, width, height] = viewBox.split(/\s+/).map(Number);
+      const parts = viewBox.split(/\s+/).map(Number);
+      const [minX = 0, minY = 0, width = 0, height = 0] = parts;
       const padding = options.padding;
       svgElement.setAttribute(
         'viewBox',
@@ -147,8 +149,8 @@ function getSvgDimensions(svgContent: string): { width: number; height: number }
 
   if ((!width || !height) && svgElement.hasAttribute('viewBox')) {
     const viewBox = svgElement.getAttribute('viewBox')!.split(/\s+/);
-    width = parseFloat(viewBox[2]) || 800;
-    height = parseFloat(viewBox[3]) || 600;
+    width = parseFloat(viewBox[2] ?? '800') || 800;
+    height = parseFloat(viewBox[3] ?? '600') || 600;
   }
 
   return {
@@ -299,7 +301,7 @@ async function svgToCanvas(
   try {
     return await svgToCanvasUsingHtml2Canvas(svgContent, options);
   } catch (error: unknown) {
-    console.warn('html2canvas 失败，使用备用方法:', error);
+    logger.warn('html2canvas-fallback', { error: error instanceof Error ? error.message : 'Unknown error' });
     return await svgToCanvasUsingImage(svgContent, options);
   }
 }
@@ -313,7 +315,7 @@ export async function exportPng(svgContent: string, filename: string, scale = 2)
     const pngUrl = canvas.toDataURL('image/png', 1.0);
     downloadFile(pngUrl, `${filename}.png`);
   } catch (error: unknown) {
-    console.error('PNG 导出失败:', error);
+    logger.error('png-export', { error: error instanceof Error ? error.message : 'Unknown error' });
     throw new Error('PNG 导出失败，请重试');
   }
 }
