@@ -1,127 +1,183 @@
 # GraphViewer
 
-[![CI](https://github.com/LessUp/graph-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/graph-viewer/actions/workflows/ci.yml)
-[![Deploy](https://github.com/LessUp/graph-viewer/actions/workflows/pages.yml/badge.svg)](https://github.com/LessUp/graph-viewer/actions/workflows/pages.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<p align="center">
+  <a href="https://github.com/LessUp/graph-viewer/actions/workflows/ci.yml">
+    <img src="https://github.com/LessUp/graph-viewer/actions/workflows/ci.yml/badge.svg" alt="CI">
+  </a>
+  <a href="https://github.com/LessUp/graph-viewer/actions/workflows/pages.yml">
+    <img src="https://github.com/LessUp/graph-viewer/actions/workflows/pages.yml/badge.svg" alt="Deploy">
+  </a>
+  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
+  </a>
+  <img src="https://img.shields.io/badge/node-20+-green.svg" alt="Node: 20+">
+</p>
 
-English | [简体中文](README.zh-CN.md)
+<p align="center">
+  <b>English</b> | <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-A modern, all-in-one diagram visualization tool supporting **16 diagram engines** with local and server-side hybrid rendering.
+---
 
-## Supported Engines
+## 🎯 Overview
+
+GraphViewer is a modern, all-in-one diagram visualization tool supporting **16+ diagram engines** with local and server-side hybrid rendering.
+
+Built with **Next.js 15** + **React 19** + **TypeScript**, it provides a seamless experience for creating, previewing, and exporting diagrams in various formats.
+
+## ✨ Features
+
+- 🎨 **16+ Diagram Engines**: Mermaid, PlantUML, Graphviz, D2, and more
+- ⚡ **Hybrid Rendering**: Local WASM for speed + Remote Kroki for broader support
+- 💾 **Multiple Export Formats**: SVG, PNG (2x/4x), PDF, HTML, Markdown
+- 🔗 **Share Links**: Compressed URL sharing with LZ-string encoding
+- 🖥️ **Live Preview**: Debounced real-time preview with manual render option
+- 📁 **Multi-diagram Workspace**: Manage multiple diagrams with local persistence
+- 🕐 **Version History**: Auto-save snapshots with restore capability
+- 🤖 **AI Assistant**: Optional AI-powered code analysis and generation
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 20+ and npm 10+
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/LessUp/graph-viewer.git
+cd graph-viewer
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📦 Installation & Deployment
+
+### Docker (Recommended)
+
+```bash
+# Production with self-hosted Kroki
+docker compose --profile prod --profile kroki up -d
+
+# Development
+docker compose --profile dev up
+```
+
+### GitHub Pages
+
+Static export for GitHub Pages deployment. See [deployment guide](docs/en/03-deployment/02-github-pages.md) for details.
+
+### Self-Hosted
+
+Deploy your own Kroki instance for complete privacy. See [self-hosting guide](docs/en/03-deployment/03-self-hosted.md).
+
+## 🛠️ Development
+
+```bash
+# Development server
+npm run dev
+
+# Build
+npm run build              # Production build with API routes
+npm run build:static       # Static export for GitHub Pages
+
+# Testing
+npm run test               # Run unit tests
+npm run test:watch         # Watch mode
+npm run test:smoke         # Smoke test (endpoint availability)
+
+# Code Quality
+npm run lint               # ESLint check
+npm run typecheck          # TypeScript type check
+npm run format             # Prettier format
+```
+
+## 📚 Documentation
+
+### 📖 English Documentation
+
+- [Documentation Center](docs/en/README.md)
+- [Quick Start](docs/en/01-getting-started/01-quick-start.md)
+- [Architecture Overview](docs/en/01-getting-started/03-architecture.md)
+- [Development Guide](docs/en/02-development/)
+- [Deployment Guide](docs/en/03-deployment/)
+- [Features](docs/en/04-features/)
+
+### 📖 中文文档
+
+- [文档中心](docs/zh-CN/README.md)
+- [快速开始](docs/zh-CN/01-getting-started/01-quick-start.md)
+- [架构概览](docs/zh-CN/01-getting-started/03-architecture.md)
+- [开发指南](docs/zh-CN/02-development/)
+- [部署指南](docs/zh-CN/03-deployment/)
+- [功能特性](docs/zh-CN/04-features/)
+
+## 🏗️ Architecture
+
+```
+app/
+├── page.tsx                 # Main page composition
+├── layout.tsx               # Root layout
+├── globals.css              # Global styles
+└── api/
+    ├── render/route.ts      # Kroki proxy with cache
+    └── healthz/route.ts     # Health check endpoint
+
+components/                   # React components
+├── EditorPanel.tsx          # Code editor and controls
+├── PreviewPanel.tsx         # Diagram preview
+├── PreviewToolbar.tsx       # Export and zoom controls
+└── ...
+
+hooks/                        # Custom React hooks
+├── useDiagramState.ts       # State management
+├── useDiagramRender.ts      # Rendering logic
+└── ...
+
+lib/                          # Utility modules
+├── diagramConfig.ts         # Engine/format definitions
+├── diagramSamples.ts        # Sample code snippets
+└── exportUtils.ts           # Export implementations
+```
+
+## 🔧 Supported Engines
 
 | Category | Engines |
 |----------|---------|
-| Popular | Mermaid, PlantUML, Graphviz (DOT), D2 |
+| Popular | Mermaid, PlantUML, Graphviz, D2 |
 | Flowcharts | Flowchart.js, BlockDiag, ActDiag |
 | Sequence & Network | SeqDiag, NwDiag |
 | Data Visualization | Vega, Vega-Lite, WaveDrom |
 | ASCII Art | Ditaa, SVGBob, Nomnoml |
 | Data Modeling | ERD |
 
-## Features
-
-- **Hybrid Rendering**: Local Mermaid/Graphviz WASM rendering for speed + remote Kroki for broader format support
-- **Multiple Export Formats**: SVG, PNG (2x/4x), PDF, HTML, Markdown, source code
-- **Real-time Preview**: Debounced live preview with manual render option
-- **Share Links**: Compressed URL sharing with LZ-string encoding
-- **Multi-diagram Workspace**: Manage multiple diagrams with local persistence
-- **Version History**: Auto-save snapshots with restore capability
-- **AI Assistant**: Optional AI-powered code analysis and generation
-
-## Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Open http://localhost:3000
-```
-
-## Commands
-
-```bash
-# Development
-npm run dev              # Start dev server on port 3000
-
-# Build
-npm run build            # Production build (with API routes)
-npm run build:static     # Static export for GitHub Pages
-
-# Testing
-npm run test             # Run unit tests
-npm run test:watch       # Watch mode
-npm run test:smoke       # Smoke test (endpoint availability)
-
-# Code Quality
-npm run lint             # ESLint check
-npm run typecheck        # TypeScript type check
-npm run format           # Prettier format
-```
-
-## Deployment
-
-### Docker
-
-```bash
-# Production
-docker compose --profile prod up --build -d
-
-# Development
-docker compose --profile dev up --build
-
-# With self-hosted Kroki
-docker compose --profile prod --profile kroki up -d
-```
-
-### GitHub Pages
-
-Static export mode is used for GitHub Pages deployment. Remote rendering is unavailable in this mode.
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `KROKI_BASE_URL` | `https://kroki.io` | Remote rendering service URL |
-| `PORT` | `3000` | Server port |
-| `NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL` | CDN URL | Graphviz WASM resources |
-
-## Architecture
-
-```
-├── app/
-│   ├── page.tsx              # Main page composition
-│   ├── api/
-│   │   ├── render/route.ts   # Kroki proxy with cache
-│   │   └── healthz/route.ts  # Health check endpoint
-├── components/               # React components
-├── hooks/                    # Custom React hooks
-│   ├── useDiagramState.ts    # Workspace state management
-│   ├── useDiagramRender.ts   # Rendering logic
-│   └── useLivePreview.ts     # Debounced preview
-├── lib/
-│   ├── diagramConfig.ts      # Engine/format definitions
-│   ├── diagramSamples.ts     # Sample code
-│   └── exportUtils.ts        # Export utilities
-```
-
-## Documentation
-
-- [Development Guide](docs/DEVELOPMENT.md) - Architecture and development guide
-- [Testing Guide](docs/TESTING_GUIDE.md) - Testing strategies
-- [Export Improvements](docs/EXPORT_IMPROVEMENTS.md) - Export capabilities
-- [Kroki Self-hosting](docs/kroki-self-hosting.md) - Self-hosted Kroki setup
-
-## Security
+## 🛡️ Security
 
 - **Local Rendering**: Mermaid uses `securityLevel: 'strict'`; Graphviz WASM runs in-browser
 - **Remote Rendering**: `/api/render` forwards to Kroki with in-memory cache
 - **SVG Sanitization**: DOMPurify sanitizes all SVG content before rendering
-- **Recommendation**: Use local rendering for sensitive content, or self-host Kroki
+- **Input Validation**: Server validates engine, format, and code length
 
-## License
+**Recommendation**: Use local rendering for sensitive content, or self-host Kroki.
 
-MIT
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Development Guidelines](docs/en/02-development/02-guidelines.md) before submitting pull requests.
+
+## 📄 License
+
+GraphViewer is released under the [MIT License](LICENSE).
+
+---
+
+<p align="center">
+  Made with ❤️ by the GraphViewer Team
+</p>
