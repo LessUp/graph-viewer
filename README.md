@@ -102,6 +102,18 @@ npm run format             # Prettier format
 
 ## 📚 Documentation
 
+### 📖 Specifications
+
+This project follows **Spec-Driven Development (SDD)**. All implementation details are defined in `/specs`:
+
+- [Product Roadmap](specs/product/roadmap.md) — Development phases and planning
+- [Product TODO](specs/product/todo.md) — Task backlog with priorities
+- [Core Architecture RFC](specs/rfc/0001-core-architecture.md) — Technical architecture decisions
+- [API Design RFC](specs/rfc/0002-api-design.md) — API design decisions
+- [OpenAPI Specification](specs/api/openapi.yaml) — Machine-readable API definition
+- [Database Schema](specs/db/schema-v1.dbml) — Data models and localStorage schema
+- [Testing Specs](specs/testing/diagram-render.feature) — BDD test specifications
+
 ### 📖 English Documentation
 
 - [Documentation Center](docs/en/README.md)
