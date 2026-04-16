@@ -2,7 +2,8 @@
   "ci": {
     "collect": {
       "staticDistDir": "./out",
-      "url": ["http://localhost/index.html"],
+      "url": ["http://localhost/"],
+      "startServerCommand": "",
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
