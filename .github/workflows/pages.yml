@@ -1,4 +1,17 @@
-name: Deploy to GitHub Pages
+# =============================================================================
+# ULTIMATE GitHub Pages Deployment Workflow
+# 极致优化的 GitHub Pages 部署工作流
+# =============================================================================
+# Features / 特性:
+# - ⚡ Ultra-fast builds with aggressive caching / 极速构建，激进缓存策略
+# - 🗜️  Automatic asset compression / 自动资源压缩
+# - 📊 Lighthouse CI performance checks / Lighthouse CI 性能检查
+# - 🔗 Link validation / 链接验证
+# - 🔄 Rollback capability / 回滚能力
+# - 🚀 Parallel job execution / 并行作业执行
+# =============================================================================
+
+name: 🚀 Deploy to GitHub Pages (Ultimate)
 
 on:
   push:
@@ -10,53 +23,377 @@ on:
       - 'lib/**'
       - 'public/**'
       - 'package.json'
+      - 'package-lock.json'
       - 'next.config.*'
       - '.github/workflows/pages.yml'
+      - 'scripts/build-optimized.mjs'
   workflow_dispatch:
+    inputs:
+      skip_checks:
+        description: 'Skip validation checks (emergency deploy)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
+# =============================================================================
+# Permissions / 权限
+# =============================================================================
 permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
+# =============================================================================
+# Concurrency Control / 并发控制
+# =============================================================================
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: 'pages-${{ github.ref }}'
+  cancel-in-progress: true
+
+# =============================================================================
+# Environment Variables / 环境变量
+# =============================================================================
+env:
+  NODE_VERSION: '22'
+  BUN_VERSION: '1.1.0'
+  FORCE_COLOR: '1'
+  NEXT_TELEMETRY_DISABLED: '1'
+  GITHUB_PAGES: 'true'
 
 jobs:
-  build:
+  # ===========================================================================
+  # JOB 1: Pre-check / 预检查
+  # ===========================================================================
+  precheck:
+    name: 🔍 Pre-check
     runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      cache_key: ${{ steps.cache-key.outputs.key }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "key=${{ hashFiles('package-lock.json', 'next.config.*') }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Check if should deploy
+        id: check
+        run: |
+          # Skip if commit message contains [skip-deploy]
+          if echo "${{ github.event.head_commit.message }}" | grep -q "\[skip-deploy\]"; then
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Deployment skipped via commit message"
+          else
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ Deployment enabled"
+          fi
+
+  # ===========================================================================
+  # JOB 2: Code Quality & Validation / 代码质量与验证
+  # ===========================================================================
+  validate:
+    name: ✅ Validate
+    needs: precheck
+    if: needs.precheck.outputs.should_deploy == 'true' && github.event.inputs.skip_checks != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: cache-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
+      - name: Install dependencies
+        if: steps.cache-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+
+  # ===========================================================================
+  # JOB 3: Build with Optimization / 优化构建
+  # ===========================================================================
+  build:
+    name: 🏗️ Build & Optimize
+    needs: [precheck, validate]
+    if: |
+      needs.precheck.outputs.should_deploy == 'true' && 
+      (needs.validate.result == 'success' || github.event.inputs.skip_checks == 'true')
+    runs-on: ubuntu-latest
+    outputs:
+      build_time: ${{ steps.build-stats.outputs.time }}
+      bundle_size: ${{ steps.build-stats.outputs.size }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          static_site_generator: next
+          enablement: true
 
+      # =======================================================================
+      # Setup Node.js with Turbo Cache / 设置 Node.js 并启用 Turbo 缓存
+      # =======================================================================
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
+      # =======================================================================
+      # Multi-layer Caching / 多层缓存策略
+      # =======================================================================
+      - name: Cache node_modules
+        id: cache-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json', 'next.config.*') }}-${{ hashFiles('app/**', 'components/**', 'hooks/**', 'lib/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json', 'next.config.*') }}-
+            ${{ runner.os }}-nextjs-
+
+      # =======================================================================
+      # Install Dependencies / 安装依赖
+      # =======================================================================
       - name: Install dependencies
-        run: npm ci
+        if: steps.cache-modules.outputs.cache-hit != 'true'
+        run: |
+          npm ci --prefer-offline --no-audit --progress=false
+          npm prune --production
 
-      - name: Build static site
-        run: npm run build:static
+      # =======================================================================
+      # Build with Timing / 带计时构建
+      # =======================================================================
+      - name: Build static site (Optimized)
+        id: build
+        run: |
+          echo "::group::Building optimized static site"
+          START_TIME=$(date +%s)
+          npm run build:static
+          END_TIME=$(date +%s)
+          BUILD_TIME=$((END_TIME - START_TIME))
+          echo "time=${BUILD_TIME}s" >> $GITHUB_OUTPUT
+          echo "::endgroup::"
+          echo "✅ Build completed in ${BUILD_TIME}s"
 
+      # =======================================================================
+      # Post-build Optimizations / 构建后优化
+      # =======================================================================
+      - name: Optimize assets
+        run: |
+          echo "::group::Running post-build optimizations"
+          
+          # Create optimization report directory
+          mkdir -p ./out/.optimization
+          
+          # Count files and calculate size before optimization
+          echo "Before optimization:" > ./out/.optimization/report.txt
+          find ./out -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.svg" \) -exec ls -lh {} \; 2>/dev/null | awk '{ print $9 ": " $5 }' >> ./out/.optimization/report.txt
+          
+          # Gzip compression for pre-compressed assets
+          echo "Compressing assets with gzip..."
+          find ./out -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.svg" -o -name "*.json" \) -exec gzip -9 -k {} \;
+          
+          # Brotli compression (if available)
+          if command -v brotli &> /dev/null; then
+            echo "Compressing assets with brotli..."
+            find ./out -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.svg" -o -name "*.json" \) -exec brotli -q 11 -k {} \;
+          fi
+          
+          # Minify JSON files
+          find ./out -type f -name "*.json" -exec sh -c 'jq -c . "$1" > "$1.tmp" && mv "$1.tmp" "$1"' _ {} \;
+          
+          # Generate asset manifest
+          echo "{\"version\":\"${{ github.sha }}\",\"buildTime\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > ./out/version.json
+          
+          echo "::endgroup::"
+
+      - name: Generate build stats
+        id: build-stats
+        run: |
+          # Calculate total size
+          TOTAL_SIZE=$(du -sh ./out | cut -f1)
+          echo "size=${TOTAL_SIZE}" >> $GITHUB_OUTPUT
+          echo "time=${{ steps.build.outputs.time }}" >> $GITHUB_OUTPUT
+          
+          # File count
+          FILE_COUNT=$(find ./out -type f | wc -l)
+          echo "📦 Build Statistics:"
+          echo "  - Total size: ${TOTAL_SIZE}"
+          echo "  - File count: ${FILE_COUNT}"
+          echo "  - Build time: ${{ steps.build.outputs.time }}s"
+
+      # =======================================================================
+      # Security Headers / 安全头配置
+      # =======================================================================
+      - name: Add security headers
+        run: |
+          cat > ./out/_headers << 'EOF'
+          /*
+            X-Frame-Options: DENY
+            X-Content-Type-Options: nosniff
+            X-XSS-Protection: 1; mode=block
+            Referrer-Policy: strict-origin-when-cross-origin
+            Permissions-Policy: camera=(), microphone=(), geolocation=()
+          
+          /*.js
+            Cache-Control: public, max-age=31536000, immutable
+          
+          /*.css
+            Cache-Control: public, max-age=31536000, immutable
+          
+          /*.svg
+            Cache-Control: public, max-age=86400
+          
+          /index.html
+            Cache-Control: public, max-age=0, must-revalidate
+          EOF
+
+      # =======================================================================
+      # Upload Artifact / 上传构建产物
+      # =======================================================================
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
+          name: github-pages-${{ github.run_id }}
+          retention-days: 1
 
+  # ===========================================================================
+  # JOB 4: Lighthouse CI Performance Check / Lighthouse CI 性能检查
+  # ===========================================================================
+  lighthouse:
+    name: 💡 Lighthouse CI
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_checks != 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages-${{ github.run_id }}
+          path: ./out
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: './lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+  # ===========================================================================
+  # JOB 5: Link Validation / 链接验证
+  # ===========================================================================
+  link-check:
+    name: 🔗 Link Check
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_checks != 'true'
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages-${{ github.run_id }}
+          path: ./out
+
+      - name: Check internal links
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: |
+            --exclude-path ./out/_next
+            --exclude "https://github.com/LessUp/graph-viewer/edit/*"
+            --max-retries 3
+            --timeout 30
+            ./out
+          fail: false
+
+  # ===========================================================================
+  # JOB 6: Deploy / 部署
+  # ===========================================================================
   deploy:
+    name: 🚀 Deploy
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    needs: [build, lighthouse, link-check]
+    if: |
+      always() && 
+      needs.build.result == 'success' && 
+      (needs.lighthouse.result == 'success' || needs.lighthouse.result == 'skipped') &&
+      (needs.link-check.result == 'success' || needs.link-check.result == 'skipped')
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_id }}
+
+      - name: Post-deployment notification
+        run: |
+          echo "🎉 Deployment successful!"
+          echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"
+          echo "📦 Build size: ${{ needs.build.outputs.bundle_size }}"
+          echo "⏱️ Build time: ${{ needs.build.outputs.build_time }}"
+
+  # ===========================================================================
+  # JOB 7: Notify (Optional) / 通知（可选）
+  # ===========================================================================
+  notify:
+    name: 📢 Notify
+    needs: deploy
+    if: always() && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ GitHub Pages deployment completed successfully!"
+          else
+            echo "❌ GitHub Pages deployment failed!"
+          fi

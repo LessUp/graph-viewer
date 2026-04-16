@@ -1,18 +1,220 @@
 /** @type {import('next').NextConfig} */
 
 const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+const isProduction = process.env.NODE_ENV === 'production';
+
+// =============================================================================
+// EXTREME OPTIMIZATION CONFIG / 极致优化配置
+// =============================================================================
 
 const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: __dirname,
+  
+  // ===========================================================================
+  // Environment Variables / 环境变量
+  // ===========================================================================
   env: {
     NEXT_PUBLIC_STATIC_EXPORT: isGitHubPages ? 'true' : 'false',
+    NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || '1.0.0',
+    NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
   },
+
+  // ===========================================================================
+  // Output Configuration / 输出配置
+  // ===========================================================================
   output: isGitHubPages ? 'export' : 'standalone',
+  distDir: isGitHubPages ? 'out' : '.next',
+  
+  // ===========================================================================
+  // GitHub Pages Specific / GitHub Pages 专属配置
+  // ===========================================================================
   ...(isGitHubPages && {
     basePath: '/graph-viewer',
     assetPrefix: '/graph-viewer/',
-    images: { unoptimized: true },
+    trailingSlash: true,
+    
+    // Images must be unoptimized for static export
+    images: {
+      unoptimized: true,
+      remotePatterns: [],
+    },
   }),
+
+  // ===========================================================================
+  // Performance Optimizations / 性能优化
+  // ===========================================================================
+  
+  // Enable SWC minification (Rust-based, faster)
+  swcMinify: true,
+  
+  // Experimental features for optimization
+  experimental: {
+    // Optimize package imports for common libraries
+    optimizePackageImports: [
+      'lucide-react',
+      '@codemirror',
+      'mermaid',
+    ],
+    
+    // Turbopack for dev (when stable)
+    // turbo: {},
+    
+    // Optimize CSS
+    optimizeCss: isProduction,
+  },
+
+  // ===========================================================================
+  // Compiler Optimizations / 编译器优化
+  // ===========================================================================
+  compiler: {
+    // Remove console.log in production
+    removeConsole: isProduction ? {
+      exclude: ['error', 'warn'],
+    } : false,
+    
+    // React optimizations
+    reactRemoveProperties: isProduction,
+  },
+
+  // ===========================================================================
+  // Webpack Optimizations / Webpack 优化
+  // ===========================================================================
+  webpack: (config, { dev, isServer, nextRuntime }) => {
+    // Only apply optimizations for client-side production builds
+    if (!dev && !isServer) {
+      // Split chunks more aggressively
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            // React core
+            reactCore: {
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              name: 'react-core',
+              priority: 40,
+              enforce: true,
+            },
+            // Mermaid (large library)
+            mermaid: {
+              test: /[\\/]node_modules[\\/]mermaid[\\/]/,
+              name: 'mermaid',
+              priority: 30,
+              enforce: true,
+            },
+            // CodeMirror
+            codemirror: {
+              test: /[\\/]node_modules[\\/]@codemirror[\\/]/,
+              name: 'codemirror',
+              priority: 25,
+              enforce: true,
+            },
+            // UI Components
+            ui: {
+              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
+              name: 'ui',
+              priority: 20,
+              enforce: true,
+            },
+            // Vendor everything else
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendor',
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+            // Common code
+            common: {
+              minChunks: 2,
+              priority: 5,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+        
+        // Aggressive module concatenation
+        concatenateModules: true,
+        
+        // Minimize module IDs
+        moduleIds: 'deterministic',
+      };
+
+      // Add resource hints for critical assets
+      config.plugins.push(
+        new (require('webpack').DefinePlugin)({
+          'process.env.GITHUB_PAGES': JSON.stringify(isGitHubPages),
+        })
+      );
+    }
+
+    // Fix for certain npm packages
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        child_process: false,
+      };
+    }
+
+    return config;
+  },
+
+  // ===========================================================================
+  // Headers / 响应头配置 (ISR only, not for static export)
+  // ===========================================================================
+  async headers() {
+    if (isGitHubPages) return [];
+    
+    return [
+      {
+        source: '/:all*(js|css|svg|png|jpg|jpeg|gif|webp|woff|woff2)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
+
+  // ===========================================================================
+  // Redirects / 重定向
+  // ===========================================================================
+  async redirects() {
+    return [];
+  },
+
+  // ===========================================================================
+  // Rewrites / 重写规则
+  // ===========================================================================
+  async rewrites() {
+    return [];
+  },
 };
+
 module.exports = nextConfig;
