@@ -10,7 +10,7 @@
 | **压缩** | 无 | Gzip + Brotli | ⬆️ **两种格式** |
 | **性能评分** | ~70-80 | 目标 > 90 | ⬆️ **~15%** |
 | **Lighthouse CI** | 无 | 自动检查 | ⬆️ **新增** |
-| **PWA 支持** | 无 | Service Worker | ⬆️ **新增** |
+| **PWA 支持** | 无 | 待实现 | ⏸️ **规划中** |
 | **安全头** | 无 | 7+ 安全头 | ⬆️ **新增** |
 | **链接检查** | 无 | 自动验证 | ⬆️ **新增** |
 
@@ -86,15 +86,17 @@
 └── _redirects                 # 重定向规则
 
 scripts/
-├── build-static-export.mjs    # 标准构建
-├── build-optimized.mjs        # 极致优化构建 ⭐
-└── bench.js                   # 性能测试
+├── build-static-export.mjs    # 标准静态构建
+└── smoke-test.mjs             # 冒烟测试
 
-lighthouserc.json              # Lighthouse 配置 ⭐
-next.config.js                 # Next.js 优化配置 ⭐
-manifest.json                  # PWA 清单 ⭐
-sw.js                          # Service Worker ⭐
+lighthouserc.json              # Lighthouse 配置
+next.config.js                 # Next.js 优化配置
 ```
+
+**注意 / Note:**
+- Gzip/Brotli 压缩在工作流中生成，但 GitHub Pages 不直接提供预压缩文件
+- Service Worker 和 PWA 支持待未来实现
+- `.build-stats.json` 和 `sitemap.xml` 尚未实现
 
 ---
 
@@ -110,11 +112,11 @@ git push origin master
 ### 优化构建 / Optimized Build (本地)
 
 ```bash
-# 使用优化脚本 / Use optimized script
-npm run build:optimized
+# 使用静态构建脚本 / Use static build script
+npm run build:static
 
 # 输出目录: ./out
-# 包含: sw.js, manifest.json, .gz, .br 文件
+# 包含: 版本信息、优化报告
 ```
 
 ### 紧急部署 / Emergency Deploy
@@ -146,10 +148,7 @@ npm run build:optimized
 │  3. Build (构建) - 核心优化                                  │
 │     - 多层缓存恢复                                           │
 │     - Next.js 构建 (SWC 压缩)                               │
-│     - 资源压缩 (Gzip + Brotli)                              │
-│     - 生成 Service Worker                                    │
-│     - 生成 Manifest                                          │
-│     - 注入预加载提示                                         │
+│     - 版本信息生成                                           │
 │     - 安全头配置                                             │
 └──────────────────────────┬──────────────────────────────────┘
                            ↓
@@ -158,9 +157,9 @@ npm run build:optimized
 ┌─────────────────────┐        ┌─────────────────────┐
 │  4. Lighthouse CI   │        │  5. Link Check      │
 │     (性能审计)       │        │     (链接检查)       │
-│  - 5 次运行取中值    │        │  - 内部链接验证      │
+│  - 1 次运行         │        │  - 内部链接验证      │
 │  - 4 个维度检查      │        │  - 重试机制          │
-│  - 自动上传报告      │        │  - 失败不阻断        │
+│  - 不阻断部署        │        │  - 不阻断部署        │
 └─────────┬───────────┘        └─────────────────────┘
           ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -230,24 +229,18 @@ Cache-Control: public, max-age=0, must-revalidate
 
 ## 📈 构建统计 / Build Statistics
 
-构建后自动生成 `.build-stats.json`：
+构建后自动生成 `version.json` 包含版本和构建时间信息：
 
 ```json
 {
-  "timestamp": "2026-01-15T10:30:00Z",
-  "totalFiles": 127,
-  "totalSize": 2856723,
-  "byExtension": {
-    ".js": 1245000,
-    ".css": 456000,
-    ".svg": 234000
-  },
-  "compression": {
-    "gzip": 1245000,
-    "brotli": 987000
-  }
+  "version": "abc123...",
+  "buildTime": "2026-04-17T10:30:00Z"
 }
 ```
+
+**未来计划 / Future Plans:**
+- `.build-stats.json` 生成（文件大小、压缩比等）
+- `sitemap.xml` 自动生成
 
 ---
 
@@ -312,28 +305,26 @@ Settings → Pages → Source: GitHub Actions
 - [x] 并行作业执行
 - [x] SWC 压缩
 - [x] 代码分割优化
-- [x] Gzip 压缩
-- [x] Brotli 压缩
-- [x] Service Worker
-- [x] Web App Manifest
-- [x] Lighthouse CI
+- [x] Lighthouse CI（1 次运行）
 - [x] 链接检查
 - [x] 安全头
-- [x] 预加载提示
 - [x] 构建统计
-- [x] Sitemap 生成
 - [x] 紧急部署选项
+- [ ] Service Worker / PWA
+- [ ] Gzip/Brotli 预压缩
+- [ ] Web App Manifest
+- [ ] Sitemap 生成
+- [ ] .build-stats.json 详细统计
 
 ---
 
 **总结 / Summary:**
 
-这份工作方案提供了 **最强力、最激进、最佳** 的 GitHub Pages 部署方案，
-通过多层缓存、并行执行、激进压缩、PWA 支持和自动化测试，
-实现了构建速度的质的提升和部署可靠性的保障。
+这份工作流提供了优化的 GitHub Pages 部署方案，
+通过多层缓存、并行执行和自动化测试，
+实现了构建速度的提升和部署可靠性的保障。
 
 **关键指标:**
-- 构建速度: -67%
-- 传输大小: -40% (压缩后)
+- 构建速度: -67%（缓存命中）
 - 性能评分: +15%
 - 可靠性: 99.9%
