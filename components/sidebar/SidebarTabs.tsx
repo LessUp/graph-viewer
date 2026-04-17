@@ -1,12 +1,12 @@
 'use client';
 
-import type { EditorPanelProps } from '@/components/EditorPanel';
-import type { AIAssistantPanelProps } from '@/components/AIAssistantPanel';
-import type { VersionHistoryPanelProps } from '@/components/VersionHistoryPanel';
+import type { EditorPanelProps } from '@/components/editor/EditorPanel';
+import type { AIAssistantPanelProps } from '@/components/ai/AIAssistantPanel';
+import type { VersionHistoryPanelProps } from '@/components/version/VersionHistoryPanel';
 import type { VersionRecord } from '@/hooks/useVersionHistory';
-import { EditorPanel } from '@/components/EditorPanel';
-import { AIAssistantPanel } from '@/components/AIAssistantPanel';
-import { VersionHistoryPanel } from '@/components/VersionHistoryPanel';
+import { EditorPanel } from '@/components/editor/EditorPanel';
+import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
+import { VersionHistoryPanel } from '@/components/version/VersionHistoryPanel';
 import { Code2, Zap, Clock } from 'lucide-react';
 
 export type SidebarTab = 'editor' | 'ai' | 'history';

@@ -11,7 +11,7 @@ import {
 } from 'react';
 import Image from 'next/image';
 import DOMPurify from 'dompurify';
-import { PreviewToolbar } from '@/components/PreviewToolbar';
+import { PreviewToolbar } from './PreviewToolbar';
 import { ENGINE_LABELS, FORMAT_LABELS, type Engine, type Format } from '@/lib/diagramConfig';
 import { Loader2, X, Image as ImageIcon } from 'lucide-react';
 import { logger } from '@/lib/logger';

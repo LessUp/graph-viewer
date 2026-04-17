@@ -21,8 +21,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:smoke": "node scripts/smoke-test.js",
-    "bench": "node scripts/bench.js"
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "bench": "node scripts/bench.mjs"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.4",

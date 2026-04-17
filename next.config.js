@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+const isLighthouseCI = process.env.LHCI === 'true';
 const isProduction = process.env.NODE_ENV === 'production';
 
 // =============================================================================
@@ -10,12 +11,12 @@ const isProduction = process.env.NODE_ENV === 'production';
 const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: __dirname,
-  
+
   // ===========================================================================
   // Environment Variables / 环境变量
   // ===========================================================================
   env: {
-    NEXT_PUBLIC_STATIC_EXPORT: isGitHubPages ? 'true' : 'false',
+    NEXT_PUBLIC_STATIC_EXPORT: isGitHubPages || isLighthouseCI ? 'true' : 'false',
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || '1.0.0',
     NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
   },
@@ -23,9 +24,9 @@ const nextConfig = {
   // ===========================================================================
   // Output Configuration / 输出配置
   // ===========================================================================
-  output: isGitHubPages ? 'export' : 'standalone',
-  distDir: isGitHubPages ? 'out' : '.next',
-  
+  output: isGitHubPages || isLighthouseCI ? 'export' : 'standalone',
+  distDir: isGitHubPages || isLighthouseCI ? 'out' : '.next',
+
   // ===========================================================================
   // GitHub Pages Specific / GitHub Pages 专属配置
   // ===========================================================================
@@ -33,8 +34,17 @@ const nextConfig = {
     basePath: '/graph-viewer',
     assetPrefix: '/graph-viewer/',
     trailingSlash: true,
-    
+
     // Images must be unoptimized for static export
+    images: {
+      unoptimized: true,
+      remotePatterns: [],
+    },
+  }),
+
+  // Lighthouse CI build - static export without basePath
+  ...(isLighthouseCI && {
+    trailingSlash: true,
     images: {
       unoptimized: true,
       remotePatterns: [],

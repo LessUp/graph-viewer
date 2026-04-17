@@ -1,6 +1,6 @@
 # Contributing to GraphViewer
 
-Thank you for your interest in contributing to GraphViewer! This guide explains how to participate in development following our **Spec-Driven Development (SDD)** workflow.
+Thank you for your interest in contributing to GraphViewer!
 
 ## Table of Contents
 
@@ -8,14 +8,10 @@ Thank you for your interest in contributing to GraphViewer! This guide explains 
 - [Getting Started](#getting-started)
 - [Spec-Driven Development Workflow](#spec-driven-development-workflow)
 - [How to Contribute](#how-to-contribute)
-  - [Reporting Bugs](#reporting-bugs)
-  - [Suggesting Features](#suggesting-features)
-  - [Code Contributions](#code-contributions)
 - [Development Setup](#development-setup)
 - [Pull Request Process](#pull-request-process)
 - [Coding Standards](#coding-standards)
 - [Testing Requirements](#testing-requirements)
-- [Documentation](#documentation)
 
 ## Code of Conduct
 
@@ -31,31 +27,25 @@ Be respectful, inclusive, and constructive in all interactions. We welcome contr
 
 ## Spec-Driven Development Workflow
 
-**This project strictly follows Spec-Driven Development.** This means:
+This project follows **Spec-Driven Development (SDD)**. This means:
 
-1. **Specs are the Single Source of Truth** — All implementation details must be defined in `/specs/` before coding.
-2. **Spec-First Approach** — For new features or interface changes, you must update or create specs first.
-3. **Code Must Follow Specs** — Implementation must 100% comply with spec definitions (no gold-plating).
-4. **Tests Validate Specs** — Test cases must cover all acceptance criteria defined in specs.
+1. **Specs are the Single Source of Truth** — All implementation details are defined in `/specs/`
+2. **Spec-First Approach** — Update or create specs before implementing code
+3. **Code Must Follow Specs** — Implementation must 100% comply with spec definitions
+4. **Tests Validate Specs** — Test cases must cover all acceptance criteria
 
-### Spec Directory Structure
+### Spec Directory
 
 ```
 specs/
 ├── product/          # Product features, roadmap, TODO
 ├── rfc/              # Technical design documents
 ├── api/              # API definitions (OpenAPI)
-├── db/               # Database/data schema definitions
+├── db/               # Data schema definitions
 └── testing/          # BDD test specifications
 ```
 
-### How to Update Specs
-
-1. Read existing specs to understand current behavior
-2. Propose spec changes in your branch (new RFC or update existing spec)
-3. Discuss the spec change in your PR before implementing code
-4. Once spec is approved, implement code based on the spec
-5. Write tests that validate against spec acceptance criteria
+For detailed workflow, see [AGENTS.md](AGENTS.md).
 
 ## How to Contribute
 
@@ -65,7 +55,7 @@ Before creating a bug report:
 - Check existing issues for duplicates
 - Verify the bug exists in the latest `main` branch
 
-When creating a bug report, include:
+Include in your report:
 - Clear description and steps to reproduce
 - Expected vs actual behavior
 - Screenshots if applicable
@@ -73,29 +63,21 @@ When creating a bug report, include:
 
 ### Suggesting Features
 
-1. Check the [Product Roadmap](specs/product/roadmap.md) and [Product TODO](specs/product/todo.md) to see if it's already planned
+1. Check [Product Roadmap](specs/product/roadmap.md) and [Product TODO](specs/product/todo.md)
 2. Open a GitHub Issue with:
    - Clear feature description
    - Use cases and user benefits
-   - Proposed implementation approach (optional)
-3. If accepted, the feature will be added to `specs/product/` and prioritized in the roadmap
+   - Proposed approach (optional)
 
 ### Code Contributions
 
-**Workflow for code contributions:**
-
-1. **Pick an issue** from GitHub or check the [Product TODO](specs/product/todo.md)
-2. **Review specs** related to the issue in `/specs/`
-3. **Update/create specs** if the feature doesn't have specs yet
+1. **Pick an issue** from GitHub or [Product TODO](specs/product/todo.md)
+2. **Review specs** in `/specs/` related to the issue
+3. **Update/create specs** if needed (spec-first approach)
 4. **Fork and branch** — Create a feature branch from `main`
 5. **Implement** — Write code following specs 100%
 6. **Test** — Write tests based on spec acceptance criteria
-7. **PR** — Submit a pull request with:
-   - Clear title and description
-   - Link to related issue(s)
-   - List of spec changes (if any)
-   - Screenshots for UI changes
-   - Test results
+7. **Submit PR** — Include spec changes, test results, and screenshots for UI changes
 
 ## Development Setup
 
@@ -107,18 +89,11 @@ When creating a bug report, include:
 ### Quick Setup
 
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Run tests
-npm run test
-
-# Check code quality
-npm run lint
-npm run typecheck
+npm install           # Install dependencies
+npm run dev           # Start dev server
+npm run test          # Run tests
+npm run lint          # Check code quality
+npm run typecheck     # TypeScript check
 ```
 
 ### Useful Commands
@@ -138,12 +113,12 @@ npm run typecheck        # TypeScript type check
 
 ## Pull Request Process
 
-1. Update documentation (specs, README, etc.) if your changes affect them
-2. Add a changelog entry in `changelog/YYYY-MM-DD-<slug>.md`
-3. Update the root `CHANGELOG.md` summary
-4. Ensure all tests pass: `npm run test`
+1. Update documentation if your changes affect them
+2. Add changelog entry in `changelog/YYYY-MM-DD-<slug>.md`
+3. Update root `CHANGELOG.md` summary
+4. Ensure tests pass: `npm run test`
 5. Ensure linting passes: `npm run lint && npm run typecheck`
-6. Request review from maintainers
+6. Request review
 
 ### PR Checklist
 
@@ -158,46 +133,23 @@ npm run typecheck        # TypeScript type check
 ## Coding Standards
 
 - **TypeScript**: Strict mode enabled
-- **Error handling**: Use `catch (e: unknown)` + `instanceof Error` narrowing
-- **Client components**: Use `'use client'` only when necessary (hooks, browser APIs)
-- **No magic strings**: Engine/format values must come from `lib/diagramConfig.ts`
-- **Small changes**: Prefer incremental changes over large rewrites
-- **Consistent naming**: Follow existing naming conventions
+- **Error handling**: Use `catch (e: unknown)` + `instanceof Error`
+- **Client components**: Use `'use client'` only when necessary
+- **No magic strings**: Engine/format values from `lib/diagramConfig.ts`
+- **Small changes**: Prefer incremental changes
 
-See [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md) for detailed coding conventions.
+See [CLAUDE.md](CLAUDE.md) for detailed conventions.
 
 ## Testing Requirements
 
-- **Unit tests**: Required for all new lib functions
+- **Unit tests**: Required for new lib functions
 - **Integration tests**: Required for hooks and components
-- **Smoke tests**: Must pass before merging to `main`
-- **Performance benchmarks**: Required for performance-critical code
+- **Smoke tests**: Must pass before merging
 
-Test specs are defined in `/specs/testing/`.
+Test specs are defined in [specs/testing/](specs/testing/).
 
-## Documentation
+## Questions?
 
-### Spec Documentation
+Open a GitHub Discussion or tag us in an issue.
 
-- Keep specs concise and focused
-- Use clear acceptance criteria
-- Include examples where helpful
-- Update specs alongside code changes
-
-### User Documentation
-
-- English docs in `docs/en/`
-- Chinese docs in `docs/zh-CN/`
-- Keep both versions in sync
-
-### Changelog
-
-Every change must have a changelog entry:
-- File: `changelog/YYYY-MM-DD-<short-slug>.md`
-- Update root `CHANGELOG.md` summary
-
----
-
-**Questions?** Open a GitHub Discussion or tag us in an issue.
-
-Thank you for contributing to GraphViewer! 🎉
+Thank you for contributing! 🎉

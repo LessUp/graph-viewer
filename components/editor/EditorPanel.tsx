@@ -9,7 +9,7 @@ import {
   FORMAT_LABELS,
 } from '@/lib/diagramConfig';
 import { SAMPLES } from '@/lib/diagramSamples';
-import { CodeEditor } from '@/components/CodeEditor';
+import { CodeEditor } from './CodeEditor';
 import { PlayCircle, Loader2, Copy, AlertCircle } from 'lucide-react';
 
 export type EditorPanelProps = {

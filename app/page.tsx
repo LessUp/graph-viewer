@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PreviewPanel } from '@/components/PreviewPanel';
-import { SettingsModal } from '@/components/SettingsModal';
-import { Toast } from '@/components/Toast';
-import { AppHeader } from '@/components/AppHeader';
-import { DiagramList } from '@/components/DiagramList';
-import { CollapsedSidebar } from '@/components/CollapsedSidebar';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { SidebarTabs, type SidebarTab } from '@/components/SidebarTabs';
-import { ConfirmDialog, PromptDialog, AlertDialog } from '@/components/Dialogs';
+import { PreviewPanel } from '@/components/preview/PreviewPanel';
+import { SettingsModal } from '@/components/dialogs/SettingsModal';
+import { Toast } from '@/components/feedback/Toast';
+import { AppHeader } from '@/components/layout/AppHeader';
+import { DiagramList } from '@/components/sidebar/DiagramList';
+import { CollapsedSidebar } from '@/components/layout/CollapsedSidebar';
+import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
+import { SidebarTabs, type SidebarTab } from '@/components/sidebar/SidebarTabs';
+import { ConfirmDialog, PromptDialog, AlertDialog } from '@/components/dialogs/Dialogs';
 import { useDiagramState } from '@/hooks/useDiagramState';
 import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { useSettings } from '@/hooks/useSettings';

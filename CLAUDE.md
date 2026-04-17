@@ -1,29 +1,15 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> For AI agent workflow, see [AGENTS.md](AGENTS.md).
 
 ## Project Philosophy: Spec-Driven Development (SDD)
 
 This project follows the **Spec-Driven Development (SDD)** paradigm. All code implementations must use the `/specs` directory as the Single Source of Truth.
 
-### Spec Directory Structure
+**Core Principle**: Before coding, read specs. For new features, update specs first. Code must 100% comply with specs.
 
-| Directory | Purpose |
-|-----------|---------|
-| `/specs/product/` | Product feature definitions, acceptance criteria, roadmap, TODO |
-| `/specs/rfc/` | Technical design documents and architecture decisions |
-| `/specs/api/` | API interface definitions |
-| `/specs/db/` | Database schema definitions |
-| `/specs/testing/` | BDD test specifications |
-
-### AI Workflow: Review Specs → Update Specs → Implement → Test
-
-1. **Review**: Before coding, read relevant specs in `/specs/`.
-2. **Spec-First**: For new features or interface changes, propose spec updates first.
-3. **Implement**: Code must 100% comply with spec definitions.
-4. **Test**: Write tests based on acceptance criteria in `/specs/testing/`.
-
-See `AGENTS.md` for the complete SDD workflow specification.
+See [AGENTS.md](AGENTS.md) for the complete SDD workflow specification.
 
 ## Commands
 
@@ -49,79 +35,88 @@ npm run typecheck        # TypeScript type check (tsc --noEmit)
 
 To run a single test file: `npx vitest run path/to/file.test.ts`
 
-## Architecture Overview
+## Coding Conventions
 
-**GraphViewer** is a Next.js 15 + React 19 app for visualizing 16 diagram types (Mermaid, PlantUML, Graphviz, D2, Nomnoml, etc.) with two deployment modes:
-- **Full server mode**: `npm run build` — includes `/api/render` Kroki proxy with in-memory cache
-- **Static export mode**: `npm run build:static` — for GitHub Pages (`GITHUB_PAGES=true`), path prefix `/graph-viewer`
+### TypeScript / React
 
-### Data Flow
+- **UI text**: Chinese (consistent with existing interface)
+- **Client components**: Use `'use client'` only when necessary (hooks, event handlers, browser APIs like `window`, `document`, `localStorage`)
+- **Pure logic**: Files in `lib/` should NOT have `'use client'`
 
+### Error Handling
+
+```typescript
+// Correct
+catch (e: unknown) {
+  if (e instanceof Error) {
+    console.error(e.message);
+  }
+}
+
+// Wrong
+catch (e: any) {
+  console.error(e.message);
+}
 ```
-useDiagramState (state + LocalStorage + URL share)
-    ↓
-page.tsx (top-level composition)
-    ├── EditorPanel / CodeEditor  ← code input
-    ├── PreviewPanel              ← renders output
-    ├── DiagramList               ← diagram list sidebar
-    └── SidebarTabs               ← Editor / AI / VersionHistory tabs
 
-useLivePreview (debounced) → useDiagramRender → local render (Mermaid/Graphviz WASM)
-                                              └→ POST /api/render (Kroki proxy, TTL 120s cache)
-```
+### Code Organization
 
-### Layer Responsibilities
+- **Small incremental changes**: Prefer modifying existing components over creating new top-level pages or global state layers
+- **Hook consumers**: When modifying a hook's return type, check all consumers (`page.tsx` is the primary consumer)
+- **File changes**: When deleting/renaming/moving files, update:
+  - Tests
+  - README (both English and Chinese)
+  - Specs in `/specs/`
+  - References in other files
 
-| Layer | Files | Purpose |
-|-------|-------|---------|
-| State | `hooks/useDiagramState.ts`, `hooks/useSettings.ts`, `hooks/useToast.ts` | App state, persistence, URL encoding |
-| Render | `hooks/useDiagramRender.ts`, `hooks/useLivePreview.ts` | Local + remote rendering, debouncing |
-| Actions | `hooks/useVersionActions.ts`, `hooks/useWorkspaceActions.ts`, `hooks/useAIActions.ts` | Encapsulated user action handlers |
-| Config | `lib/diagramConfig.ts`, `lib/types.ts` | Engine/format definitions, `DiagramDoc` type |
+## Key Architecture Points
 
-### Core Constraints
+For detailed architecture, see [RFC-0001: Core Architecture](specs/rfc/0001-core-architecture.md).
 
-- **Engine/Format values** must come from `lib/diagramConfig.ts` — no magic strings in business code.
-- **`DiagramDoc` structure** is `{ id, name, engine, format, code, updatedAt }` — maintain compatibility.
-- When adding/changing a diagram engine or export format, sync all affected files (see below).
+### Engine/Format Values
+
+- Must come from `lib/diagramConfig.ts` — no magic strings in business code
+- `DiagramDoc` structure: `{ id, name, engine, format, code, updatedAt }`
 
 ### Engine/Format Change Checklist
 
-When modifying diagram engines, formats, or export capabilities, check all of:
-- `lib/diagramConfig.ts` — type definitions, `ENGINE_CATEGORIES`, `getKrokiType`
-- `lib/diagramSamples.ts` — sample code
-- `lib/syntaxHighlight.ts` — CodeMirror language mapping
-- `lib/exportUtils.ts` — export format mapping
-- `hooks/useDiagramRender.ts` — local/remote render logic
-- `app/api/render/route.ts` — Kroki proxy, engine whitelist
-- `components/EditorPanel.tsx` — engine/format selector UI
-- `components/PreviewPanel.tsx` — preview rendering
-- `components/PreviewToolbar.tsx` — export entry points
-- `app/page.tsx` — top-level composition
+When modifying diagram engines, formats, or export capabilities, sync all affected files:
 
-### Preview/Export Pipeline
-
-- SVG preview depends on `sanitizedSvg`
-- PNG/PDF preview depends on `base64` + `contentType`
-- `PreviewToolbar` only receives exportable SVG content
-- Export mappings defined in `lib/exportUtils.ts`
+1. `lib/diagramConfig.ts` — type definitions, `ENGINE_CATEGORIES`, `getKrokiType`
+2. `lib/diagramSamples.ts` — sample code
+3. `lib/syntaxHighlight.ts` — CodeMirror language mapping
+4. `lib/exportUtils.ts` — export format mapping
+5. `hooks/useDiagramRender.ts` — local/remote render logic
+6. `app/api/render/route.ts` — Kroki proxy, engine whitelist
+7. `components/EditorPanel.tsx` — engine/format selector UI
+8. `components/PreviewPanel.tsx` — preview rendering
+9. `components/PreviewToolbar.tsx` — export entry points
+10. `app/page.tsx` — top-level composition
 
 ### API Routes
 
-- `POST /api/render` — Kroki proxy, in-memory cache (TTL 120s), 100KB code size limit, 10s timeout
-- `GET /api/healthz` — health check for Docker/Netlify
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/render` | Kroki proxy, in-memory cache (TTL 120s), 100KB limit, 10s timeout |
+| `GET /api/healthz` | Health check for Docker/Netlify |
 
-## Coding Conventions
-
-- UI text should be in Chinese (consistent with existing interface).
-- `'use client'` only when using hooks, event handlers, or browser APIs (`window`, `document`, `localStorage`). Pure logic in `lib/` should not have it.
-- Error handling: use `catch (e: unknown)` + `instanceof Error` narrowing, not `catch (e: any)`.
-- Prefer small incremental changes to existing components over creating new top-level pages or global state layers.
-- When deleting/renaming/moving files, update tests, README, ROADMAP, TODO, and `.windsurf` references.
-- When modifying a hook's return type, check all consumers (`page.tsx` is the primary consumer).
+For full API specification, see [OpenAPI Specification](specs/api/openapi.yaml).
 
 ## Changelog Requirement
 
 Every change must have a changelog entry:
-- File path: `changelog/YYYY-MM-DD-<short-slug>.md`
-- After adding a changelog file, update the summary entry in the root `CHANGELOG.md`.
+
+1. Create file: `changelog/YYYY-MM-DD-<short-slug>.md`
+2. Update summary in root `CHANGELOG.md`
+
+## Quick Links
+
+| Document | Purpose |
+|----------|---------|
+| [AGENTS.md](AGENTS.md) | AI agent workflow specification |
+| [specs/README.md](specs/README.md) | Specifications index |
+| [specs/rfc/0001-core-architecture.md](specs/rfc/0001-core-architecture.md) | Core architecture |
+| [specs/api/openapi.yaml](specs/api/openapi.yaml) | API specification |
+| [specs/db/schema-v1.dbml](specs/db/schema-v1.dbml) | Data models |
+| [specs/testing/diagram-render.feature](specs/testing/diagram-render.feature) | Test specifications |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide |

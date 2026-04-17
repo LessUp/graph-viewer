@@ -1,5 +1,5 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
-import type { SidebarTab } from '@/components/SidebarTabs';
+import type { SidebarTab } from '@/components/sidebar/SidebarTabs';
 
 type AIActionsDeps = {
   code: string;
