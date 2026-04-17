@@ -1,7 +1,7 @@
 # RFC-0001: Core Architecture
 
-**Status**: Accepted  
-**Created**: 2026-04-17  
+**Status**: Accepted
+**Created**: 2026-04-17
 **Author**: GraphViewer Team
 
 ## Context
@@ -13,15 +13,19 @@ GraphViewer is a Next.js 15 + React 19 application for visualizing 16+ diagram e
 We support two deployment modes to balance feature completeness and deployment simplicity:
 
 ### Full Server Mode
+
 - Standard Next.js build with API routes
 - Includes `/api/render` Kroki proxy with in-memory cache
 - Suitable for self-hosted or Docker deployment
+- Build command: `npm run build`
 
 ### Static Export Mode
-- `npm run build:static` with `GITHUB_PAGES=true`
-- No API routes — all rendering done client-side via WASM
+
+- Static export without API routes
+- All rendering done client-side via WASM
 - Path prefix `/graph-viewer` for GitHub Pages
-- Suitable for static hosting
+- Suitable for static hosting (GitHub Pages, Netlify, etc.)
+- Build command: `npm run build:static` with `GITHUB_PAGES=true`
 
 ## Data Flow Architecture
 
@@ -90,3 +94,10 @@ When modifying diagram engines, formats, or export capabilities, check all of:
 1. **Pure client-side rendering**: Rejected due to limited engine support in WASM
 2. **Pure server-side rendering**: Rejected due to privacy concerns for sensitive diagrams
 3. **Redux/Zustand for state**: Rejected in favor of React hooks + localStorage for simplicity
+
+## References
+
+- [API Design RFC](0002-api-design.md) — API endpoint specifications
+- [OpenAPI Specification](../api/openapi.yaml) — Machine-readable API definition
+- [Database Schema](../db/schema-v1.dbml) — Data model definitions
+- [Testing Specs](../testing/diagram-render.feature) — Test requirements

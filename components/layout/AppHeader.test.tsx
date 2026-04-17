@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { AppHeader } from '@/components/AppHeader';
+import { AppHeader } from './AppHeader';
 
 function createJsonFile(text: string) {
   const file = new File(['placeholder'], 'workspace.json', { type: 'application/json' });

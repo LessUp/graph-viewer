@@ -20,13 +20,13 @@
 
 ---
 
-## 🎯 Overview
+## Overview
 
 GraphViewer is a modern, all-in-one diagram visualization tool supporting **16+ diagram engines** with local and server-side hybrid rendering.
 
-Built with **Next.js 15** + **React 19** + **TypeScript**, it provides a seamless experience for creating, previewing, and exporting diagrams in various formats.
+Built with **Next.js 15** + **React 19** + **TypeScript**, it provides a seamless experience for creating, previewing, and exporting diagrams.
 
-## ✨ Features
+## Features
 
 - 🎨 **16+ Diagram Engines**: Mermaid, PlantUML, Graphviz, D2, and more
 - ⚡ **Hybrid Rendering**: Local WASM for speed + Remote Kroki for broader support
@@ -37,7 +37,7 @@ Built with **Next.js 15** + **React 19** + **TypeScript**, it provides a seamles
 - 🕐 **Version History**: Auto-save snapshots with restore capability
 - 🤖 **AI Assistant**: Optional AI-powered code analysis and generation
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -59,7 +59,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📦 Installation & Deployment
+## Deployment
 
 ### Docker (Recommended)
 
@@ -73,36 +73,39 @@ docker compose --profile dev up
 
 ### GitHub Pages
 
-Static export for GitHub Pages deployment. See [deployment guide](docs/en/03-deployment/02-github-pages.md) for details.
-
-### Self-Hosted
-
-Deploy your own Kroki instance for complete privacy. See [self-hosting guide](docs/en/03-deployment/03-self-hosted.md).
-
-## 🛠️ Development
-
 ```bash
-# Development server
-npm run dev
-
-# Build
-npm run build              # Production build with API routes
-npm run build:static       # Static export for GitHub Pages
-
-# Testing
-npm run test               # Run unit tests
-npm run test:watch         # Watch mode
-npm run test:smoke         # Smoke test (endpoint availability)
-
-# Code Quality
-npm run lint               # ESLint check
-npm run typecheck          # TypeScript type check
-npm run format             # Prettier format
+npm run build:static
 ```
 
-## 📚 Documentation
+See [Deployment Guide](docs/en/03-deployment/02-github-pages.md) for details.
 
-### 📖 Specifications
+### Self-Hosted Kroki
+
+Deploy your own Kroki instance for complete privacy. See [Self-hosting Guide](docs/en/03-deployment/03-self-hosted.md).
+
+## Development
+
+```bash
+npm run dev              # Development server
+npm run build            # Production build
+npm run build:static     # Static export
+npm run test             # Run tests
+npm run lint             # ESLint check
+npm run typecheck        # TypeScript check
+```
+
+## Supported Engines
+
+| Category | Engines |
+|----------|---------|
+| Popular | Mermaid, PlantUML, Graphviz, D2 |
+| Flowcharts | Flowchart.js, BlockDiag, ActDiag |
+| Sequence & Network | SeqDiag, NwDiag |
+| Data Visualization | Vega, Vega-Lite, WaveDrom |
+| ASCII Art | Ditaa, SVGBob, Nomnoml |
+| Data Modeling | ERD |
+
+## Specifications (Spec-Driven Development)
 
 This project follows **Spec-Driven Development (SDD)**. All implementation details are defined in `/specs`:
 
@@ -114,25 +117,12 @@ This project follows **Spec-Driven Development (SDD)**. All implementation detai
 - [Database Schema](specs/db/schema-v1.dbml) — Data models and localStorage schema
 - [Testing Specs](specs/testing/diagram-render.feature) — BDD test specifications
 
-### 📖 English Documentation
+## Documentation
 
-- [Documentation Center](docs/en/README.md)
-- [Quick Start](docs/en/01-getting-started/01-quick-start.md)
-- [Architecture Overview](docs/en/01-getting-started/03-architecture.md)
-- [Development Guide](docs/en/02-development/)
-- [Deployment Guide](docs/en/03-deployment/)
-- [Features](docs/en/04-features/)
+- [English Documentation](docs/en/README.md)
+- [中文文档](docs/zh-CN/README.md)
 
-### 📖 中文文档
-
-- [文档中心](docs/zh-CN/README.md)
-- [快速开始](docs/zh-CN/01-getting-started/01-quick-start.md)
-- [架构概览](docs/zh-CN/01-getting-started/03-architecture.md)
-- [开发指南](docs/zh-CN/02-development/)
-- [部署指南](docs/zh-CN/03-deployment/)
-- [功能特性](docs/zh-CN/04-features/)
-
-## 🏗️ Architecture
+## Architecture
 
 ```
 app/
@@ -144,49 +134,26 @@ app/
     └── healthz/route.ts     # Health check endpoint
 
 components/                   # React components
-├── EditorPanel.tsx          # Code editor and controls
-├── PreviewPanel.tsx         # Diagram preview
-├── PreviewToolbar.tsx       # Export and zoom controls
-└── ...
-
 hooks/                        # Custom React hooks
-├── useDiagramState.ts       # State management
-├── useDiagramRender.ts      # Rendering logic
-└── ...
-
 lib/                          # Utility modules
-├── diagramConfig.ts         # Engine/format definitions
-├── diagramSamples.ts        # Sample code snippets
-└── exportUtils.ts           # Export implementations
 ```
 
-## 🔧 Supported Engines
+For detailed architecture, see [RFC-0001](specs/rfc/0001-core-architecture.md).
 
-| Category | Engines |
-|----------|---------|
-| Popular | Mermaid, PlantUML, Graphviz, D2 |
-| Flowcharts | Flowchart.js, BlockDiag, ActDiag |
-| Sequence & Network | SeqDiag, NwDiag |
-| Data Visualization | Vega, Vega-Lite, WaveDrom |
-| ASCII Art | Ditaa, SVGBob, Nomnoml |
-| Data Modeling | ERD |
-
-## 🛡️ Security
+## Security
 
 - **Local Rendering**: Mermaid uses `securityLevel: 'strict'`; Graphviz WASM runs in-browser
 - **Remote Rendering**: `/api/render` forwards to Kroki with in-memory cache
 - **SVG Sanitization**: DOMPurify sanitizes all SVG content before rendering
 - **Input Validation**: Server validates engine, format, and code length
 
-**Recommendation**: Use local rendering for sensitive content, or self-host Kroki.
+## Contributing
 
-## 🤝 Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
-Contributions are welcome! Please read our [Development Guidelines](docs/en/02-development/02-guidelines.md) before submitting pull requests.
+## License
 
-## 📄 License
-
-GraphViewer is released under the [MIT License](LICENSE).
+[MIT License](LICENSE)
 
 ---
 

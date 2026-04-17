@@ -2,6 +2,12 @@
 
 所有重要变更按时间倒序记录。详细内容见 [`changelog/`](./changelog/) 目录。
 
+## [2026-04-17] 文档重组与规范驱动开发
+
+按照 SDD 最佳实践重组项目文档：明确 CLAUDE.md、AGENTS.md、specs/ 的职责边界，移除冗余内容，删除 docs/archive 目录，保留 .windsurf 配置。
+
+→ [详情](./changelog/2026-04-17-documentation-restructure.md)
+
 ## [2026-04-17] 项目完善度检查与修复
 
 全面检查项目代码质量，修复安全问题、错误处理缺失、调试代码残留等问题。增强 TypeScript 严格模式、创建统一日志工具、替换原生对话框为自定义组件、增强健康检查。

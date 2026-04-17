@@ -32,11 +32,12 @@ specs/
 
 ### For AI Agents
 
-See `AGENTS.md` for the complete SDD workflow. In short:
-1. Review specs
-2. Update specs first
-3. Implement code
-4. Test against specs
+See [AGENTS.md](../AGENTS.md) for the complete SDD workflow. In short:
+
+1. **Review Specs** — Read relevant specs before coding
+2. **Update Specs First** — Propose spec changes before implementing
+3. **Implement** — Code must 100% comply with specs
+4. **Test** — Write tests based on acceptance criteria
 
 ## Specification Formats
 
@@ -55,3 +56,54 @@ See `AGENTS.md` for the complete SDD workflow. In short:
 3. **API changes**: Update `specs/api/openapi.yaml`
 4. **Schema changes**: Update `specs/db/schema-v1.dbml`
 5. **Test cases**: Add to `specs/testing/`
+
+## Spec Document Guidelines
+
+### RFC Naming Convention
+
+RFCs should be numbered sequentially and have descriptive titles:
+
+- `0001-core-architecture.md`
+- `0002-api-design.md`
+- `0003-feature-name.md`
+
+### RFC Template
+
+```markdown
+# RFC-NNNN: Title
+
+**Status**: Proposed | Accepted | Deprecated
+**Created**: YYYY-MM-DD
+**Author**: Name
+
+## Context
+
+[Describe the problem or situation]
+
+## Decision
+
+[Describe the decision made]
+
+## Consequences
+
+[Describe the impact of this decision]
+
+## Alternatives Considered
+
+[List alternatives that were considered but rejected]
+```
+
+### Product Spec Guidelines
+
+Product specs should include:
+
+- Feature description
+- User stories / use cases
+- Acceptance criteria
+- Priority and status
+
+## Related Documents
+
+- [AGENTS.md](../AGENTS.md) — AI agent workflow specification
+- [CLAUDE.md](../CLAUDE.md) — Claude Code instructions
+- [CONTRIBUTING.md](../CONTRIBUTING.md) — Contribution guide

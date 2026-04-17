@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { PreviewPanel } from '@/components/PreviewPanel';
+import { PreviewPanel } from './PreviewPanel';
 
-vi.mock('@/components/PreviewToolbar', () => ({
+vi.mock('./PreviewToolbar', () => ({
   PreviewToolbar: ({ onZoomIn, onZoomOut, onResetZoom, onFullscreen }: Record<string, () => void>) => (
     <div>
       <button onClick={onZoomIn}>zoom-in</button>

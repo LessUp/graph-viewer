@@ -1,42 +1,37 @@
-# GraphViewer Documentation / GraphViewer 文档
+# GraphViewer Documentation
 
-> **文档已重构 / Documentation Restructured**
-> 
-> This documentation has been restructured to provide better bilingual support.
-> 
-> 本文档已重构，以提供更好的双语支持。
+> Bilingual documentation for GraphViewer.
 
-## 📚 Quick Navigation / 快速导航
+## Quick Navigation
 
 | Language | Path | Description |
 |----------|------|-------------|
 | 🇺🇸 English | [docs/en/README.md](en/README.md) | Complete English documentation |
 | 🇨🇳 中文 | [docs/zh-CN/README.md](zh-CN/README.md) | 完整中文文档 |
 
-## 📁 New Structure / 新结构
+## Directory Structure
 
 ```
 docs/
-├── en/                    # English Documentation / 英文文档
+├── en/                    # English Documentation
 │   ├── 01-getting-started/
 │   ├── 02-development/
 │   ├── 03-deployment/
 │   ├── 04-features/
 │   └── 05-reference/
-├── zh-CN/                 # Chinese Documentation / 中文文档
-│   ├── 01-getting-started/
-│   ├── 02-development/
-│   ├── 03-deployment/
-│   ├── 04-features/
-│   └── 05-reference/
-└── archive/               # Historical Documents / 历史文档
-    ├── refactor-plan-2025-11-18.md
-    └── remediation-plan-2025-12-15.md
+└── zh-CN/                 # Chinese Documentation
+    ├── 01-getting-started/
+    ├── 02-development/
+    ├── 03-deployment/
+    ├── 04-features/
+    └── 05-reference/
 ```
 
----
+## Specifications
 
-## 🚀 Choose Your Language / 选择您的语言
+For technical specifications (SDD), see [specs/](../specs/).
+
+---
 
 - **[English →](en/README.md)**
 - **[中文 →](zh-CN/README.md)**

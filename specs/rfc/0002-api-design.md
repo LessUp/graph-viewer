@@ -1,7 +1,7 @@
 # RFC-0002: API Design
 
-**Status**: Accepted  
-**Created**: 2026-04-17  
+**Status**: Accepted
+**Created**: 2026-04-17
 **Author**: GraphViewer Team
 
 ## Context
@@ -67,3 +67,9 @@ Common error codes:
 - `CODE_TOO_LARGE`
 - `RENDER_TIMEOUT`
 - `RENDER_FAILED`
+
+## References
+
+- [Core Architecture RFC](0001-core-architecture.md) — Overall architecture decisions
+- [OpenAPI Specification](../api/openapi.yaml) — Full machine-readable API definition
+- [Testing Specs](../testing/diagram-render.feature) — API test requirements
