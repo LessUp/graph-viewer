@@ -55,8 +55,7 @@ const nextConfig = {
   // Performance Optimizations / 性能优化
   // ===========================================================================
   
-  // Enable SWC minification (Rust-based, faster)
-  swcMinify: true,
+  // SWC minification is default in Next.js 15+
   
   // Experimental features for optimization
   experimental: {
