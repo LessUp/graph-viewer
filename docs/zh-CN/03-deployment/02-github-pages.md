@@ -26,8 +26,24 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'hooks/**'
+      - 'lib/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'next.config.*'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
+    inputs:
+      skip_checks:
+        description: 'Skip validation checks'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: read
@@ -35,18 +51,44 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: 'pages-${{ github.ref }}'
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
 
 jobs:
-  build:
+  validate:
+    if: inputs.skip_checks != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+
+  build:
+    needs: [validate]
+    if: always() && (needs.validate.result == 'success' || needs.validate.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          static_site_generator: next
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-modules-${{ hashFiles('package-lock.json') }}
       - run: npm ci
       - run: npm run build:static
       - uses: actions/upload-pages-artifact@v3
@@ -54,11 +96,11 @@ jobs:
           path: ./out
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
