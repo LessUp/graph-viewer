@@ -51,7 +51,7 @@ jobs:
       - run: npm run build:static
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./out
 
   deploy:
     environment:
@@ -71,7 +71,7 @@ Static export is configured in `next.config.js`:
 ```javascript
 const nextConfig = {
   output: 'export',
-  distDir: 'dist',
+  distDir: 'out',
   // ... other config
 };
 ```
@@ -82,8 +82,8 @@ const nextConfig = {
 # Local static build
 npm run build:static
 
-# Output in dist/ directory
-# Upload dist/ to GitHub Pages
+# Output in out/ directory
+# Upload out/ to GitHub Pages
 ```
 
 The build script (`scripts/build-static-export.mjs`) handles:
@@ -141,7 +141,7 @@ NEXT_PUBLIC_DEFAULT_KROKI_URL=https://kroki.io
 
 ```bash
 npm run build:static
-npx serve dist
+npx serve out
 ```
 
 Open `http://localhost:3000` and verify:

@@ -51,7 +51,7 @@ jobs:
       - run: npm run build:static
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./out
 
   deploy:
     environment:
@@ -71,7 +71,7 @@ jobs:
 ```javascript
 const nextConfig = {
   output: 'export',
-  distDir: 'dist',
+  distDir: 'out',
   // ... 其他配置
 };
 ```
@@ -82,8 +82,8 @@ const nextConfig = {
 # 本地静态构建
 npm run build:static
 
-# 输出到 dist/ 目录
-# 上传 dist/ 到 GitHub Pages
+# 输出到 out/ 目录
+# 上传 out/ 到 GitHub Pages
 ```
 
 构建脚本 (`scripts/build-static-export.mjs`) 处理：
@@ -141,7 +141,7 @@ NEXT_PUBLIC_DEFAULT_KROKI_URL=https://kroki.io
 
 ```bash
 npm run build:static
-npx serve dist
+npx serve out
 ```
 
 打开 `http://localhost:3000` 并验证：

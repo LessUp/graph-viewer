@@ -1,37 +1,30 @@
 # GraphViewer Documentation
 
-> Bilingual documentation for GraphViewer.
+Bilingual documentation for GraphViewer.
 
 ## Quick Navigation
 
-| Language | Path | Description |
-|----------|------|-------------|
-| 🇺🇸 English | [docs/en/README.md](en/README.md) | Complete English documentation |
-| 🇨🇳 中文 | [docs/zh-CN/README.md](zh-CN/README.md) | 完整中文文档 |
+| Language | Path |
+|----------|------|
+| English | [docs/en/README.md](en/README.md) |
+| 中文 | [docs/zh-CN/README.md](zh-CN/README.md) |
 
-## Directory Structure
+## Documentation Structure
 
 ```
 docs/
-├── en/                    # English Documentation
-│   ├── 01-getting-started/
-│   ├── 02-development/
-│   ├── 03-deployment/
-│   ├── 04-features/
-│   └── 05-reference/
-└── zh-CN/                 # Chinese Documentation
-    ├── 01-getting-started/
-    ├── 02-development/
-    ├── 03-deployment/
-    ├── 04-features/
-    └── 05-reference/
+├── en/                    # English
+│   ├── 01-getting-started/   # Quick Start, Installation, Architecture
+│   ├── 02-development/       # Setup, Guidelines, Testing
+│   ├── 03-deployment/        # Docker, GitHub Pages, Self-hosted
+│   ├── 04-features/          # Export, Rendering, AI Assistant
+│   └── 05-reference/         # Configuration, API
+└── zh-CN/                 # Chinese
+    └── (same structure)
 ```
 
-## Specifications
+## Key Resources
 
-For technical specifications (SDD), see [specs/](../specs/).
-
----
-
-- **[English →](en/README.md)**
-- **[中文 →](zh-CN/README.md)**
+- [Architecture RFC](../specs/rfc/0001-core-architecture.md)
+- [API Specification](../specs/api/openapi.yaml)
+- [Contributing Guide](../CONTRIBUTING.md)
