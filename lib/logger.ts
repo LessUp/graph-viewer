@@ -40,5 +40,3 @@ export const logger = {
     console.error(formatMessage('error', context, data));
   },
 };
-
-export default logger;
