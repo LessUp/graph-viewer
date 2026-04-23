@@ -26,6 +26,7 @@ docker compose --profile prod --profile kroki up -d
 ```
 
 This deploys:
+
 - Kroki core server
 - BlockDiag service
 - Mermaid service
@@ -74,7 +75,7 @@ services:
       - KROKI_BASE_URL=http://kroki:8000
     depends_on:
       - kroki
-  
+
   kroki:
     image: yuzutech/kroki:latest
     # ...
@@ -134,12 +135,12 @@ services:
     networks:
       - frontend
       - backend
-  
+
   kroki:
     networks:
       - backend
     # No port exposed to host
-    
+
 networks:
   frontend:
   backend:
@@ -159,10 +160,10 @@ upstream kroki {
 server {
     listen 443 ssl;
     server_name kroki.example.com;
-    
+
     ssl_certificate /path/to/cert.pem;
     ssl_certificate_key /path/to/key.pem;
-    
+
     location / {
         proxy_pass http://kroki;
         proxy_set_header Host $host;
@@ -191,6 +192,7 @@ docker exec graph-viewer curl http://kroki:8000/health
 Error: `KROKI_BASE_URL_NOT_ALLOWED`
 
 Solutions:
+
 1. Add URL to `KROKI_CLIENT_BASE_URL_ALLOWLIST`
 2. Set `KROKI_ALLOW_CLIENT_BASE_URL=true` (development)
 3. Use server-side `KROKI_BASE_URL` instead
@@ -237,6 +239,7 @@ const CACHE_SIZE_LIMIT = 1000; // Max entries
 ```
 
 For production scale, consider:
+
 - Redis cache
 - CDN caching
 - HTTP caching headers
@@ -245,19 +248,19 @@ For production scale, consider:
 
 Full Kroki supports 20+ engines:
 
-| Engine | Local | Remote | Notes |
-|--------|-------|--------|-------|
-| Mermaid | ✅ | ✅ | Local uses browser |
-| Graphviz | ✅ WASM | ✅ | |
-| PlantUML | ❌ | ✅ | Java required |
-| D2 | ❌ | ✅ | |
-| BlockDiag | ❌ | ✅ | Python |
-| SeqDiag | ❌ | ✅ | |
-| Nomnoml | ❌ | ✅ | |
-| Vega | ❌ | ✅ | |
-| Vega-Lite | ❌ | ✅ | |
-| WaveDrom | ❌ | ✅ | |
-| ... | | | |
+| Engine    | Local   | Remote | Notes              |
+| --------- | ------- | ------ | ------------------ |
+| Mermaid   | ✅      | ✅     | Local uses browser |
+| Graphviz  | ✅ WASM | ✅     |                    |
+| PlantUML  | ❌      | ✅     | Java required      |
+| D2        | ❌      | ✅     |                    |
+| BlockDiag | ❌      | ✅     | Python             |
+| SeqDiag   | ❌      | ✅     |                    |
+| Nomnoml   | ❌      | ✅     |                    |
+| Vega      | ❌      | ✅     |                    |
+| Vega-Lite | ❌      | ✅     |                    |
+| WaveDrom  | ❌      | ✅     |                    |
+| ...       |         |        |                    |
 
 ## Maintenance
 

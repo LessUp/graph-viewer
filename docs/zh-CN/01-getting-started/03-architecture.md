@@ -4,13 +4,13 @@
 
 ## 技术栈
 
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| Next.js | 15 | React 框架（App Router） |
-| React | 19 | UI 库 |
-| TypeScript | 5.4+ | 类型安全的 JavaScript |
-| Tailwind CSS | 3.4 | 实用优先的样式 |
-| Node.js | 20+ | 运行时环境 |
+| 技术         | 版本 | 用途                     |
+| ------------ | ---- | ------------------------ |
+| Next.js      | 15   | React 框架（App Router） |
+| React        | 19   | UI 库                    |
+| TypeScript   | 5.4+ | 类型安全的 JavaScript    |
+| Tailwind CSS | 3.4  | 实用优先的样式           |
+| Node.js      | 20+  | 运行时环境               |
 
 ## 项目结构
 
@@ -75,11 +75,13 @@ PreviewPanel（显示）
 GraphViewer 采用混合方式以获得最佳性能：
 
 #### 本地渲染（客户端）
+
 - **Mermaid**: 直接使用 `mermaid` 库在浏览器中渲染
 - **Graphviz**: 使用 `@hpcc-js/wasm` 基于 WebAssembly 渲染
 - **优势**: 快速、离线工作、数据不出浏览器
 
 #### 远程渲染（服务端）
+
 - **所有引擎**: 通过 Kroki 服务代理
 - **端点**: `/api/render` 带内存缓存
 - **优势**: 支持 16+ 引擎、一致的输出

@@ -4,10 +4,10 @@ GraphViewer API 端点的完整参考。
 
 ## 基础 URL
 
-| 环境 | 基础 URL |
-|-------------|----------|
+| 环境 | 基础 URL                |
+| ---- | ----------------------- |
 | 开发 | `http://localhost:3000` |
-| 生产 | 您的部署 URL |
+| 生产 | 您的部署 URL            |
 
 ## 端点
 
@@ -27,9 +27,9 @@ GraphViewer API 端点的完整参考。
 
 **状态码：**
 
-| 代码 | 说明 |
-|------|-------------|
-| 200 | 服务健康 |
+| 代码 | 说明     |
+| ---- | -------- |
+| 200  | 服务健康 |
 
 ---
 
@@ -85,15 +85,15 @@ curl -X POST http://localhost:3000/api/render \
 
 **错误响应：**
 
-| 状态 | 错误代码 | 说明 |
-|--------|------------|-------------|
-| 400 | `INVALID_ENGINE` | 不支持的引擎 |
-| 400 | `INVALID_FORMAT` | 不支持的格式 |
-| 400 | `INVALID_KROKI_BASE_URL` | 格式错误的 Kroki URL |
-| 400 | `KROKI_BASE_URL_NOT_ALLOWED` | URL 不在白名单中 |
-| 413 | `PAYLOAD_TOO_LARGE` | 代码超过 100,000 字符 |
-| 502 | `KROKI_ERROR` | Kroki 返回错误 |
-| 504 | `KROKI_TIMEOUT` | 请求超时 |
+| 状态 | 错误代码                     | 说明                  |
+| ---- | ---------------------------- | --------------------- |
+| 400  | `INVALID_ENGINE`             | 不支持的引擎          |
+| 400  | `INVALID_FORMAT`             | 不支持的格式          |
+| 400  | `INVALID_KROKI_BASE_URL`     | 格式错误的 Kroki URL  |
+| 400  | `KROKI_BASE_URL_NOT_ALLOWED` | URL 不在白名单中      |
+| 413  | `PAYLOAD_TOO_LARGE`          | 代码超过 100,000 字符 |
+| 502  | `KROKI_ERROR`                | Kroki 返回错误        |
+| 504  | `KROKI_TIMEOUT`              | 请求超时              |
 
 **错误响应格式：**
 
@@ -147,38 +147,38 @@ const svg = graphviz.dot(code);
 
 ### 支持的引擎
 
-| 引擎 | Kroki 类型 | 本地支持 |
-|--------|------------|---------------|
-| mermaid | mermaid | ✅ 浏览器 |
-| plantuml | plantuml | ❌ |
-| graphviz | graphviz | ✅ WASM |
-| d2 | d2 | ❌ |
-| nomnoml | nomnoml | ❌ |
-| blockdiag | blockdiag | ❌ |
-| seqdiag | seqdiag | ❌ |
-| actdiag | actdiag | ❌ |
-| nwdiag | nwdiag | ❌ |
-| packetdiag | packetdiag | ❌ |
-| rackdiag | rackdiag | ❌ |
-| c4plantuml | c4plantuml | ❌ |
-| ditaa | ditaa | ❌ |
-| erd | erd | ❌ |
-| excalidraw | excalidraw | ❌ |
-| pikchr | pikchr | ❌ |
-| svgbob | svgbob | ❌ |
-| symbolator | symbolator | ❌ |
-| umlet | umlet | ❌ |
-| vega | vega | ❌ |
-| vegalite | vegalite | ❌ |
-| wavedrom | wavedrom | ❌ |
+| 引擎       | Kroki 类型 | 本地支持  |
+| ---------- | ---------- | --------- |
+| mermaid    | mermaid    | ✅ 浏览器 |
+| plantuml   | plantuml   | ❌        |
+| graphviz   | graphviz   | ✅ WASM   |
+| d2         | d2         | ❌        |
+| nomnoml    | nomnoml    | ❌        |
+| blockdiag  | blockdiag  | ❌        |
+| seqdiag    | seqdiag    | ❌        |
+| actdiag    | actdiag    | ❌        |
+| nwdiag     | nwdiag     | ❌        |
+| packetdiag | packetdiag | ❌        |
+| rackdiag   | rackdiag   | ❌        |
+| c4plantuml | c4plantuml | ❌        |
+| ditaa      | ditaa      | ❌        |
+| erd        | erd        | ❌        |
+| excalidraw | excalidraw | ❌        |
+| pikchr     | pikchr     | ❌        |
+| svgbob     | svgbob     | ❌        |
+| symbolator | symbolator | ❌        |
+| umlet      | umlet      | ❌        |
+| vega       | vega       | ❌        |
+| vegalite   | vegalite   | ❌        |
+| wavedrom   | wavedrom   | ❌        |
 
 ### 支持的格式
 
-| 格式 | MIME 类型 | 说明 |
-|--------|-----------|-------------|
-| svg | image/svg+xml | 可缩放矢量 |
-| png | image/png | 位图 |
-| pdf | application/pdf | 文档 |
+| 格式 | MIME 类型       | 说明       |
+| ---- | --------------- | ---------- |
+| svg  | image/svg+xml   | 可缩放矢量 |
+| png  | image/png       | 位图       |
+| pdf  | application/pdf | 文档       |
 
 **注意：** 并非所有引擎支持所有格式。检查 Kroki 文档了解兼容性。
 
@@ -237,22 +237,18 @@ curl -X POST http://localhost:3000/api/render \
 ### JavaScript/TypeScript
 
 ```typescript
-async function renderDiagram(
-  engine: string,
-  format: string,
-  code: string
-): Promise<string> {
+async function renderDiagram(engine: string, format: string, code: string): Promise<string> {
   const response = await fetch('/api/render', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ engine, format, code }),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message);
   }
-  
+
   const data = await response.json();
   return data.result;
 }
@@ -292,7 +288,7 @@ type RenderRequest struct {
 func renderDiagram(engine, format, code string) (string, error) {
     req := RenderRequest{Engine: engine, Format: format, Code: code}
     body, _ := json.Marshal(req)
-    
+
     resp, err := http.Post(
         "http://localhost:3000/api/render",
         "application/json",
@@ -302,7 +298,7 @@ func renderDiagram(engine, format, code string) (string, error) {
         return "", err
     }
     defer resp.Body.Close()
-    
+
     var result map[string]interface{}
     json.NewDecoder(resp.Body).Decode(&result)
     return result["result"].(string), nil

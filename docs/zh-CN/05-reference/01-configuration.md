@@ -6,29 +6,29 @@ GraphViewer 配置选项的完整参考。
 
 ### 服务端配置
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `PORT` | `3000` | 服务器监听端口 |
-| `NODE_ENV` | `development` | 环境模式 |
-| `KROKI_BASE_URL` | `https://kroki.io` | 默认 Kroki 渲染服务 |
-| `KROKI_TIMEOUT_MS` | `10000` | Kroki 请求超时（毫秒） |
-| `KROKI_ALLOW_CLIENT_BASE_URL` | `false` | 允许客户端指定 Kroki URL |
-| `KROKI_CLIENT_BASE_URL_ALLOWLIST` | - | 逗号分隔的允许 URL |
+| 变量                              | 默认值             | 说明                     |
+| --------------------------------- | ------------------ | ------------------------ |
+| `PORT`                            | `3000`             | 服务器监听端口           |
+| `NODE_ENV`                        | `development`      | 环境模式                 |
+| `KROKI_BASE_URL`                  | `https://kroki.io` | 默认 Kroki 渲染服务      |
+| `KROKI_TIMEOUT_MS`                | `10000`            | Kroki 请求超时（毫秒）   |
+| `KROKI_ALLOW_CLIENT_BASE_URL`     | `false`            | 允许客户端指定 Kroki URL |
+| `KROKI_CLIENT_BASE_URL_ALLOWLIST` | -                  | 逗号分隔的允许 URL       |
 
 ### 客户端配置
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
+| 变量                                 | 默认值  | 说明                   |
+| ------------------------------------ | ------- | ---------------------- |
 | `NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL` | CDN URL | Graphviz WASM 资源 URL |
-| `NEXT_PUBLIC_DEFAULT_KROKI_URL` | - | 客户端配置的默认 Kroki |
+| `NEXT_PUBLIC_DEFAULT_KROKI_URL`      | -       | 客户端配置的默认 Kroki |
 
 ### AI 助手配置
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `AI_API_KEY` | - | AI 服务 API 密钥 |
-| `AI_BASE_URL` | - | 自定义 AI 服务端点 |
-| `AI_MODEL` | `gpt-4` | AI 模型选择 |
+| 变量          | 默认值  | 说明               |
+| ------------- | ------- | ------------------ |
+| `AI_API_KEY`  | -       | AI 服务 API 密钥   |
+| `AI_BASE_URL` | -       | 自定义 AI 服务端点 |
+| `AI_MODEL`    | `gpt-4` | AI 模型选择        |
 
 ## 完整 .env.example
 
@@ -124,7 +124,7 @@ services:
   web:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - KROKI_BASE_URL=${KROKI_BASE_URL:-https://kroki.io}
       - PORT=3000
@@ -136,7 +136,7 @@ services:
   kroki:
     image: yuzutech/kroki:latest
     ports:
-      - "8000:8000"
+      - '8000:8000'
     profiles:
       - kroki
 ```
@@ -207,11 +207,7 @@ CMD ["node", "server.js"]
 
 ```json
 {
-  "extends": [
-    "next/core-web-vitals",
-    "next/typescript",
-    "prettier"
-  ],
+  "extends": ["next/core-web-vitals", "next/typescript", "prettier"],
   "rules": {
     "@typescript-eslint/no-unused-vars": "error",
     "react-hooks/exhaustive-deps": "warn"
@@ -241,10 +237,7 @@ CMD ["node", "server.js"]
 ```javascript
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  content: ['./app/**/*.{js,ts,jsx,tsx,mdx}', './components/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       fontFamily: {
@@ -284,29 +277,29 @@ export default defineConfig({
 
 ### 代码限制
 
-| 限制 | 值 | 说明 |
-|------|-------|-------------|
+| 限制              | 值      | 说明               |
+| ----------------- | ------- | ------------------ |
 | `MAX_CODE_LENGTH` | 100,000 | 每个图表最大字符数 |
-| `MAX_DIAGRAMS` | 100 | 工作区最大图表数 |
+| `MAX_DIAGRAMS`    | 100     | 工作区最大图表数   |
 
 ### 缓存配置
 
-| 设置 | 值 | 说明 |
-|---------|-------|-------------|
+| 设置               | 值        | 说明                   |
+| ------------------ | --------- | ---------------------- |
 | `CACHE_MAX_AGE_MS` | 3,600,000 | 缓存条目 TTL（1 小时） |
-| `CACHE_SIZE_LIMIT` | 1,000 | 最大缓存条目数 |
+| `CACHE_SIZE_LIMIT` | 1,000     | 最大缓存条目数         |
 
 ### 防抖计时
 
-| 设置 | 值 | 说明 |
-|---------|-------|-------------|
+| 设置                  | 值  | 说明         |
+| --------------------- | --- | ------------ |
 | `PREVIEW_DEBOUNCE_MS` | 300 | 预览输入防抖 |
 
 ### 导出设置
 
-| 设置 | 值 | 说明 |
-|---------|-------|-------------|
-| `PNG_QUALITY` | 0.95 | PNG 导出质量（0-1） |
-| `PNG_SCALE_2X` | 2 | PNG 2x 缩放因子 |
-| `PNG_SCALE_4X` | 4 | PNG 4x 缩放因子 |
-| `SVG_PADDING` | 20 | SVG viewBox 内边距（像素） |
+| 设置           | 值   | 说明                       |
+| -------------- | ---- | -------------------------- |
+| `PNG_QUALITY`  | 0.95 | PNG 导出质量（0-1）        |
+| `PNG_SCALE_2X` | 2    | PNG 2x 缩放因子            |
+| `PNG_SCALE_4X` | 4    | PNG 4x 缩放因子            |
+| `SVG_PADDING`  | 20   | SVG viewBox 内边距（像素） |

@@ -19,12 +19,12 @@ docker compose --profile prod --profile kroki up -d
 
 GraphViewer 为不同用例提供多个 compose 配置：
 
-| 配置文件 | 描述 | 用途 |
-|----------|------|------|
-| `dev` | 热重载开发 | 本地开发 |
-| `prod` | 生产构建 | 生产部署 |
-| `web-test` | 测试环境 | 测试/CI |
-| `kroki` | 自建 Kroki 服务 | 离线/受限环境 |
+| 配置文件   | 描述            | 用途          |
+| ---------- | --------------- | ------------- |
+| `dev`      | 热重载开发      | 本地开发      |
+| `prod`     | 生产构建        | 生产部署      |
+| `web-test` | 测试环境        | 测试/CI       |
+| `kroki`    | 自建 Kroki 服务 | 离线/受限环境 |
 
 ### 开发环境
 
@@ -33,6 +33,7 @@ docker compose --profile dev up
 ```
 
 特性：
+
 - 热重载启用
 - 源代码作为卷挂载
 - 端口: 3000
@@ -49,6 +50,7 @@ docker compose --profile prod --profile kroki up -d
 ```
 
 特性：
+
 - 优化的生产构建
 - 独立 Next.js 服务器
 - 无卷挂载
@@ -88,7 +90,7 @@ services:
   kroki:
     image: yuzutech/kroki:latest
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       - KROKI_BLOCKDIAG_HOST=blockdiag
       - KROKI_MERMAID_HOST=mermaid
@@ -96,6 +98,7 @@ services:
 ```
 
 优点：
+
 - 离线工作
 - 无外部依赖
 - 跨环境一致的渲染
@@ -152,7 +155,7 @@ curl http://localhost:8000/health
 server {
     listen 80;
     server_name diagrams.example.com;
-    
+
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;

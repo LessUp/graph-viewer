@@ -4,10 +4,10 @@ Bilingual documentation for GraphViewer.
 
 ## Quick Navigation
 
-| Language | Path |
-|----------|------|
-| English | [docs/en/README.md](en/README.md) |
-| 中文 | [docs/zh-CN/README.md](zh-CN/README.md) |
+| Language | Path                                    |
+| -------- | --------------------------------------- |
+| English  | [docs/en/README.md](en/README.md)       |
+| 中文     | [docs/zh-CN/README.md](zh-CN/README.md) |
 
 ## Documentation Structure
 
@@ -25,6 +25,6 @@ docs/
 
 ## Key Resources
 
-- [Architecture RFC](../specs/rfc/0001-core-architecture.md)
-- [API Specification](../specs/api/openapi.yaml)
+- [Architecture RFC](../openspec/specs/architecture/0001-core-architecture.md)
+- [API Specification](../openspec/specs/api/openapi.yaml)
 - [Contributing Guide](../CONTRIBUTING.md)

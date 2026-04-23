@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, type MouseEvent as ReactMouseEvent } from 'react';
-import { Plus, ChevronsLeft, Layers, Pencil, Trash2 } from 'lucide-react';
+import { Plus, ChevronsLeft, Layers, Pencil, Trash2, FileCode } from 'lucide-react';
 
 export type DiagramEntry = {
   id: string;
@@ -17,6 +17,7 @@ export type DiagramListProps = {
   onRename: (id: string, currentName: string) => void;
   onDelete: (id: string, name: string) => void;
   onCollapseSidebar: () => void;
+  onOpenTemplateModal?: () => void;
 };
 
 export function DiagramList({
@@ -27,6 +28,7 @@ export function DiagramList({
   onRename,
   onDelete,
   onCollapseSidebar,
+  onOpenTemplateModal,
 }: DiagramListProps) {
   const sortedDiagrams = useMemo(
     () =>
@@ -58,6 +60,16 @@ export function DiagramList({
             <Plus className="h-3.5 w-3.5" />
             新建
           </button>
+          {onOpenTemplateModal && (
+            <button
+              onClick={onOpenTemplateModal}
+              className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-200"
+              title="从模板创建"
+            >
+              <FileCode className="h-3.5 w-3.5" />
+              模板
+            </button>
+          )}
           <button
             onClick={onCollapseSidebar}
             className="hidden h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 lg:flex"

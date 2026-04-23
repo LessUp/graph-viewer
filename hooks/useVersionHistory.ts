@@ -36,7 +36,9 @@ function hasMeaningfulContentChange(nextCode: string, previousCode: string): boo
 }
 
 function sortVersions(records: VersionRecord[]): VersionRecord[] {
-  return [...records].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return [...records].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  );
 }
 
 function trimDiagramVersions(records: VersionRecord[]): VersionRecord[] {
@@ -79,7 +81,9 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
         setVersions(allVersions);
       }
     } catch (e: unknown) {
-      logger.error('load-version-history', { error: e instanceof Error ? e.message : 'Unknown error' });
+      logger.error('load-version-history', {
+        error: e instanceof Error ? e.message : 'Unknown error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +96,9 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
       try {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
       } catch (e: unknown) {
-        logger.error('save-version-history', { error: e instanceof Error ? e.message : 'Unknown error' });
+        logger.error('save-version-history', {
+          error: e instanceof Error ? e.message : 'Unknown error',
+        });
       }
     }, STORAGE_WRITE_DEBOUNCE_MS);
 

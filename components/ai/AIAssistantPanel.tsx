@@ -42,9 +42,8 @@ const ALL_PROVIDERS: Array<{ id: AIProvider; name: string; description: string }
   { id: 'custom', name: '自定义', description: '自定义 API 端点' },
 ];
 
-const PROVIDERS: Array<{ id: AIProvider; name: string; description: string }> = ALL_PROVIDERS.filter(
-  (provider) => getVisibleAIProviders().includes(provider.id),
-);
+const PROVIDERS: Array<{ id: AIProvider; name: string; description: string }> =
+  ALL_PROVIDERS.filter((provider) => getVisibleAIProviders().includes(provider.id));
 
 const OPENAI_MODELS = [
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini (推荐)' },

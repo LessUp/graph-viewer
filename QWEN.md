@@ -8,16 +8,16 @@
 
 ### Key Technologies
 
-| Category | Technology |
-|----------|------------|
-| **Framework** | Next.js 15 (App Router) |
-| **UI** | React 19, TypeScript |
-| **Styling** | Tailwind CSS |
-| **Code Editor** | CodeMirror 6 |
+| Category            | Technology                                    |
+| ------------------- | --------------------------------------------- |
+| **Framework**       | Next.js 15 (App Router)                       |
+| **UI**              | React 19, TypeScript                          |
+| **Styling**         | Tailwind CSS                                  |
+| **Code Editor**     | CodeMirror 6                                  |
 | **Diagram Engines** | Mermaid, PlantUML, Graphviz, D2, and 12+ more |
-| **Rendering** | Local WASM (Mermaid, Graphviz) + Remote Kroki |
-| **Testing** | Vitest, Testing Library |
-| **Linting** | ESLint, Prettier |
+| **Rendering**       | Local WASM (Mermaid, Graphviz) + Remote Kroki |
+| **Testing**         | Vitest, Testing Library                       |
+| **Linting**         | ESLint, Prettier                              |
 
 ### Core Features
 
@@ -32,19 +32,29 @@
 
 ## Development Philosophy: Spec-Driven Development (SDD)
 
-This project strictly follows **Spec-Driven Development (SDD)**. The `/specs` directory is the **Single Source of Truth** for all implementation decisions.
+This project strictly follows **Spec-Driven Development (SDD)** with **OpenSpec**. The `openspec/specs/` directory is the **Single Source of Truth** for all implementation decisions.
 
-**Core Rule**: Before coding, read relevant specs. For new features, update specs first. Code must 100% comply with specs.
+**Core Rule**: Before coding, read relevant specs. For new features, use `/opsx:propose` first. Code must 100% comply with specs.
+
+### OpenSpec Workflow
+
+| Command         | Purpose                                    |
+| --------------- | ------------------------------------------ |
+| `/opsx:explore` | Investigate codebase, clarify requirements |
+| `/opsx:propose` | Create change with all artifacts           |
+| `/opsx:apply`   | Implement tasks from tasks.md              |
+| `/opsx:archive` | Finalize and merge delta specs             |
 
 ### Spec Directory Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `/specs/product/` | Product features, roadmap, TODO |
-| `/specs/rfc/` | Technical design documents and architecture decisions |
-| `/specs/api/` | API interface definitions (OpenAPI) |
-| `/specs/db/` | Database schema definitions |
-| `/specs/testing/` | BDD test specifications |
+| Directory                      | Purpose                             |
+| ------------------------------ | ----------------------------------- |
+| `openspec/specs/product/`      | Product features, roadmap, TODO     |
+| `openspec/specs/architecture/` | Technical design documents (RFCs)   |
+| `openspec/specs/api/`          | API interface definitions (OpenAPI) |
+| `openspec/specs/data/`         | Data model definitions              |
+| `openspec/specs/testing/`      | BDD test specifications             |
+| `openspec/changes/`            | Active change proposals             |
 
 ## Project Structure
 
@@ -70,8 +80,11 @@ graph-viewer/
 │
 ├── hooks/                        # Custom React Hooks (10 hooks)
 ├── lib/                          # Utility Libraries & Types
-├── specs/                        # SDD Specifications (Single Source of Truth)
-├── docs/                         # User Documentation (bilingual: en / zh-CN)
+├── openspec/              # OpenSpec change management
+│   ├── config.yaml        # Project configuration
+│   ├── specs/             # System behavior specs (source of truth)
+│   └── changes/           # Active change proposals
+├── docs/                  # User Documentation (bilingual: en / zh-CN)
 ├── scripts/                      # Build & automation scripts (ESM .mjs)
 └── public/                       # Static assets (favicon)
 ```
@@ -156,7 +169,7 @@ catch (e: any) {
 - **File changes**: When deleting/renaming/moving files, update:
   - Tests
   - README (both English and Chinese)
-  - Specs in `/specs/`
+  - Specs in `openspec/specs/`
   - References in other files
 
 ### UI Text
@@ -202,12 +215,12 @@ Engine and format values must come from `lib/diagramConfig.ts` — no magic stri
 
 ### API Routes
 
-| Endpoint | Description |
-|----------|-------------|
+| Endpoint           | Description                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------------- |
 | `POST /api/render` | Kroki proxy with in-memory cache (TTL 120s), 100KB limit, 10s timeout, base URL allowlist |
-| `GET /api/healthz` | Health check with Kroki connectivity verification |
+| `GET /api/healthz` | Health check with Kroki connectivity verification                                         |
 
-For full API specification, see [specs/api/openapi.yaml](specs/api/openapi.yaml).
+For full API specification, see [openspec/specs/api/openapi.yaml](openspec/specs/api/openapi.yaml).
 
 ### Engine/Format Change Checklist
 
@@ -226,13 +239,13 @@ When modifying diagram engines, formats, or export capabilities, sync all affect
 
 ## Security
 
-| Layer | Implementation |
-|-------|----------------|
-| **Local Rendering** | Mermaid `securityLevel: 'strict'`; Graphviz WASM in-browser isolation |
-| **Remote Rendering** | `/api/render` proxies to Kroki with in-memory cache (TTL 120s) |
-| **SVG Sanitization** | DOMPurify sanitizes all SVG content before rendering |
-| **Input Validation** | Server validates engine, format, and code length (100KB limit) |
-| **Request Security** | Base URL allowlist, 10s timeout, request deduplication |
+| Layer                | Implementation                                                        |
+| -------------------- | --------------------------------------------------------------------- |
+| **Local Rendering**  | Mermaid `securityLevel: 'strict'`; Graphviz WASM in-browser isolation |
+| **Remote Rendering** | `/api/render` proxies to Kroki with in-memory cache (TTL 120s)        |
+| **SVG Sanitization** | DOMPurify sanitizes all SVG content before rendering                  |
+| **Input Validation** | Server validates engine, format, and code length (100KB limit)        |
+| **Request Security** | Base URL allowlist, 10s timeout, request deduplication                |
 
 ## Deployment
 
@@ -254,7 +267,7 @@ When modifying diagram engines, formats, or export capabilities, sync all affect
 
 ## Related Documents
 
-- [AGENTS.md](AGENTS.md) — AI agent workflow specification (SDD)
+- [AGENTS.md](AGENTS.md) — AI agent workflow specification (OpenSpec)
 - [CLAUDE.md](CLAUDE.md) — Claude Code specific instructions and coding conventions
 - [CONTRIBUTING.md](CONTRIBUTING.md) — Contribution guide for human contributors
 - [README.md](README.md) — Project overview and quick start

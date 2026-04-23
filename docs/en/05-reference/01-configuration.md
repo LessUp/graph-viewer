@@ -6,29 +6,29 @@ Complete reference for GraphViewer configuration options.
 
 ### Server Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3000` | Server listening port |
-| `NODE_ENV` | `development` | Environment mode |
-| `KROKI_BASE_URL` | `https://kroki.io` | Default Kroki rendering service |
-| `KROKI_TIMEOUT_MS` | `10000` | Kroki request timeout (ms) |
-| `KROKI_ALLOW_CLIENT_BASE_URL` | `false` | Allow clients to specify Kroki URL |
-| `KROKI_CLIENT_BASE_URL_ALLOWLIST` | - | Comma-separated allowed URLs |
+| Variable                          | Default            | Description                        |
+| --------------------------------- | ------------------ | ---------------------------------- |
+| `PORT`                            | `3000`             | Server listening port              |
+| `NODE_ENV`                        | `development`      | Environment mode                   |
+| `KROKI_BASE_URL`                  | `https://kroki.io` | Default Kroki rendering service    |
+| `KROKI_TIMEOUT_MS`                | `10000`            | Kroki request timeout (ms)         |
+| `KROKI_ALLOW_CLIENT_BASE_URL`     | `false`            | Allow clients to specify Kroki URL |
+| `KROKI_CLIENT_BASE_URL_ALLOWLIST` | -                  | Comma-separated allowed URLs       |
 
 ### Client-Side Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL` | CDN URL | Graphviz WASM resource URL |
-| `NEXT_PUBLIC_DEFAULT_KROKI_URL` | - | Default Kroki for client config |
+| Variable                             | Default | Description                     |
+| ------------------------------------ | ------- | ------------------------------- |
+| `NEXT_PUBLIC_GRAPHVIZ_WASM_BASE_URL` | CDN URL | Graphviz WASM resource URL      |
+| `NEXT_PUBLIC_DEFAULT_KROKI_URL`      | -       | Default Kroki for client config |
 
 ### AI Assistant Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `AI_API_KEY` | - | API key for AI service |
-| `AI_BASE_URL` | - | Custom AI service endpoint |
-| `AI_MODEL` | `gpt-4` | AI model selection |
+| Variable      | Default | Description                |
+| ------------- | ------- | -------------------------- |
+| `AI_API_KEY`  | -       | API key for AI service     |
+| `AI_BASE_URL` | -       | Custom AI service endpoint |
+| `AI_MODEL`    | `gpt-4` | AI model selection         |
 
 ## Complete .env.example
 
@@ -124,7 +124,7 @@ services:
   web:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - KROKI_BASE_URL=${KROKI_BASE_URL:-https://kroki.io}
       - PORT=3000
@@ -136,7 +136,7 @@ services:
   kroki:
     image: yuzutech/kroki:latest
     ports:
-      - "8000:8000"
+      - '8000:8000'
     profiles:
       - kroki
 ```
@@ -207,11 +207,7 @@ CMD ["node", "server.js"]
 
 ```json
 {
-  "extends": [
-    "next/core-web-vitals",
-    "next/typescript",
-    "prettier"
-  ],
+  "extends": ["next/core-web-vitals", "next/typescript", "prettier"],
   "rules": {
     "@typescript-eslint/no-unused-vars": "error",
     "react-hooks/exhaustive-deps": "warn"
@@ -241,10 +237,7 @@ CMD ["node", "server.js"]
 ```javascript
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  content: ['./app/**/*.{js,ts,jsx,tsx,mdx}', './components/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       fontFamily: {
@@ -284,29 +277,29 @@ export default defineConfig({
 
 ### Code Limits
 
-| Limit | Value | Description |
-|-------|-------|-------------|
+| Limit             | Value   | Description                    |
+| ----------------- | ------- | ------------------------------ |
 | `MAX_CODE_LENGTH` | 100,000 | Maximum characters per diagram |
-| `MAX_DIAGRAMS` | 100 | Maximum diagrams in workspace |
+| `MAX_DIAGRAMS`    | 100     | Maximum diagrams in workspace  |
 
 ### Cache Configuration
 
-| Setting | Value | Description |
-|---------|-------|-------------|
+| Setting            | Value     | Description              |
+| ------------------ | --------- | ------------------------ |
 | `CACHE_MAX_AGE_MS` | 3,600,000 | Cache entry TTL (1 hour) |
-| `CACHE_SIZE_LIMIT` | 1,000 | Maximum cache entries |
+| `CACHE_SIZE_LIMIT` | 1,000     | Maximum cache entries    |
 
 ### Debounce Timing
 
-| Setting | Value | Description |
-|---------|-------|-------------|
-| `PREVIEW_DEBOUNCE_MS` | 300 | Input debounce for preview |
+| Setting               | Value | Description                |
+| --------------------- | ----- | -------------------------- |
+| `PREVIEW_DEBOUNCE_MS` | 300   | Input debounce for preview |
 
 ### Export Settings
 
-| Setting | Value | Description |
-|---------|-------|-------------|
-| `PNG_QUALITY` | 0.95 | PNG export quality (0-1) |
-| `PNG_SCALE_2X` | 2 | 2x PNG scale factor |
-| `PNG_SCALE_4X` | 4 | 4x PNG scale factor |
-| `SVG_PADDING` | 20 | SVG viewBox padding (px) |
+| Setting        | Value | Description              |
+| -------------- | ----- | ------------------------ |
+| `PNG_QUALITY`  | 0.95  | PNG export quality (0-1) |
+| `PNG_SCALE_2X` | 2     | 2x PNG scale factor      |
+| `PNG_SCALE_4X` | 4     | 4x PNG scale factor      |
+| `SVG_PADDING`  | 20    | SVG viewBox padding (px) |

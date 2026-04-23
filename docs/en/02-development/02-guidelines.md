@@ -47,7 +47,7 @@ export function EditorPanel({ engine, onEngineChange }: EditorPanelProps) {
   const handleSelect = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
     onEngineChange(e.target.value);
   }, [onEngineChange]);
-  
+
   return <select value={engine} onChange={handleSelect}>...</select>;
 }
 ```
@@ -75,14 +75,14 @@ export function useDiagramState(): UseDiagramStateReturn {
 
 ### Naming Conventions
 
-| Type | Naming | Example |
-|------|--------|---------|
-| Components | PascalCase | `EditorPanel.tsx` |
-| Hooks | camelCase with use prefix | `useDiagramState.ts` |
-| Utilities | camelCase | `exportUtils.ts` |
-| Types | PascalCase | `DiagramState.ts` |
-| Constants | UPPER_SNAKE_CASE | `MAX_CODE_LENGTH` |
-| Tests | Same as source + `.test.ts` | `exportUtils.test.ts` |
+| Type       | Naming                      | Example               |
+| ---------- | --------------------------- | --------------------- |
+| Components | PascalCase                  | `EditorPanel.tsx`     |
+| Hooks      | camelCase with use prefix   | `useDiagramState.ts`  |
+| Utilities  | camelCase                   | `exportUtils.ts`      |
+| Types      | PascalCase                  | `DiagramState.ts`     |
+| Constants  | UPPER_SNAKE_CASE            | `MAX_CODE_LENGTH`     |
+| Tests      | Same as source + `.test.ts` | `exportUtils.test.ts` |
 
 ### Directory Structure
 
@@ -116,7 +116,7 @@ describe('useDiagramState', () => {
     it('should save state to localStorage', () => {
       // ...
     });
-    
+
     it('should restore state from localStorage', () => {
       // ...
     });
@@ -162,12 +162,12 @@ try {
 ```typescript
 // ✅ Return structured error responses
 return NextResponse.json(
-  { 
+  {
     error: 'KROKI_ERROR',
     message: 'Failed to render diagram',
-    details: error.message 
+    details: error.message,
   },
-  { status: 502 }
+  { status: 502 },
 );
 ```
 
@@ -177,9 +177,9 @@ return NextResponse.json(
 
 ```typescript
 // ✅ Use memoization
-const sortedDiagrams = useMemo(() => 
-  diagrams.sort((a, b) => b.updatedAt - a.updatedAt),
-  [diagrams]
+const sortedDiagrams = useMemo(
+  () => diagrams.sort((a, b) => b.updatedAt - a.updatedAt),
+  [diagrams],
 );
 
 // ✅ Memoize callback props
@@ -192,10 +192,7 @@ const handleRender = useCallback(() => {
 
 ```typescript
 // ✅ Lazy load heavy components
-const GraphvizRenderer = dynamic(
-  () => import('./GraphvizRenderer'),
-  { ssr: false }
-);
+const GraphvizRenderer = dynamic(() => import('./GraphvizRenderer'), { ssr: false });
 ```
 
 ## Documentation
@@ -205,19 +202,19 @@ const GraphvizRenderer = dynamic(
 ```typescript
 /**
  * Renders a diagram using the specified engine and format.
- * 
+ *
  * @param engine - Diagram engine (mermaid, plantuml, etc.)
  * @param format - Output format (svg, png, pdf)
  * @param code - Diagram source code
  * @returns Rendered output and metadata
- * 
+ *
  * @example
  * const result = await renderDiagram('mermaid', 'svg', 'graph TD; A-->B;');
  */
 export async function renderDiagram(
   engine: string,
   format: Format,
-  code: string
+  code: string,
 ): Promise<RenderResult> {
   // ...
 }

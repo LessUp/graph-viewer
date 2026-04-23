@@ -44,12 +44,12 @@ useLivePreview (debounced) → useDiagramRender → local render (Mermaid/Graphv
 
 ## Layer Responsibilities
 
-| Layer | Files | Purpose |
-|-------|-------|---------|
-| State | `hooks/useDiagramState.ts`, `hooks/useSettings.ts`, `hooks/useToast.ts` | App state, persistence, URL encoding |
-| Render | `hooks/useDiagramRender.ts`, `hooks/useLivePreview.ts` | Local + remote rendering, debouncing |
-| Actions | `hooks/useVersionActions.ts`, `hooks/useWorkspaceActions.ts`, `hooks/useAIActions.ts` | Encapsulated user action handlers |
-| Config | `lib/diagramConfig.ts`, `lib/types.ts` | Engine/format definitions, `DiagramDoc` type |
+| Layer   | Files                                                                                 | Purpose                                      |
+| ------- | ------------------------------------------------------------------------------------- | -------------------------------------------- |
+| State   | `hooks/useDiagramState.ts`, `hooks/useSettings.ts`, `hooks/useToast.ts`               | App state, persistence, URL encoding         |
+| Render  | `hooks/useDiagramRender.ts`, `hooks/useLivePreview.ts`                                | Local + remote rendering, debouncing         |
+| Actions | `hooks/useVersionActions.ts`, `hooks/useWorkspaceActions.ts`, `hooks/useAIActions.ts` | Encapsulated user action handlers            |
+| Config  | `lib/diagramConfig.ts`, `lib/types.ts`                                                | Engine/format definitions, `DiagramDoc` type |
 
 ## Core Constraints
 
@@ -60,6 +60,7 @@ useLivePreview (debounced) → useDiagramRender → local render (Mermaid/Graphv
 ## Engine/Format Change Checklist
 
 When modifying diagram engines, formats, or export capabilities, check all of:
+
 - `lib/diagramConfig.ts` — type definitions, `ENGINE_CATEGORIES`, `getKrokiType`
 - `lib/diagramSamples.ts` — sample code
 - `lib/syntaxHighlight.ts` — CodeMirror language mapping
@@ -73,14 +74,14 @@ When modifying diagram engines, formats, or export capabilities, check all of:
 
 ## Supported Engines
 
-| Category | Engines |
-|----------|---------|
-| Popular | Mermaid, PlantUML, Graphviz, D2 |
-| Flowcharts | Flowchart.js, BlockDiag, ActDiag |
-| Sequence & Network | SeqDiag, NwDiag |
-| Data Visualization | Vega, Vega-Lite, WaveDrom |
-| ASCII Art | Ditaa, SVGBob, Nomnoml |
-| Data Modeling | ERD |
+| Category           | Engines                          |
+| ------------------ | -------------------------------- |
+| Popular            | Mermaid, PlantUML, Graphviz, D2  |
+| Flowcharts         | Flowchart.js, BlockDiag, ActDiag |
+| Sequence & Network | SeqDiag, NwDiag                  |
+| Data Visualization | Vega, Vega-Lite, WaveDrom        |
+| ASCII Art          | Ditaa, SVGBob, Nomnoml           |
+| Data Modeling      | ERD                              |
 
 ## Security Considerations
 

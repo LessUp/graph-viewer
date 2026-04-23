@@ -5,6 +5,7 @@
 ## 概述
 
 AI 助手面板帮助用户：
+
 - 分析现有图表代码
 - 从描述生成新图表
 - 修复语法错误
@@ -15,12 +16,14 @@ AI 助手面板帮助用户：
 ### 1. 代码分析
 
 分析当前图表并提供：
+
 - 结构分解
 - 改进建议
 - 复杂度评估
 - 最佳实践建议
 
 示例：
+
 ```
 输入: Mermaid 流程图
 
@@ -85,9 +88,9 @@ graph TD
 
 ```typescript
 interface UseAIAssistantOptions {
-  apiKey?: string;      // AI 服务 API 密钥
-  baseUrl?: string;     // 自定义端点
-  model?: string;       // 模型选择
+  apiKey?: string; // AI 服务 API 密钥
+  baseUrl?: string; // 自定义端点
+  model?: string; // 模型选择
 }
 
 interface UseAIAssistantReturn {
@@ -124,6 +127,7 @@ AI_MODEL=gpt-4
 ### 客户端设置
 
 用户可以在设置面板中配置：
+
 - 启用/禁用 AI 功能
 - API 密钥输入
 - 自定义端点 URL
@@ -146,20 +150,21 @@ AI_MODEL=gpt-4
 // app/api/ai/route.ts
 export async function POST(request: Request) {
   const { action, code, engine } = await request.json();
-  
+
   // 服务端调用 AI 服务
   const response = await fetch(process.env.AI_BASE_URL, {
     headers: {
-      'Authorization': `Bearer ${process.env.AI_API_KEY}`
+      Authorization: `Bearer ${process.env.AI_API_KEY}`,
     },
     // ...
   });
-  
+
   return NextResponse.json(result);
 }
 ```
 
 优点：
+
 - API 密钥保留在服务端
 - 速率限制
 - 请求日志
@@ -212,6 +217,7 @@ export async function POST(request: Request) {
 ## 未来增强
 
 计划改进：
+
 - 本地 AI 模型支持（设备端）
 - 更好的上下文感知
 - 多轮对话

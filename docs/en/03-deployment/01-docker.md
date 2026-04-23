@@ -19,12 +19,12 @@ docker compose --profile prod --profile kroki up -d
 
 GraphViewer provides multiple compose profiles for different use cases:
 
-| Profile | Description | Use Case |
-|---------|-------------|----------|
-| `dev` | Development with hot reload | Local development |
-| `prod` | Production build | Production deployment |
-| `web-test` | Test environment | Testing/CI |
-| `kroki` | Self-hosted Kroki service | Offline/restricted environments |
+| Profile    | Description                 | Use Case                        |
+| ---------- | --------------------------- | ------------------------------- |
+| `dev`      | Development with hot reload | Local development               |
+| `prod`     | Production build            | Production deployment           |
+| `web-test` | Test environment            | Testing/CI                      |
+| `kroki`    | Self-hosted Kroki service   | Offline/restricted environments |
 
 ### Development Environment
 
@@ -33,6 +33,7 @@ docker compose --profile dev up
 ```
 
 Features:
+
 - Hot reload enabled
 - Source code mounted as volume
 - Port: 3000
@@ -49,6 +50,7 @@ docker compose --profile prod --profile kroki up -d
 ```
 
 Features:
+
 - Optimized production build
 - Standalone Next.js server
 - No volume mounts
@@ -88,7 +90,7 @@ services:
   kroki:
     image: yuzutech/kroki:latest
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       - KROKI_BLOCKDIAG_HOST=blockdiag
       - KROKI_MERMAID_HOST=mermaid
@@ -96,6 +98,7 @@ services:
 ```
 
 Benefits:
+
 - Works offline
 - No external dependencies
 - Consistent rendering across environments
@@ -152,7 +155,7 @@ curl http://localhost:8000/health
 server {
     listen 80;
     server_name diagrams.example.com;
-    
+
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;

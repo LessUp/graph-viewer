@@ -13,12 +13,12 @@ trigger: always_on
 
 优先复用现有核心模块，不要平行引入第二套状态流或渲染/导出逻辑：
 
-| 层级 | 模块 |
-|------|------|
-| 状态层 | `useDiagramState`、`useSettings`、`useToast` |
-| 渲染层 | `useDiagramRender`、`useLivePreview` |
+| 层级   | 模块                                                       |
+| ------ | ---------------------------------------------------------- |
+| 状态层 | `useDiagramState`、`useSettings`、`useToast`               |
+| 渲染层 | `useDiagramRender`、`useLivePreview`                       |
 | 动作层 | `useVersionActions`、`useWorkspaceActions`、`useAIActions` |
-| 配置层 | `lib/diagramConfig.ts`、`lib/types.ts` |
+| 配置层 | `lib/diagramConfig.ts`、`lib/types.ts`                     |
 
 ## 类型约束
 

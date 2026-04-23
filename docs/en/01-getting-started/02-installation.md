@@ -4,12 +4,12 @@ Complete installation instructions for GraphViewer.
 
 ## System Requirements
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| Node.js | 20.0.0 | 22.0.0 LTS |
-| npm | 10.0.0 | 11.6.0+ |
-| RAM | 4GB | 8GB |
-| Disk | 1GB free | 2GB free |
+| Component | Minimum  | Recommended |
+| --------- | -------- | ----------- |
+| Node.js   | 20.0.0   | 22.0.0 LTS  |
+| npm       | 10.0.0   | 11.6.0+     |
+| RAM       | 4GB      | 8GB         |
+| Disk      | 1GB free | 2GB free    |
 
 ## Standard Installation
 
@@ -27,6 +27,7 @@ npm install
 ```
 
 This installs all required dependencies including:
+
 - Next.js 15 framework
 - React 19 and React DOM
 - Mermaid, Graphviz WASM, and other rendering engines

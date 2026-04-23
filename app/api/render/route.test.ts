@@ -34,21 +34,27 @@ describe('POST /api/render', () => {
   });
 
   it('rejects requests with missing required fields', async () => {
-    const response = await POST(createRequest({ engine: 'mermaid', code: 'graph TD\nA-->B' }) as never);
+    const response = await POST(
+      createRequest({ engine: 'mermaid', code: 'graph TD\nA-->B' }) as never,
+    );
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ code: 'MISSING_FIELDS' });
   });
 
   it('rejects unsupported engine values', async () => {
-    const response = await POST(createRequest({ engine: 'bad', format: 'svg', code: 'x' }) as never);
+    const response = await POST(
+      createRequest({ engine: 'bad', format: 'svg', code: 'x' }) as never,
+    );
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ code: 'UNSUPPORTED_ENGINE' });
   });
 
   it('rejects unsupported format values', async () => {
-    const response = await POST(createRequest({ engine: 'mermaid', format: 'jpg', code: 'x' }) as never);
+    const response = await POST(
+      createRequest({ engine: 'mermaid', format: 'jpg', code: 'x' }) as never,
+    );
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ code: 'UNSUPPORTED_FORMAT' });
@@ -108,7 +114,10 @@ describe('POST /api/render', () => {
       code: 'graph TD\nA-->B\nDedupeCase',
     });
 
-    const [first, second] = await Promise.all([POST(req.clone() as never), POST(req.clone() as never)]);
+    const [first, second] = await Promise.all([
+      POST(req.clone() as never),
+      POST(req.clone() as never),
+    ]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     await expect(first.json()).resolves.toMatchObject({ svg: '<svg>ok</svg>' });
@@ -142,7 +151,11 @@ describe('POST /api/render', () => {
     );
 
     const response = await POST(
-      createRequest({ engine: 'mermaid', format: 'png', code: 'graph TD\nA-->B\nPngCase' }) as never,
+      createRequest({
+        engine: 'mermaid',
+        format: 'png',
+        code: 'graph TD\nA-->B\nPngCase',
+      }) as never,
     );
 
     expect(response.status).toBe(200);
@@ -161,7 +174,12 @@ describe('POST /api/render', () => {
     );
 
     const response = await POST(
-      createRequest({ engine: 'plantuml', format: 'pdf', code: '@startuml', binary: true }) as never,
+      createRequest({
+        engine: 'plantuml',
+        format: 'pdf',
+        code: '@startuml',
+        binary: true,
+      }) as never,
     );
 
     expect(response.status).toBe(200);
@@ -177,7 +195,11 @@ describe('POST /api/render', () => {
     });
 
     const response = await POST(
-      createRequest({ engine: 'mermaid', format: 'svg', code: 'graph TD\nA-->B\nTimeoutCase' }) as never,
+      createRequest({
+        engine: 'mermaid',
+        format: 'svg',
+        code: 'graph TD\nA-->B\nTimeoutCase',
+      }) as never,
     );
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -191,7 +213,11 @@ describe('POST /api/render', () => {
     });
 
     const response = await POST(
-      createRequest({ engine: 'mermaid', format: 'svg', code: 'graph TD\nA-->B\nNetworkCase' }) as never,
+      createRequest({
+        engine: 'mermaid',
+        format: 'svg',
+        code: 'graph TD\nA-->B\nNetworkCase',
+      }) as never,
     );
 
     expect(response.status).toBe(502);
@@ -225,7 +251,11 @@ describe('POST /api/render', () => {
     vi.stubEnv('KROKI_BASE_URL', 'javascript:bad');
 
     const response = await POST(
-      createRequest({ engine: 'mermaid', format: 'svg', code: 'graph TD\nA-->B\nConfigCase' }) as never,
+      createRequest({
+        engine: 'mermaid',
+        format: 'svg',
+        code: 'graph TD\nA-->B\nConfigCase',
+      }) as never,
     );
 
     expect(response.status).toBe(500);

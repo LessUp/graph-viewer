@@ -7,13 +7,13 @@
 
 ## 推荐的 MCP 服务器
 
-| 服务器 | 用途 | 需要 API Key |
-|--------|------|:---:|
-| **context7** | 查询 Next.js / React / Mermaid / Tailwind 等库的最新文档和代码示例 | ❌ |
-| **fetch** | 获取外部网页内容（Kroki 文档、GitHub Release Notes 等） | ❌ |
-| **filesystem** | 读写项目文件、创建目录、搜索文件树 | ❌ |
-| **github** | 查看仓库、Issue、Pull Request、创建分支、代码搜索 | ✅ |
-| **brave-search** | Web 搜索（Mermaid 语法、Graphviz 属性、部署问题排查） | ✅ |
+| 服务器           | 用途                                                               | 需要 API Key |
+| ---------------- | ------------------------------------------------------------------ | :----------: |
+| **context7**     | 查询 Next.js / React / Mermaid / Tailwind 等库的最新文档和代码示例 |      ❌      |
+| **fetch**        | 获取外部网页内容（Kroki 文档、GitHub Release Notes 等）            |      ❌      |
+| **filesystem**   | 读写项目文件、创建目录、搜索文件树                                 |      ❌      |
+| **github**       | 查看仓库、Issue、Pull Request、创建分支、代码搜索                  |      ✅      |
+| **brave-search** | Web 搜索（Mermaid 语法、Graphviz 属性、部署问题排查）              |      ✅      |
 
 ## 各 MCP 在 GraphViewer 中的典型用法
 

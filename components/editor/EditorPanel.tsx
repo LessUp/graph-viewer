@@ -30,6 +30,8 @@ export type EditorPanelProps = {
   onClearCode: () => void;
   onExportSourceCode: () => Promise<void> | void;
   editorFontSize?: number;
+  /** 限制可选择的引擎列表（用于静态导出模式） */
+  limitEngines?: readonly Engine[];
 };
 
 function EditorPanelComponent(props: EditorPanelProps) {
@@ -51,6 +53,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
     onClearCode,
     onExportSourceCode,
     editorFontSize = 13,
+    limitEngines,
   } = props;
 
   // 切换引擎时自动加载示例代码
@@ -59,6 +62,19 @@ function EditorPanelComponent(props: EditorPanelProps) {
   };
 
   const currentEngineConfig = ENGINE_CONFIGS[engine];
+
+  // 根据 limitEngines 过滤引擎类别
+  const filteredCategories = limitEngines
+    ? Object.entries(ENGINE_CATEGORIES)
+        .map(([category, engines]) => ({
+          category,
+          engines: engines.filter((eng) => limitEngines.includes(eng)),
+        }))
+        .filter(({ engines }) => engines.length > 0)
+    : Object.entries(ENGINE_CATEGORIES).map(([category, engines]) => ({
+        category,
+        engines,
+      }));
 
   return (
     <div className="flex h-full flex-col space-y-4 overflow-hidden rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-sm backdrop-blur md:p-5">
@@ -70,7 +86,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
             onChange={(e) => handleEngineChange(e.target.value as Engine)}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
           >
-            {Object.entries(ENGINE_CATEGORIES).map(([category, engines]) => (
+            {filteredCategories.map(({ category, engines }) => (
               <optgroup key={category} label={category}>
                 {engines.map((eng) => (
                   <option key={eng} value={eng}>

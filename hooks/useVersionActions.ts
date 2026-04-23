@@ -9,7 +9,11 @@ type VersionActionsDeps = {
   setEngine: (engine: Engine) => void;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   // 对话框回调（可选，用于替代 window.confirm）
-  showConfirm?: (options: { title: string; message: string; variant?: 'default' | 'danger' }) => Promise<boolean>;
+  showConfirm?: (options: {
+    title: string;
+    message: string;
+    variant?: 'default' | 'danger';
+  }) => Promise<boolean>;
 };
 
 export function useVersionActions(deps: VersionActionsDeps) {

@@ -25,7 +25,7 @@ type DiagramStateControls = {
   setFormat: (format: Format) => void;
   setCode: (code: string) => void;
   setCurrentId: (id: string) => void;
-  createDiagram: (defaultCode?: string) => void;
+  createDiagram: (defaultCode?: string, name?: string, engineOverride?: Engine) => void;
   renameDiagram: (id: string, name: string) => void;
   deleteDiagram: (id: string) => void;
   importWorkspace: (payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => void;
@@ -84,7 +84,9 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
             if (typeof decompressed === 'string' && decompressed.length > 0) {
               codeFromQuery = decompressed;
             } else {
-              setLinkError((prev: string) => prev || '分享链接中的代码解压后为空，已使用原始内容。');
+              setLinkError(
+                (prev: string) => prev || '分享链接中的代码解压后为空，已使用原始内容。',
+              );
             }
           } catch {
             setLinkError((prev: string) => prev || '分享链接中的代码解压失败，已使用原始内容。');
@@ -114,7 +116,8 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
         setCurrentId(nextId);
 
         if (!appliedFromQuery) {
-          const currentDiagram = parsed.diagrams.find((d: DiagramDoc) => d.id === nextId) ?? parsed.diagrams[0];
+          const currentDiagram =
+            parsed.diagrams.find((d: DiagramDoc) => d.id === nextId) ?? parsed.diagrams[0];
           if (currentDiagram) {
             setEngine(currentDiagram.engine);
             setFormat(currentDiagram.format);
@@ -225,16 +228,17 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
   }, []);
 
   const createDiagram = useCallback(
-    (defaultCode?: string) => {
+    (defaultCode?: string, name?: string, engineOverride?: Engine) => {
       const id = generateDiagramId();
       const now = new Date().toISOString();
       const newCode = defaultCode ?? '';
+      const newEngine = engineOverride ?? engine;
       setDiagrams((prev) => {
-        const name = `未命名图 ${prev.length + 1}`;
+        const diagramName = name ?? `未命名图 ${prev.length + 1}`;
         const doc: DiagramDoc = {
           id,
-          name,
-          engine,
+          name: diagramName,
+          engine: newEngine,
           format,
           code: newCode,
           updatedAt: now,
@@ -242,6 +246,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
         return [...prev, doc];
       });
       setCurrentId(id);
+      setEngine(newEngine);
       setCode(newCode);
     },
     [engine, format],

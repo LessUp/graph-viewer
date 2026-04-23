@@ -23,25 +23,25 @@ Be respectful, inclusive, and constructive in all interactions. We welcome contr
 2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/graph-viewer.git`
 3. Install dependencies: `npm install`
 4. Start development server: `npm run dev`
-5. Read the [specs/](specs/) directory to understand our specification structure
+5. Read the [openspec/specs/](openspec/specs/) directory to understand our specification structure
 
 ## Spec-Driven Development Workflow
 
-This project follows **Spec-Driven Development (SDD)**. This means:
+This project follows **Spec-Driven Development (SDD)** with **OpenSpec**. This means:
 
-1. **Specs are the Single Source of Truth** — All implementation details are defined in `/specs/`
-2. **Spec-First Approach** — Update or create specs before implementing code
+1. **Specs are the Single Source of Truth** — All implementation details are defined in `openspec/specs/`
+2. **OpenSpec Workflow** — Use `/opsx:propose` to create changes, `/opsx:apply` to implement, `/opsx:archive` to finalize
 3. **Code Must Follow Specs** — Implementation must 100% comply with spec definitions
 4. **Tests Validate Specs** — Test cases must cover all acceptance criteria
 
 ### Spec Directory
 
 ```
-specs/
+openspec/specs/
 ├── product/          # Product features, roadmap, TODO
-├── rfc/              # Technical design documents
+├── architecture/     # Technical design documents (RFCs)
 ├── api/              # API definitions (OpenAPI)
-├── db/               # Data schema definitions
+├── data/             # Data schema definitions
 └── testing/          # BDD test specifications
 ```
 
@@ -52,10 +52,12 @@ For detailed workflow, see [AGENTS.md](AGENTS.md).
 ### Reporting Bugs
 
 Before creating a bug report:
+
 - Check existing issues for duplicates
 - Verify the bug exists in the latest `main` branch
 
 Include in your report:
+
 - Clear description and steps to reproduce
 - Expected vs actual behavior
 - Screenshots if applicable
@@ -63,7 +65,7 @@ Include in your report:
 
 ### Suggesting Features
 
-1. Check [Product Roadmap](specs/product/roadmap.md) and [Product TODO](specs/product/todo.md)
+1. Check [Product Roadmap](openspec/specs/product/roadmap.md) and [Product TODO](openspec/specs/product/todo.md)
 2. Open a GitHub Issue with:
    - Clear feature description
    - Use cases and user benefits
@@ -71,9 +73,9 @@ Include in your report:
 
 ### Code Contributions
 
-1. **Pick an issue** from GitHub or [Product TODO](specs/product/todo.md)
-2. **Review specs** in `/specs/` related to the issue
-3. **Update/create specs** if needed (spec-first approach)
+1. **Pick an issue** from GitHub or [Product TODO](openspec/specs/product/todo.md)
+2. **Review specs** in `openspec/specs/` related to the issue
+3. **Create proposal** using `/opsx:propose` (or update existing specs if minor)
 4. **Fork and branch** — Create a feature branch from `main`
 5. **Implement** — Write code following specs 100%
 6. **Test** — Write tests based on spec acceptance criteria
@@ -146,7 +148,7 @@ See [CLAUDE.md](CLAUDE.md) for detailed conventions.
 - **Integration tests**: Required for hooks and components
 - **Smoke tests**: Must pass before merging
 
-Test specs are defined in [specs/testing/](specs/testing/).
+Test specs are defined in [openspec/specs/testing/](openspec/specs/testing/).
 
 ## Questions?
 

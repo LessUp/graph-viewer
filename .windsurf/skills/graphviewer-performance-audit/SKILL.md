@@ -30,13 +30,13 @@ npx next build
 
 ### Key heavy dependencies
 
-| Package | Approx. size | Notes |
-|---------|-------------|-------|
-| `mermaid` | ~2MB | Dynamic import only in `useDiagramRender` |
-| `@hpcc-js/wasm` | ~4MB WASM | Dynamic import only for Graphviz |
-| `@uiw/react-codemirror` | ~500KB | Tree-shakeable, check extensions |
-| `html2canvas` | ~200KB | Used only for PNG export |
-| `dompurify` | ~50KB | Required for SVG sanitization |
+| Package                 | Approx. size | Notes                                     |
+| ----------------------- | ------------ | ----------------------------------------- |
+| `mermaid`               | ~2MB         | Dynamic import only in `useDiagramRender` |
+| `@hpcc-js/wasm`         | ~4MB WASM    | Dynamic import only for Graphviz          |
+| `@uiw/react-codemirror` | ~500KB       | Tree-shakeable, check extensions          |
+| `html2canvas`           | ~200KB       | Used only for PNG export                  |
+| `dompurify`             | ~50KB        | Required for SVG sanitization             |
 
 ### Optimization targets
 

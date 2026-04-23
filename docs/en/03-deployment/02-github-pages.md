@@ -5,6 +5,7 @@ Deploy GraphViewer to GitHub Pages as a static site.
 ## Overview
 
 GitHub Pages deployment uses static export mode, where:
+
 - The application is pre-built as static HTML/CSS/JS
 - No server-side API routes are available
 - Remote Kroki rendering requires CORS-enabled Kroki instance
@@ -129,6 +130,7 @@ npm run build:static
 ```
 
 The build script (`scripts/build-static-export.mjs`) handles:
+
 1. Setting environment variables for static build
 2. Running Next.js export
 3. Copying necessary assets
@@ -154,6 +156,7 @@ For remote engines (PlantUML, D2, etc.), you need:
 ### Local Rendering
 
 Local rendering still works in static mode:
+
 - ✅ Mermaid (browser)
 - ✅ Graphviz WASM (browser)
 - ❌ Remote engines without CORS
@@ -187,6 +190,7 @@ npx serve out
 ```
 
 Open `http://localhost:3000` and verify:
+
 - [ ] Mermaid diagrams render
 - [ ] Graphviz diagrams render (WASM)
 - [ ] Settings panel opens
@@ -206,6 +210,7 @@ After GitHub Actions deploys:
 ### Setup
 
 1. Add `CNAME` file to repository root:
+
    ```
    diagrams.example.com
    ```
@@ -225,6 +230,7 @@ GitHub Pages automatically provisions SSL certificates for custom domains.
 ### Build Failures
 
 Check GitHub Actions logs for:
+
 - Node.js version compatibility
 - npm install errors
 - TypeScript compilation errors
@@ -232,6 +238,7 @@ Check GitHub Actions logs for:
 ### Runtime Errors
 
 Open browser DevTools:
+
 - Console errors
 - Network requests to Kroki
 - 404 errors for assets
@@ -239,11 +246,13 @@ Open browser DevTools:
 ### CORS Errors
 
 If remote rendering fails:
+
 ```
 Access to fetch at 'https://kroki.io/' from origin '...' has been blocked by CORS policy
 ```
 
 Solutions:
+
 1. Use local Kroki with CORS headers
 2. Use a CORS proxy
 3. Stick to local rendering engines

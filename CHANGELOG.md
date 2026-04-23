@@ -2,6 +2,12 @@
 
 所有重要变更按时间倒序记录。详细内容见 [`changelog/`](./changelog/) 目录。
 
+## [2026-04-23] OpenSpec 规范迁移
+
+完全采用 OpenSpec 规范重构项目开发模式：迁移 specs/ 到 openspec/specs/，配置 config.yaml，更新所有 AI 指令文件（AGENTS.md、CLAUDE.md、QWEN.md），使用 Core Profile 工作流（/opsx:propose、/opsx:apply、/opsx:archive）。
+
+→ [详情](./changelog/2026-04-23-openspec-migration.md)
+
 ## [2026-04-17] 文档重组与规范驱动开发
 
 按照 SDD 最佳实践重组项目文档：明确 CLAUDE.md、AGENTS.md、specs/ 的职责边界，移除冗余内容，删除 docs/archive 目录，保留 .windsurf 配置。
