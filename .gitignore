@@ -47,3 +47,9 @@ CLAUDE.local.md
 
 # Package archives
 *.tgz
+
+# BMad Method V6
+_bmad/
+_bmad-output/
+.github/copilot-instructions.md
+docs/index.md
