@@ -6,7 +6,7 @@
   color-scheme: light;
   --color-primary: #0ea5e9;
   --color-primary-dark: #0284c7;
-  --font-jetbrains-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-jetbrains-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 
 html,

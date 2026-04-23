@@ -26,6 +26,7 @@ docker compose --profile prod --profile kroki up -d
 ```
 
 这将部署：
+
 - Kroki 核心服务器
 - BlockDiag 服务
 - Mermaid 服务
@@ -74,7 +75,7 @@ services:
       - KROKI_BASE_URL=http://kroki:8000
     depends_on:
       - kroki
-  
+
   kroki:
     image: yuzutech/kroki:latest
     # ...
@@ -134,12 +135,12 @@ services:
     networks:
       - frontend
       - backend
-  
+
   kroki:
     networks:
       - backend
     # 不暴露端口到主机
-    
+
 networks:
   frontend:
   backend:
@@ -159,10 +160,10 @@ upstream kroki {
 server {
     listen 443 ssl;
     server_name kroki.example.com;
-    
+
     ssl_certificate /path/to/cert.pem;
     ssl_certificate_key /path/to/key.pem;
-    
+
     location / {
         proxy_pass http://kroki;
         proxy_set_header Host $host;
@@ -191,6 +192,7 @@ docker exec graph-viewer curl http://kroki:8000/health
 错误：`KROKI_BASE_URL_NOT_ALLOWED`
 
 解决方案：
+
 1. 添加 URL 到 `KROKI_CLIENT_BASE_URL_ALLOWLIST`
 2. 设置 `KROKI_ALLOW_CLIENT_BASE_URL=true`（开发）
 3. 改用服务端 `KROKI_BASE_URL`
@@ -237,6 +239,7 @@ const CACHE_SIZE_LIMIT = 1000; // 最大条目数
 ```
 
 对于生产规模，考虑：
+
 - Redis 缓存
 - CDN 缓存
 - HTTP 缓存头
@@ -245,19 +248,19 @@ const CACHE_SIZE_LIMIT = 1000; // 最大条目数
 
 完整 Kroki 支持 20+ 引擎：
 
-| 引擎 | 本地 | 远程 | 说明 |
-|------|------|------|------|
-| Mermaid | ✅ | ✅ | 本地使用浏览器 |
-| Graphviz | ✅ WASM | ✅ | |
-| PlantUML | ❌ | ✅ | 需要 Java |
-| D2 | ❌ | ✅ | |
-| BlockDiag | ❌ | ✅ | Python |
-| SeqDiag | ❌ | ✅ | |
-| Nomnoml | ❌ | ✅ | |
-| Vega | ❌ | ✅ | |
-| Vega-Lite | ❌ | ✅ | |
-| WaveDrom | ❌ | ✅ | |
-| ... | | | |
+| 引擎      | 本地    | 远程 | 说明           |
+| --------- | ------- | ---- | -------------- |
+| Mermaid   | ✅      | ✅   | 本地使用浏览器 |
+| Graphviz  | ✅ WASM | ✅   |                |
+| PlantUML  | ❌      | ✅   | 需要 Java      |
+| D2        | ❌      | ✅   |                |
+| BlockDiag | ❌      | ✅   | Python         |
+| SeqDiag   | ❌      | ✅   |                |
+| Nomnoml   | ❌      | ✅   |                |
+| Vega      | ❌      | ✅   |                |
+| Vega-Lite | ❌      | ✅   |                |
+| WaveDrom  | ❌      | ✅   |                |
+| ...       |         |      |                |
 
 ## 维护
 

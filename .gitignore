@@ -38,6 +38,7 @@ Thumbs.db
 
 # Local environment
 *.local
+CLAUDE.local.md
 
 # Cache directories
 .npm/

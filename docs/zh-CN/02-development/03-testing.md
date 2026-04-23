@@ -30,16 +30,16 @@ npm run test -- useDiagramState.test.tsx
 
 ### 当前测试覆盖
 
-| 模块 | 测试文件 | 覆盖范围 |
-|------|----------|----------|
-| lib/diagramConfig | `lib/__tests__/diagramConfig.test.ts` | 引擎/格式验证 |
-| hooks/useDiagramState | `hooks/__tests__/useDiagramState.test.tsx` | 状态持久化 |
-| hooks/useDiagramRender | `hooks/__tests__/useDiagramRender.test.tsx` | 渲染逻辑 |
-| hooks/useVersionHistory | `hooks/__tests__/useVersionHistory.test.tsx` | 版本管理 |
-| components/AppHeader | `components/__tests__/AppHeader.test.tsx` | 导入/导出 |
-| components/PreviewPanel | `components/__tests__/PreviewPanel.test.tsx` | 预览显示 |
-| API /healthz | `app/api/healthz/route.test.ts` | 健康检查 |
-| API /render | `app/api/render/route.test.ts` | 渲染端点 |
+| 模块                    | 测试文件                                     | 覆盖范围      |
+| ----------------------- | -------------------------------------------- | ------------- |
+| lib/diagramConfig       | `lib/__tests__/diagramConfig.test.ts`        | 引擎/格式验证 |
+| hooks/useDiagramState   | `hooks/__tests__/useDiagramState.test.tsx`   | 状态持久化    |
+| hooks/useDiagramRender  | `hooks/__tests__/useDiagramRender.test.tsx`  | 渲染逻辑      |
+| hooks/useVersionHistory | `hooks/__tests__/useVersionHistory.test.tsx` | 版本管理      |
+| components/AppHeader    | `components/__tests__/AppHeader.test.tsx`    | 导入/导出     |
+| components/PreviewPanel | `components/__tests__/PreviewPanel.test.tsx` | 预览显示      |
+| API /healthz            | `app/api/healthz/route.test.ts`              | 健康检查      |
+| API /render             | `app/api/render/route.test.ts`               | 渲染端点      |
 
 ### 编写测试
 
@@ -56,11 +56,11 @@ describe('useDiagramState', () => {
 
   it('应将状态保存到 localStorage', () => {
     const { result } = renderHook(() => useDiagramState());
-    
+
     act(() => {
       result.current.setCode('graph TD; A-->B;');
     });
-    
+
     const saved = localStorage.getItem('graphviewer:state:v1');
     expect(saved).toContain('graph TD');
   });
@@ -76,18 +76,18 @@ import { EditorPanel } from './EditorPanel';
 describe('EditorPanel', () => {
   it('应渲染引擎选择器', () => {
     render(<EditorPanel engine="mermaid" onEngineChange={vi.fn()} code="" />);
-    
+
     expect(screen.getByLabelText(/引擎/i)).toBeInTheDocument();
   });
 
   it('选择引擎时应调用 onEngineChange', () => {
     const onChange = vi.fn();
     render(<EditorPanel engine="mermaid" onEngineChange={onChange} code="" />);
-    
+
     fireEvent.change(screen.getByLabelText(/引擎/i), {
       target: { value: 'plantuml' }
     });
-    
+
     expect(onChange).toHaveBeenCalledWith('plantuml');
   });
 });
@@ -102,9 +102,9 @@ describe('/api/render', () => {
   it('无效引擎应返回 400', async () => {
     const request = new Request('http://localhost/api/render', {
       method: 'POST',
-      body: JSON.stringify({ engine: 'invalid', format: 'svg', code: 'test' })
+      body: JSON.stringify({ engine: 'invalid', format: 'svg', code: 'test' }),
     });
-    
+
     const response = await POST(request);
     expect(response.status).toBe(400);
   });
@@ -113,11 +113,11 @@ describe('/api/render', () => {
     // 第一个请求
     const req1 = createRequest({ engine: 'mermaid', format: 'svg', code: 'A-->B;' });
     await POST(req1);
-    
+
     // 第二个相同请求应命中缓存
     const req2 = createRequest({ engine: 'mermaid', format: 'svg', code: 'A-->B;' });
     const response2 = await POST(req2);
-    
+
     expect(response2.headers.get('X-Cache')).toBe('HIT');
   });
 });
@@ -130,26 +130,26 @@ describe('/api/render', () => {
 const localStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
-  removeItem: vi.fn()
+  removeItem: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
 });
 
 // Mock 剪贴板 API
 Object.assign(navigator, {
   clipboard: {
     writeText: vi.fn(),
-    write: vi.fn()
-  }
+    write: vi.fn(),
+  },
 });
 
 // Mock fetch 用于 API 测试
 global.fetch = vi.fn(() =>
   Promise.resolve({
     ok: true,
-    json: () => Promise.resolve({ result: 'success' })
-  })
+    json: () => Promise.resolve({ result: 'success' }),
+  }),
 );
 ```
 
@@ -253,28 +253,31 @@ docker compose down
 
 ### CI 测试矩阵
 
-| 环境 | Node 版本 | 测试套件 |
-|------|----------|---------|
-| ubuntu-latest | 22.x | 完整测试套件 |
-| CI 工作流 | 22.x | Lint、类型检查、测试、构建 |
+| 环境          | Node 版本 | 测试套件                   |
+| ------------- | --------- | -------------------------- |
+| ubuntu-latest | 22.x      | 完整测试套件               |
+| CI 工作流     | 22.x      | Lint、类型检查、测试、构建 |
 
 ## 调试测试失败
 
 ### 常见问题
 
 **测试超时：**
+
 ```bash
 # 为慢测试增加超时
 npm run test -- --testTimeout=10000
 ```
 
 **环境不匹配：**
+
 ```bash
 # 清除 Jest/Vitest 缓存
 npm run test -- --clearCache
 ```
 
 **缺少 mock：**
+
 - 检查所有浏览器 API 是否已 mock
 - 验证 fetch mock 返回正确的 Response 对象
 

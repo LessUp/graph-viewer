@@ -58,11 +58,11 @@ npm run build
 npm run dev
 ```
 
-   - Main page loads
-   - Mermaid and Graphviz samples render
-   - SVG / PNG / PDF switching works
-   - Export actions work
-   - Settings modal works
+- Main page loads
+- Mermaid and Graphviz samples render
+- SVG / PNG / PDF switching works
+- Export actions work
+- Settings modal works
 
 8. Check for security vulnerabilities:
    // turbo

@@ -66,11 +66,11 @@
 - [x] [P1][frontend] Diagram list switching
 - [x] [P2][frontend] localStorage persistence
 
-### Template Library
+### Template Library ✅ Complete
 
 - [x] [P2][frontend] Template configuration structure
 - [x] [P2][frontend] Common templates added
-- [ ] [P2][frontend] "Create from template" entry point
+- [x] [P2][frontend] "Create from template" entry point
 
 ### Import/Export ✅ Complete
 
@@ -97,7 +97,6 @@
 
 ### Feature Enhancements
 
-- [ ] [P2][frontend] "Create from template" entry point
 - [ ] [P3][backend] `/api/share` short-link sharing
 
 ### Operations Enhancements

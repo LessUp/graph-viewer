@@ -5,6 +5,7 @@
 ## 概述
 
 GitHub Pages 部署使用静态导出模式，其中：
+
 - 应用预构建为静态 HTML/CSS/JS
 - 无服务端 API 路由可用
 - 远程 Kroki 渲染需要支持 CORS 的 Kroki 实例
@@ -129,6 +130,7 @@ npm run build:static
 ```
 
 构建脚本 (`scripts/build-static-export.mjs`) 处理：
+
 1. 为静态构建设置环境变量
 2. 运行 Next.js 导出
 3. 复制必要资源
@@ -154,6 +156,7 @@ npm run build:static
 ### 本地渲染
 
 静态模式下本地渲染仍然工作：
+
 - ✅ Mermaid（浏览器）
 - ✅ Graphviz WASM（浏览器）
 - ❌ 无 CORS 的远程引擎
@@ -187,6 +190,7 @@ npx serve out
 ```
 
 打开 `http://localhost:3000` 并验证：
+
 - [ ] Mermaid 图表渲染
 - [ ] Graphviz 图表渲染（WASM）
 - [ ] 设置面板打开
@@ -206,6 +210,7 @@ GitHub Actions 部署后：
 ### 设置
 
 1. 在仓库根目录添加 `CNAME` 文件：
+
    ```
    diagrams.example.com
    ```
@@ -225,6 +230,7 @@ GitHub Pages 自动为自定义域名配置 SSL 证书。
 ### 构建失败
 
 检查 GitHub Actions 日志：
+
 - Node.js 版本兼容性
 - npm install 错误
 - TypeScript 编译错误
@@ -232,6 +238,7 @@ GitHub Pages 自动为自定义域名配置 SSL 证书。
 ### 运行时错误
 
 打开浏览器 DevTools：
+
 - Console 错误
 - 到 Kroki 的网络请求
 - 资源 404 错误
@@ -239,11 +246,13 @@ GitHub Pages 自动为自定义域名配置 SSL 证书。
 ### CORS 错误
 
 如果远程渲染失败：
+
 ```
 Access to fetch at 'https://kroki.io/' from origin '...' has been blocked by CORS policy
 ```
 
 解决方案：
+
 1. 使用带 CORS 头的自建 Kroki
 2. 使用 CORS 代理
 3. 坚持使用本地渲染引擎

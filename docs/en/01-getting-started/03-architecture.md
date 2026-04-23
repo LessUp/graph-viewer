@@ -4,13 +4,13 @@ Understanding GraphViewer's architecture and design principles.
 
 ## Tech Stack
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Next.js | 15 | React framework with App Router |
-| React | 19 | UI library |
-| TypeScript | 5.4+ | Type-safe JavaScript |
-| Tailwind CSS | 3.4 | Utility-first styling |
-| Node.js | 20+ | Runtime environment |
+| Technology   | Version | Purpose                         |
+| ------------ | ------- | ------------------------------- |
+| Next.js      | 15      | React framework with App Router |
+| React        | 19      | UI library                      |
+| TypeScript   | 5.4+    | Type-safe JavaScript            |
+| Tailwind CSS | 3.4     | Utility-first styling           |
+| Node.js      | 20+     | Runtime environment             |
 
 ## Project Structure
 
@@ -75,11 +75,13 @@ PreviewPanel (display)
 GraphViewer uses a hybrid approach for optimal performance:
 
 #### Local Rendering (Client-Side)
+
 - **Mermaid**: Direct browser rendering with `mermaid` library
 - **Graphviz**: WebAssembly-based rendering with `@hpcc-js/wasm`
 - **Advantages**: Fast, works offline, no data leaves browser
 
 #### Remote Rendering (Server-Side)
+
 - **All Engines**: Via Kroki service proxy
 - **Endpoint**: `/api/render` with in-memory caching
 - **Advantages**: Supports all 16+ engines, consistent output

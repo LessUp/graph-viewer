@@ -7,6 +7,7 @@
 Create an "out-of-the-box, lightweight but not crude" one-stop diagram visualization tool supporting Mermaid, PlantUML, Graphviz, and other mainstream grammars — suitable for individuals and small teams for daily documentation and architecture design.
 
 **Core Features**:
+
 - Local + remote hybrid rendering, balancing performance and security
 - Containerized deployment with one-click scripts
 - Basic testing and benchmarking capabilities
@@ -36,12 +37,12 @@ Create an "out-of-the-box, lightweight but not crude" one-stop diagram visualiza
 - [x] Docker multi-environment deployment
 - [x] Smoke tests
 
-### Phase 3: Advanced Features 🔄 In Progress
+### Phase 3: Advanced Features ✅ Complete
 
 - [x] Multi-diagram workspace
 - [x] Version history
 - [x] Multi-format export (SVG/PNG/PDF/HTML/MD)
-- [ ] Template library entry point
+- [x] Template library entry point
 - [ ] Short-link sharing
 
 ### Phase 4: Operations & Security 📋 Planned

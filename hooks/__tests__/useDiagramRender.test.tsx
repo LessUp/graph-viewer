@@ -45,7 +45,9 @@ describe('useDiagramRender', () => {
   });
 
   it('uses local graphviz rendering for svg diagrams', async () => {
-    const { result } = renderHook(() => useDiagramRender('graphviz', 'svg', 'digraph G { A -> B }'));
+    const { result } = renderHook(() =>
+      useDiagramRender('graphviz', 'svg', 'digraph G { A -> B }'),
+    );
 
     await act(async () => {
       await result.current.renderDiagram();
@@ -83,7 +85,9 @@ describe('useDiagramRender', () => {
       }),
     );
 
-    const { result } = renderHook(() => useDiagramRender('plantuml', 'png', '@startuml\nAlice -> Bob\n@enduml'));
+    const { result } = renderHook(() =>
+      useDiagramRender('plantuml', 'png', '@startuml\nAlice -> Bob\n@enduml'),
+    );
 
     await act(async () => {
       await result.current.renderDiagram();
@@ -137,12 +141,14 @@ describe('useDiagramRender', () => {
     const originalCreateElement = document.createElement.bind(document);
     const anchor = originalCreateElement('a');
     anchor.click = click;
-    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
-      if (tagName === 'a') {
-        return anchor;
-      }
-      return originalCreateElement(tagName);
-    });
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockImplementation((tagName: string) => {
+        if (tagName === 'a') {
+          return anchor;
+        }
+        return originalCreateElement(tagName);
+      });
 
     fetchMock.mockResolvedValueOnce(
       new Response(new Blob(['pngdata'], { type: 'image/png' }), {
@@ -151,7 +157,9 @@ describe('useDiagramRender', () => {
       }),
     );
 
-    const { result } = renderHook(() => useDiagramRender('plantuml', 'png', '@startuml\nA->B\n@enduml'));
+    const { result } = renderHook(() =>
+      useDiagramRender('plantuml', 'png', '@startuml\nA->B\n@enduml'),
+    );
 
     await act(async () => {
       await result.current.downloadDiagram();
@@ -164,5 +172,4 @@ describe('useDiagramRender', () => {
     URL.createObjectURL = originalCreateObjectURL;
     URL.revokeObjectURL = originalRevokeObjectURL;
   });
-
 });

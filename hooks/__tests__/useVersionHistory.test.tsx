@@ -80,7 +80,9 @@ describe('useVersionHistory', () => {
   });
 
   it('renames and deletes versions', async () => {
-    const { result } = renderHook(() => useVersionHistory('diagram-1', 'graph TD\nA-->B', 'mermaid'));
+    const { result } = renderHook(() =>
+      useVersionHistory('diagram-1', 'graph TD\nA-->B', 'mermaid'),
+    );
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -112,7 +114,9 @@ describe('useVersionHistory', () => {
   });
 
   it('persists versions to localStorage after updates', async () => {
-    const { result } = renderHook(() => useVersionHistory('diagram-1', 'graph TD\nA-->B', 'mermaid'));
+    const { result } = renderHook(() =>
+      useVersionHistory('diagram-1', 'graph TD\nA-->B', 'mermaid'),
+    );
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

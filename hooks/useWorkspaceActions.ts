@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
 import type { DiagramDoc } from '@/lib/types';
 import { SAMPLES } from '@/lib/diagramSamples';
+import type { DiagramTemplate } from '@/lib/diagramTemplates';
 import { exportSourceCode } from '@/lib/exportUtils';
 
 type WorkspaceActionsDeps = {
@@ -12,7 +13,7 @@ type WorkspaceActionsDeps = {
   setCode: (code: string) => void;
   setEngine: (engine: Engine) => void;
   resetOutput: () => void;
-  createDiagram: (code: string) => void;
+  createDiagram: (defaultCode?: string, name?: string, engineOverride?: Engine) => void;
   renameDiagram: (id: string, name: string) => void;
   deleteDiagram: (id: string) => void;
   setCurrentId: (id: string) => void;
@@ -20,8 +21,16 @@ type WorkspaceActionsDeps = {
   setError: (msg: string) => void;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   // 对话框回调（可选，用于替代 window.prompt/confirm）
-  showPrompt?: (options: { title: string; message: string; defaultValue: string }) => Promise<string | null>;
-  showConfirm?: (options: { title: string; message: string; variant?: 'default' | 'danger' }) => Promise<boolean>;
+  showPrompt?: (options: {
+    title: string;
+    message: string;
+    defaultValue: string;
+  }) => Promise<string | null>;
+  showConfirm?: (options: {
+    title: string;
+    message: string;
+    variant?: 'default' | 'danger';
+  }) => Promise<boolean>;
 };
 
 export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
@@ -177,6 +186,14 @@ export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
     [setEngine, setCode, resetOutput],
   );
 
+  const handleCreateFromTemplate = useCallback(
+    (template: DiagramTemplate) => {
+      createDiagram(template.code, template.name, template.engine);
+      showToast(`已从模板「${template.name}」创建`);
+    },
+    [createDiagram, showToast],
+  );
+
   return {
     handleCopyCode,
     handleClearCode,
@@ -187,5 +204,6 @@ export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
     handleExportWorkspace,
     handleExportSourceCode,
     handleEngineChange,
+    handleCreateFromTemplate,
   };
 }

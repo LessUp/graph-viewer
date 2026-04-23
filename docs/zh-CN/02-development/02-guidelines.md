@@ -47,7 +47,7 @@ export function EditorPanel({ engine, onEngineChange }: EditorPanelProps) {
   const handleSelect = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
     onEngineChange(e.target.value);
   }, [onEngineChange]);
-  
+
   return <select value={engine} onChange={handleSelect}>...</select>;
 }
 ```
@@ -75,14 +75,14 @@ export function useDiagramState(): UseDiagramStateReturn {
 
 ### 命名约定
 
-| 类型 | 命名 | 示例 |
-|------|------|------|
-| 组件 | 大驼峰 | `EditorPanel.tsx` |
-| Hooks | 小驼峰 + use 前缀 | `useDiagramState.ts` |
-| 工具 | 小驼峰 | `exportUtils.ts` |
-| 类型 | 大驼峰 | `DiagramState.ts` |
-| 常量 | 大写下划线 | `MAX_CODE_LENGTH` |
-| 测试 | 源文件名 + `.test.ts` | `exportUtils.test.ts` |
+| 类型  | 命名                  | 示例                  |
+| ----- | --------------------- | --------------------- |
+| 组件  | 大驼峰                | `EditorPanel.tsx`     |
+| Hooks | 小驼峰 + use 前缀     | `useDiagramState.ts`  |
+| 工具  | 小驼峰                | `exportUtils.ts`      |
+| 类型  | 大驼峰                | `DiagramState.ts`     |
+| 常量  | 大写下划线            | `MAX_CODE_LENGTH`     |
+| 测试  | 源文件名 + `.test.ts` | `exportUtils.test.ts` |
 
 ### 目录结构
 
@@ -116,7 +116,7 @@ describe('useDiagramState', () => {
     it('应将状态保存到 localStorage', () => {
       // ...
     });
-    
+
     it('应从 localStorage 恢复状态', () => {
       // ...
     });
@@ -162,12 +162,12 @@ try {
 ```typescript
 // ✅ 返回结构化错误响应
 return NextResponse.json(
-  { 
+  {
     error: 'KROKI_ERROR',
     message: '图表渲染失败',
-    details: error.message 
+    details: error.message,
   },
-  { status: 502 }
+  { status: 502 },
 );
 ```
 
@@ -177,9 +177,9 @@ return NextResponse.json(
 
 ```typescript
 // ✅ 使用记忆化
-const sortedDiagrams = useMemo(() => 
-  diagrams.sort((a, b) => b.updatedAt - a.updatedAt),
-  [diagrams]
+const sortedDiagrams = useMemo(
+  () => diagrams.sort((a, b) => b.updatedAt - a.updatedAt),
+  [diagrams],
 );
 
 // ✅ 记忆化回调 props
@@ -192,10 +192,7 @@ const handleRender = useCallback(() => {
 
 ```typescript
 // ✅ 懒加载重量级组件
-const GraphvizRenderer = dynamic(
-  () => import('./GraphvizRenderer'),
-  { ssr: false }
-);
+const GraphvizRenderer = dynamic(() => import('./GraphvizRenderer'), { ssr: false });
 ```
 
 ## 文档
@@ -205,19 +202,19 @@ const GraphvizRenderer = dynamic(
 ```typescript
 /**
  * 使用指定的引擎和格式渲染图表。
- * 
+ *
  * @param engine - 图表引擎（mermaid、plantuml 等）
  * @param format - 输出格式（svg、png、pdf）
  * @param code - 图表源代码
  * @returns 渲染输出和元数据
- * 
+ *
  * @example
  * const result = await renderDiagram('mermaid', 'svg', 'graph TD; A-->B;');
  */
 export async function renderDiagram(
   engine: string,
   format: Format,
-  code: string
+  code: string,
 ): Promise<RenderResult> {
   // ...
 }

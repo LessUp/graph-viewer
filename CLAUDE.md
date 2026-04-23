@@ -5,11 +5,24 @@
 
 ## Project Philosophy: Spec-Driven Development (SDD)
 
-This project follows the **Spec-Driven Development (SDD)** paradigm. All code implementations must use the `/specs` directory as the Single Source of Truth.
+This project follows the **Spec-Driven Development (SDD)** paradigm with **OpenSpec**. All code implementations must use `openspec/specs/` as the Single Source of Truth.
 
-**Core Principle**: Before coding, read specs. For new features, update specs first. Code must 100% comply with specs.
+**Core Principle**: Before coding, read specs. For new features, use `/opsx:propose` first. Code must 100% comply with specs.
 
-See [AGENTS.md](AGENTS.md) for the complete SDD workflow specification.
+See [AGENTS.md](AGENTS.md) for the complete OpenSpec workflow specification.
+
+## OpenSpec CLI
+
+```bash
+# Verify installation
+openspec --version
+
+# Check project status
+openspec status
+
+# List active changes
+openspec list
+```
 
 ## Commands
 
@@ -66,12 +79,12 @@ catch (e: any) {
 - **File changes**: When deleting/renaming/moving files, update:
   - Tests
   - README (both English and Chinese)
-  - Specs in `/specs/`
+  - Specs in `openspec/specs/`
   - References in other files
 
 ## Key Architecture Points
 
-For detailed architecture, see [RFC-0001: Core Architecture](specs/rfc/0001-core-architecture.md).
+For detailed architecture, see [RFC-0001: Core Architecture](openspec/specs/architecture/0001-core-architecture.md).
 
 ### Engine/Format Values
 
@@ -95,12 +108,12 @@ When modifying diagram engines, formats, or export capabilities, sync all affect
 
 ### API Routes
 
-| Endpoint | Description |
-|----------|-------------|
+| Endpoint           | Description                                                       |
+| ------------------ | ----------------------------------------------------------------- |
 | `POST /api/render` | Kroki proxy, in-memory cache (TTL 120s), 100KB limit, 10s timeout |
-| `GET /api/healthz` | Health check for Docker/Netlify |
+| `GET /api/healthz` | Health check for Docker/Netlify                                   |
 
-For full API specification, see [OpenAPI Specification](specs/api/openapi.yaml).
+For full API specification, see [OpenAPI Specification](openspec/specs/api/openapi.yaml).
 
 ## Changelog Requirement
 
@@ -111,12 +124,13 @@ Every change must have a changelog entry:
 
 ## Quick Links
 
-| Document | Purpose |
-|----------|---------|
-| [AGENTS.md](AGENTS.md) | AI agent workflow specification |
-| [specs/README.md](specs/README.md) | Specifications index |
-| [specs/rfc/0001-core-architecture.md](specs/rfc/0001-core-architecture.md) | Core architecture |
-| [specs/api/openapi.yaml](specs/api/openapi.yaml) | API specification |
-| [specs/db/schema-v1.dbml](specs/db/schema-v1.dbml) | Data models |
-| [specs/testing/diagram-render.feature](specs/testing/diagram-render.feature) | Test specifications |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide |
+| Document                                                                                                       | Purpose                         |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| [AGENTS.md](AGENTS.md)                                                                                         | AI agent workflow specification |
+| [openspec/specs/README.md](openspec/specs/README.md)                                                           | Specifications index            |
+| [openspec/specs/architecture/0001-core-architecture.md](openspec/specs/architecture/0001-core-architecture.md) | Core architecture               |
+| [openspec/specs/api/openapi.yaml](openspec/specs/api/openapi.yaml)                                             | API specification               |
+| [openspec/specs/data/schema-v1.dbml](openspec/specs/data/schema-v1.dbml)                                       | Data models                     |
+| [openspec/specs/testing/diagram-render.feature](openspec/specs/testing/diagram-render.feature)                 | Test specifications             |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                                                                             | Contribution guide              |
+| [OpenSpec Docs](https://github.com/Fission-AI/OpenSpec)                                                        | OpenSpec documentation          |

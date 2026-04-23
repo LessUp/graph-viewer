@@ -30,16 +30,16 @@ npm run test -- useDiagramState.test.tsx
 
 ### Current Test Coverage
 
-| Module | Test File | Coverage |
-|--------|-----------|----------|
-| lib/diagramConfig | `lib/__tests__/diagramConfig.test.ts` | Engine/format validation |
-| hooks/useDiagramState | `hooks/__tests__/useDiagramState.test.tsx` | State persistence |
-| hooks/useDiagramRender | `hooks/__tests__/useDiagramRender.test.tsx` | Rendering logic |
-| hooks/useVersionHistory | `hooks/__tests__/useVersionHistory.test.tsx` | Version management |
-| components/AppHeader | `components/__tests__/AppHeader.test.tsx` | Import/export |
-| components/PreviewPanel | `components/__tests__/PreviewPanel.test.tsx` | Preview display |
-| API /healthz | `app/api/healthz/route.test.ts` | Health check |
-| API /render | `app/api/render/route.test.ts` | Rendering endpoint |
+| Module                  | Test File                                    | Coverage                 |
+| ----------------------- | -------------------------------------------- | ------------------------ |
+| lib/diagramConfig       | `lib/__tests__/diagramConfig.test.ts`        | Engine/format validation |
+| hooks/useDiagramState   | `hooks/__tests__/useDiagramState.test.tsx`   | State persistence        |
+| hooks/useDiagramRender  | `hooks/__tests__/useDiagramRender.test.tsx`  | Rendering logic          |
+| hooks/useVersionHistory | `hooks/__tests__/useVersionHistory.test.tsx` | Version management       |
+| components/AppHeader    | `components/__tests__/AppHeader.test.tsx`    | Import/export            |
+| components/PreviewPanel | `components/__tests__/PreviewPanel.test.tsx` | Preview display          |
+| API /healthz            | `app/api/healthz/route.test.ts`              | Health check             |
+| API /render             | `app/api/render/route.test.ts`               | Rendering endpoint       |
 
 ### Writing Tests
 
@@ -56,11 +56,11 @@ describe('useDiagramState', () => {
 
   it('should persist state to localStorage', () => {
     const { result } = renderHook(() => useDiagramState());
-    
+
     act(() => {
       result.current.setCode('graph TD; A-->B;');
     });
-    
+
     const saved = localStorage.getItem('graphviewer:state:v1');
     expect(saved).toContain('graph TD');
   });
@@ -76,18 +76,18 @@ import { EditorPanel } from './EditorPanel';
 describe('EditorPanel', () => {
   it('should render engine selector', () => {
     render(<EditorPanel engine="mermaid" onEngineChange={vi.fn()} code="" />);
-    
+
     expect(screen.getByLabelText(/engine/i)).toBeInTheDocument();
   });
 
   it('should call onEngineChange when engine selected', () => {
     const onChange = vi.fn();
     render(<EditorPanel engine="mermaid" onEngineChange={onChange} code="" />);
-    
+
     fireEvent.change(screen.getByLabelText(/engine/i), {
       target: { value: 'plantuml' }
     });
-    
+
     expect(onChange).toHaveBeenCalledWith('plantuml');
   });
 });
@@ -102,9 +102,9 @@ describe('/api/render', () => {
   it('should return 400 for invalid engine', async () => {
     const request = new Request('http://localhost/api/render', {
       method: 'POST',
-      body: JSON.stringify({ engine: 'invalid', format: 'svg', code: 'test' })
+      body: JSON.stringify({ engine: 'invalid', format: 'svg', code: 'test' }),
     });
-    
+
     const response = await POST(request);
     expect(response.status).toBe(400);
   });
@@ -113,11 +113,11 @@ describe('/api/render', () => {
     // First request
     const req1 = createRequest({ engine: 'mermaid', format: 'svg', code: 'A-->B;' });
     await POST(req1);
-    
+
     // Second identical request should hit cache
     const req2 = createRequest({ engine: 'mermaid', format: 'svg', code: 'A-->B;' });
     const response2 = await POST(req2);
-    
+
     expect(response2.headers.get('X-Cache')).toBe('HIT');
   });
 });
@@ -130,26 +130,26 @@ describe('/api/render', () => {
 const localStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
-  removeItem: vi.fn()
+  removeItem: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
 });
 
 // Mock clipboard API
 Object.assign(navigator, {
   clipboard: {
     writeText: vi.fn(),
-    write: vi.fn()
-  }
+    write: vi.fn(),
+  },
 });
 
 // Mock fetch for API tests
 global.fetch = vi.fn(() =>
   Promise.resolve({
     ok: true,
-    json: () => Promise.resolve({ result: 'success' })
-  })
+    json: () => Promise.resolve({ result: 'success' }),
+  }),
 );
 ```
 
@@ -253,28 +253,31 @@ Tests run automatically on:
 
 ### CI Test Matrix
 
-| Environment | Node Version | Test Suite |
-|-------------|--------------|------------|
-| ubuntu-latest | 22.x | Full test suite |
-| CI workflow | 22.x | Lint, typecheck, test, build |
+| Environment   | Node Version | Test Suite                   |
+| ------------- | ------------ | ---------------------------- |
+| ubuntu-latest | 22.x         | Full test suite              |
+| CI workflow   | 22.x         | Lint, typecheck, test, build |
 
 ## Debugging Test Failures
 
 ### Common Issues
 
 **Test timeout:**
+
 ```bash
 # Increase timeout for slow tests
 npm run test -- --testTimeout=10000
 ```
 
 **Environment mismatch:**
+
 ```bash
 # Clear Jest/Vitest cache
 npm run test -- --clearCache
 ```
 
 **Missing mocks:**
+
 - Check that all browser APIs are mocked
 - Verify fetch mocks return proper Response objects
 

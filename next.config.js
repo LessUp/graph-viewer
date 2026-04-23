@@ -5,6 +5,21 @@ const isLighthouseCI = process.env.LHCI === 'true';
 const isProduction = process.env.NODE_ENV === 'production';
 
 // =============================================================================
+// Dynamic BasePath for GitHub Pages / GitHub Pages 动态基础路径
+// =============================================================================
+// Automatically detect repository name from GITHUB_REPOSITORY env variable
+// 从 GITHUB_REPOSITORY 环境变量自动检测仓库名称
+// Format: owner/repo -> extract repo name / 格式：owner/repo -> 提取 repo 名称
+let gitHubPagesRepoName = 'graph-viewer';
+if (process.env.GITHUB_REPOSITORY) {
+  const parts = process.env.GITHUB_REPOSITORY.split('/');
+  if (parts.length === 2 && parts[1]) {
+    gitHubPagesRepoName = parts[1];
+  }
+}
+const gitHubPagesBasePath = `/${gitHubPagesRepoName}`;
+
+// =============================================================================
 // EXTREME OPTIMIZATION CONFIG / 极致优化配置
 // =============================================================================
 
@@ -28,11 +43,19 @@ const nextConfig = {
   distDir: isGitHubPages || isLighthouseCI ? 'out' : '.next',
 
   // ===========================================================================
+  // Static Export Configuration / 静态导出配置
+  // ===========================================================================
+  // Note: exportPathMap is not compatible with App Router
+  // Use generateStaticParams() in individual pages instead
+  // 注意：exportPathMap 与 App Router 不兼容
+  // 请在各个页面中使用 generateStaticParams() 代替
+
+  // ===========================================================================
   // GitHub Pages Specific / GitHub Pages 专属配置
   // ===========================================================================
   ...(isGitHubPages && {
-    basePath: '/graph-viewer',
-    assetPrefix: '/graph-viewer/',
+    basePath: gitHubPagesBasePath,
+    assetPrefix: `${gitHubPagesBasePath}/`,
     trailingSlash: true,
 
     // Images must be unoptimized for static export
@@ -54,21 +77,17 @@ const nextConfig = {
   // ===========================================================================
   // Performance Optimizations / 性能优化
   // ===========================================================================
-  
+
   // SWC minification is default in Next.js 15+
-  
+
   // Experimental features for optimization
   experimental: {
     // Optimize package imports for common libraries
-    optimizePackageImports: [
-      'lucide-react',
-      '@codemirror',
-      'mermaid',
-    ],
-    
+    optimizePackageImports: ['lucide-react', '@codemirror', 'mermaid'],
+
     // Turbopack for dev (when stable)
     // turbo: {},
-    
+
     // Optimize CSS
     optimizeCss: isProduction,
   },
@@ -78,10 +97,12 @@ const nextConfig = {
   // ===========================================================================
   compiler: {
     // Remove console.log in production
-    removeConsole: isProduction ? {
-      exclude: ['error', 'warn'],
-    } : false,
-    
+    removeConsole: isProduction
+      ? {
+          exclude: ['error', 'warn'],
+        }
+      : false,
+
     // React optimizations
     reactRemoveProperties: isProduction,
   },
@@ -141,10 +162,10 @@ const nextConfig = {
             },
           },
         },
-        
+
         // Aggressive module concatenation
         concatenateModules: true,
-        
+
         // Minimize module IDs
         moduleIds: 'deterministic',
       };
@@ -153,7 +174,7 @@ const nextConfig = {
       config.plugins.push(
         new (require('webpack').DefinePlugin)({
           'process.env.GITHUB_PAGES': JSON.stringify(isGitHubPages),
-        })
+        }),
       );
     }
 
@@ -176,7 +197,7 @@ const nextConfig = {
   // ===========================================================================
   async headers() {
     if (isGitHubPages) return [];
-    
+
     return [
       {
         source: '/:all*(js|css|svg|png|jpg|jpeg|gif|webp|woff|woff2)',

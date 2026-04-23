@@ -3,7 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { PreviewPanel } from './PreviewPanel';
 
 vi.mock('./PreviewToolbar', () => ({
-  PreviewToolbar: ({ onZoomIn, onZoomOut, onResetZoom, onFullscreen }: Record<string, () => void>) => (
+  PreviewToolbar: ({
+    onZoomIn,
+    onZoomOut,
+    onResetZoom,
+    onFullscreen,
+  }: Record<string, () => void>) => (
     <div>
       <button onClick={onZoomIn}>zoom-in</button>
       <button onClick={onZoomOut}>zoom-out</button>
@@ -78,7 +83,9 @@ describe('PreviewPanel', () => {
 
     expect(screen.getByText('PDF 预览加载失败')).toBeInTheDocument();
     expect(screen.getByText('当前静态部署模式下不可用该渲染方式')).toBeInTheDocument();
-    expect(screen.getByText('当前 PDF 预览依赖远程渲染结果，建议检查服务状态后重试。')).toBeInTheDocument();
+    expect(
+      screen.getByText('当前 PDF 预览依赖远程渲染结果，建议检查服务状态后重试。'),
+    ).toBeInTheDocument();
   });
 
   it('renders pdf previews', () => {
@@ -93,7 +100,10 @@ describe('PreviewPanel', () => {
       />,
     );
 
-    expect(screen.getByTitle('diagram preview')).toHaveAttribute('src', 'data:application/pdf;base64,abc123');
+    expect(screen.getByTitle('diagram preview')).toHaveAttribute(
+      'src',
+      'data:application/pdf;base64,abc123',
+    );
   });
 
   it('renders sanitized svg content and interaction hint', () => {
@@ -126,7 +136,8 @@ describe('PreviewPanel', () => {
     );
 
     fireEvent.click(screen.getByText('zoom-in'));
-    const zoomContainer = container.querySelector('.diagram-container')?.parentElement as HTMLElement;
+    const zoomContainer = container.querySelector('.diagram-container')
+      ?.parentElement as HTMLElement;
     expect(zoomContainer).toHaveStyle({ transform: 'translate(0px, 0px) scale(1.25)' });
 
     fireEvent.click(screen.getByText('zoom-reset'));

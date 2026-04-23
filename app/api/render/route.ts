@@ -3,8 +3,13 @@ import crypto from 'crypto';
 import { getKrokiType, isEngine, isFormat } from '@/lib/diagramConfig';
 import { logger } from '@/lib/logger';
 
+// Detect static export mode / 检测静态导出模式
+const isStaticExport =
+  process.env.GITHUB_PAGES === 'true' || process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true';
+
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+// Use force-static for static export compatibility / 为静态导出兼容性使用 force-static
+export const dynamic = isStaticExport ? 'force-static' : 'force-dynamic';
 
 const MAX_CODE_LENGTH = 100000;
 const KROKI_TIMEOUT_MS = 10000;
@@ -108,6 +113,19 @@ class RenderError extends Error {
 }
 
 export async function POST(req: NextRequest) {
+  // NOTE: This code path is effectively unreachable in static export builds
+  // because scripts/build-static-export.mjs removes the app/api directory.
+  // The check remains for safety in case the API route is somehow accessed.
+  if (isStaticExport) {
+    return NextResponse.json(
+      {
+        error:
+          'API not available in static export mode. Please use Docker deployment for full functionality.',
+      },
+      { status: 503 },
+    );
+  }
+
   try {
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
@@ -194,7 +212,8 @@ export async function POST(req: NextRequest) {
       } else {
         // 拒绝其他 URL
         throw new RenderError(400, {
-          error: 'krokiBaseUrl not allowed. Configure KROKI_CLIENT_BASE_URL_ALLOWLIST to allow custom URLs.',
+          error:
+            'krokiBaseUrl not allowed. Configure KROKI_CLIENT_BASE_URL_ALLOWLIST to allow custom URLs.',
           code: 'KROKI_BASE_URL_NOT_ALLOWED',
         });
       }
@@ -260,7 +279,13 @@ export async function POST(req: NextRequest) {
           );
         } catch (error: unknown) {
           if (error instanceof Error && error.name === 'AbortError') {
-            logger.error('render', { message: 'Kroki timeout', engine, format, timeoutMs: KROKI_TIMEOUT_MS, length: code.length });
+            logger.error('render', {
+              message: 'Kroki timeout',
+              engine,
+              format,
+              timeoutMs: KROKI_TIMEOUT_MS,
+              length: code.length,
+            });
             throw new RenderError(504, {
               error: 'Kroki timeout',
               code: 'KROKI_TIMEOUT',
@@ -268,7 +293,13 @@ export async function POST(req: NextRequest) {
             });
           }
           const errMsg = error instanceof Error ? error.message : '';
-          logger.error('render', { message: 'Kroki network error', engine, format, length: code.length, error: errMsg });
+          logger.error('render', {
+            message: 'Kroki network error',
+            engine,
+            format,
+            length: code.length,
+            error: errMsg,
+          });
           throw new RenderError(502, {
             error: 'Kroki request failed',
             code: 'KROKI_NETWORK_ERROR',
@@ -279,7 +310,13 @@ export async function POST(req: NextRequest) {
 
         if (!krokiResp.ok) {
           const text = await krokiResp.text().catch(() => '');
-          logger.error('render', { message: 'Kroki render error', engine, format, status: krokiResp.status, length: code.length });
+          logger.error('render', {
+            message: 'Kroki render error',
+            engine,
+            format,
+            status: krokiResp.status,
+            length: code.length,
+          });
           throw new RenderError(502, {
             error: 'Kroki render error',
             status: krokiResp.status,

@@ -86,7 +86,9 @@ async function renderMermaidLocally(input: string): Promise<RenderOutputState | 
       };
     }
   } catch (e: unknown) {
-    logger.warn('render-mermaid-local', { error: e instanceof Error ? e.message : 'Unknown error' });
+    logger.warn('render-mermaid-local', {
+      error: e instanceof Error ? e.message : 'Unknown error',
+    });
   }
   return null;
 }
@@ -104,7 +106,9 @@ async function renderGraphvizLocally(input: string): Promise<RenderOutputState |
       };
     }
   } catch (e: unknown) {
-    logger.warn('render-graphviz-local', { error: e instanceof Error ? e.message : 'Unknown error' });
+    logger.warn('render-graphviz-local', {
+      error: e instanceof Error ? e.message : 'Unknown error',
+    });
   }
   return null;
 }
@@ -251,7 +255,9 @@ export function useDiagramRender(
       }
 
       if (!remoteRenderingEnabled) {
-        throw new Error('当前静态部署模式下不可用该渲染方式，请切换到 SVG 本地渲染或使用完整服务部署。');
+        throw new Error(
+          '当前静态部署模式下不可用该渲染方式，请切换到 SVG 本地渲染或使用完整服务部署。',
+        );
       }
 
       const payload: Record<string, unknown> = { engine, format, code };

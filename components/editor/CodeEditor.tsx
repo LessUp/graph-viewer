@@ -99,7 +99,9 @@ function CodeEditorComponent(props: CodeEditorProps) {
         ext.push(...langExt);
       }
     } catch (e: unknown) {
-      logger.warn('language-extension', { error: e instanceof Error ? e.message : 'Unknown error' });
+      logger.warn('language-extension', {
+        error: e instanceof Error ? e.message : 'Unknown error',
+      });
     }
 
     return ext;

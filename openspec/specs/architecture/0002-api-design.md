@@ -15,15 +15,17 @@ This RFC documents the API design for GraphViewer's server-side endpoints.
 Kroki proxy for remote diagram rendering.
 
 **Request**:
+
 ```typescript
 {
-  engine: string;      // Diagram engine (from diagramConfig.ts)
-  format: string;      // Output format (svg, png, pdf)
-  code: string;        // Diagram source code (max 100KB)
+  engine: string; // Diagram engine (from diagramConfig.ts)
+  format: string; // Output format (svg, png, pdf)
+  code: string; // Diagram source code (max 100KB)
 }
 ```
 
 **Response**:
+
 ```typescript
 {
   svg?: string;        // SVG content (if format === 'svg')
@@ -33,6 +35,7 @@ Kroki proxy for remote diagram rendering.
 ```
 
 **Constraints**:
+
 - In-memory cache with TTL 120 seconds
 - 10 second timeout for Kroki requests
 - 100KB code size limit
@@ -47,6 +50,7 @@ Health check endpoint for Docker/Netlify deployment.
 ## Caching Strategy
 
 The render endpoint uses an in-memory LRU cache with:
+
 - TTL: 120 seconds
 - Cache key: hash of (engine + format + code)
 - Eviction: LRU when cache reaches capacity
@@ -54,6 +58,7 @@ The render endpoint uses an in-memory LRU cache with:
 ## Error Handling
 
 All API errors follow this format:
+
 ```typescript
 {
   error: string;       // Human-readable error message
@@ -62,6 +67,7 @@ All API errors follow this format:
 ```
 
 Common error codes:
+
 - `ENGINE_NOT_SUPPORTED`
 - `INVALID_FORMAT`
 - `CODE_TOO_LARGE`

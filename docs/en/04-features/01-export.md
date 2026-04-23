@@ -4,14 +4,14 @@ GraphViewer supports multiple export formats for sharing and publishing diagrams
 
 ## Supported Formats
 
-| Format | Extension | Use Case |
-|--------|-----------|----------|
-| SVG | `.svg` | Vector graphics, web embedding |
-| PNG 2x | `.png` | High-quality screenshots |
-| PNG 4x | `.png` | Print-ready, presentations |
-| HTML | `.html` | Standalone web pages |
-| Markdown | `.md` | Documentation, GitHub |
-| Source | `.mmd`, `.puml`, etc. | Original code |
+| Format   | Extension             | Use Case                       |
+| -------- | --------------------- | ------------------------------ |
+| SVG      | `.svg`                | Vector graphics, web embedding |
+| PNG 2x   | `.png`                | High-quality screenshots       |
+| PNG 4x   | `.png`                | Print-ready, presentations     |
+| HTML     | `.html`               | Standalone web pages           |
+| Markdown | `.md`                 | Documentation, GitHub          |
+| Source   | `.mmd`, `.puml`, etc. | Original code                  |
 
 ## Using Export
 
@@ -31,40 +31,47 @@ GraphViewer supports multiple export formats for sharing and publishing diagrams
 ### SVG Export
 
 **Features:**
+
 - Scalable vector graphics
 - Style inlining for portability
 - Namespace preservation
 - Embedded fonts (where possible)
 
 **Best For:**
+
 - Further editing in vector tools (Illustrator, Figma)
 - Web embedding with CSS control
 - Archival storage
 
 **Implementation:**
+
 ```typescript
 // lib/exportUtils.ts
-export function exportSvg(svgContent: string, filename: string): void
+export function exportSvg(svgContent: string, filename: string): void;
 ```
 
 ### PNG Export
 
 **Options:**
+
 - **2x (HD)**: Standard high quality
 - **4x (Ultra HD)**: Maximum quality for print
 
 **Rendering Strategy:**
+
 1. **Primary**: html2canvas for complex SVG handling
 2. **Fallback**: Native Image + Canvas API
 
 **Configuration:**
+
 ```typescript
 // Quality settings
-const quality = 0.95;           // JPEG quality
-const imageSmoothing = 'high';  // Interpolation
+const quality = 0.95; // JPEG quality
+const imageSmoothing = 'high'; // Interpolation
 ```
 
 **Best For:**
+
 - Social media sharing
 - Email attachments
 - Documents and presentations
@@ -72,28 +79,33 @@ const imageSmoothing = 'high';  // Interpolation
 ### HTML Export
 
 **Features:**
+
 - Self-contained HTML file
 - Embedded SVG
 - Responsive viewport
 - No external dependencies
 
 **Template Structure:**
+
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Diagram</title>
-  <style>/* Embedded styles */</style>
-</head>
-<body>
-  <div class="diagram-container">
-    <!-- Embedded SVG -->
-  </div>
-</body>
+  <head>
+    <title>Diagram</title>
+    <style>
+      /* Embedded styles */
+    </style>
+  </head>
+  <body>
+    <div class="diagram-container">
+      <!-- Embedded SVG -->
+    </div>
+  </body>
 </html>
 ```
 
 **Best For:**
+
 - Sharing single diagrams
 - Embedding in web pages
 - Archive reference
@@ -115,14 +127,15 @@ graph TD
 
 **Language Mapping:**
 
-| Engine | Markdown Language |
-|--------|-------------------|
-| Mermaid | `mermaid` |
-| PlantUML | `plantuml` |
-| Graphviz | `dot` |
-| D2 | `d2` |
+| Engine   | Markdown Language |
+| -------- | ----------------- |
+| Mermaid  | `mermaid`         |
+| PlantUML | `plantuml`        |
+| Graphviz | `dot`             |
+| D2       | `d2`              |
 
 **Best For:**
+
 - GitHub/GitLab documentation
 - Knowledge bases
 - Version-controlled docs
@@ -131,16 +144,17 @@ graph TD
 
 **Extension Mapping:**
 
-| Engine | Extension |
-|--------|-----------|
-| Mermaid | `.mmd` |
-| PlantUML | `.puml` |
-| Graphviz | `.dot` |
-| D2 | `.d2` |
-| Vega | `.vg.json` |
+| Engine    | Extension  |
+| --------- | ---------- |
+| Mermaid   | `.mmd`     |
+| PlantUML  | `.puml`    |
+| Graphviz  | `.dot`     |
+| D2        | `.d2`      |
+| Vega      | `.vg.json` |
 | Vega-Lite | `.vl.json` |
 
 **Best For:**
+
 - Version control
 - Code review
 - Editing in external tools
@@ -194,13 +208,12 @@ ctx.imageSmoothingQuality = 'high';
 ```typescript
 async function copyPngToClipboard(svg: string): Promise<void> {
   const blob = await svgToPngBlob(svg);
-  await navigator.clipboard.write([
-    new ClipboardItem({ 'image/png': blob })
-  ]);
+  await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
 }
 ```
 
 **Requirements:**
+
 - Secure context (HTTPS or localhost)
 - Browser support (Chrome 76+, Firefox 63+, Safari 13.1+)
 - User permission
@@ -210,6 +223,7 @@ async function copyPngToClipboard(svg: string): Promise<void> {
 ### SVG Complexity
 
 Very large or complex SVGs may:
+
 - Exceed canvas memory limits
 - Take longer to process
 - Require more RAM
@@ -217,6 +231,7 @@ Very large or complex SVGs may:
 ### Font Rendering
 
 Custom fonts in SVG may not render correctly in PNG:
+
 - System fonts work best
 - Web fonts may need `@font-face` inlining
 - Consider converting text to paths
@@ -224,17 +239,18 @@ Custom fonts in SVG may not render correctly in PNG:
 ### External Resources
 
 SVGs with external references (images, fonts):
+
 - May not display correctly
 - Consider embedding resources as data URIs
 
 ### Browser Compatibility
 
-| Feature | Chrome | Firefox | Safari | Edge |
-|---------|--------|---------|--------|------|
-| SVG Export | ✅ | ✅ | ✅ | ✅ |
-| PNG Export | ✅ | ✅ | ✅ | ✅ |
-| Clipboard PNG | ✅ 76+ | ✅ 63+ | ✅ 13.1+ | ✅ 79+ |
-| HTML Export | ✅ | ✅ | ✅ | ✅ |
+| Feature       | Chrome | Firefox | Safari   | Edge   |
+| ------------- | ------ | ------- | -------- | ------ |
+| SVG Export    | ✅     | ✅      | ✅       | ✅     |
+| PNG Export    | ✅     | ✅      | ✅       | ✅     |
+| Clipboard PNG | ✅ 76+ | ✅ 63+  | ✅ 13.1+ | ✅ 79+ |
+| HTML Export   | ✅     | ✅      | ✅       | ✅     |
 
 ## Manual Verification
 
@@ -254,6 +270,7 @@ Test these scenarios after changes:
 ## Future Enhancements
 
 Planned improvements:
+
 - PDF file export (currently only preview)
 - Animation export (GIF/MP4)
 - Batch export for workspace

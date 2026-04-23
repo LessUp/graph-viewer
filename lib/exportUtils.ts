@@ -301,7 +301,9 @@ async function svgToCanvas(
   try {
     return await svgToCanvasUsingHtml2Canvas(svgContent, options);
   } catch (error: unknown) {
-    logger.warn('html2canvas-fallback', { error: error instanceof Error ? error.message : 'Unknown error' });
+    logger.warn('html2canvas-fallback', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     return await svgToCanvasUsingImage(svgContent, options);
   }
 }

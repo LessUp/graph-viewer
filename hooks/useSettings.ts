@@ -55,7 +55,9 @@ export function useSettings() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         } catch (e: unknown) {
-          logger.error('save-settings', { error: e instanceof Error ? e.message : 'Unknown error' });
+          logger.error('save-settings', {
+            error: e instanceof Error ? e.message : 'Unknown error',
+          });
         }
       }
       return updated;

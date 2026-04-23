@@ -5,6 +5,7 @@ AI-powered features for diagram creation and analysis.
 ## Overview
 
 The AI Assistant panel helps users:
+
 - Analyze existing diagram code
 - Generate new diagrams from descriptions
 - Fix syntax errors
@@ -15,12 +16,14 @@ The AI Assistant panel helps users:
 ### 1. Code Analysis
 
 Analyzes current diagram and provides:
+
 - Structure breakdown
 - Suggestions for improvement
 - Complexity assessment
 - Best practices recommendations
 
 Example:
+
 ```
 Input: Mermaid flowchart
 
@@ -85,9 +88,9 @@ Explanation:
 
 ```typescript
 interface UseAIAssistantOptions {
-  apiKey?: string;      // AI service API key
-  baseUrl?: string;     // Custom endpoint
-  model?: string;       // Model selection
+  apiKey?: string; // AI service API key
+  baseUrl?: string; // Custom endpoint
+  model?: string; // Model selection
 }
 
 interface UseAIAssistantReturn {
@@ -124,6 +127,7 @@ AI_MODEL=gpt-4
 ### Client-Side Settings
 
 Users can configure in Settings panel:
+
 - Enable/disable AI features
 - API key input
 - Custom endpoint URL
@@ -146,20 +150,21 @@ Instead of browser directly calling AI APIs:
 // app/api/ai/route.ts
 export async function POST(request: Request) {
   const { action, code, engine } = await request.json();
-  
+
   // Call AI service server-side
   const response = await fetch(process.env.AI_BASE_URL, {
     headers: {
-      'Authorization': `Bearer ${process.env.AI_API_KEY}`
+      Authorization: `Bearer ${process.env.AI_API_KEY}`,
     },
     // ...
   });
-  
+
   return NextResponse.json(result);
 }
 ```
 
 Benefits:
+
 - API key remains server-side
 - Rate limiting
 - Request logging
@@ -212,6 +217,7 @@ Benefits:
 ## Future Enhancements
 
 Planned improvements:
+
 - Local AI model support (on-device)
 - Better context awareness
 - Multi-turn conversations

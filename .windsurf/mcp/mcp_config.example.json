@@ -12,11 +12,7 @@
     },
     "filesystem": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@anthropic/mcp-server-filesystem",
-        "${workspaceFolder}"
-      ],
+      "args": ["-y", "@anthropic/mcp-server-filesystem", "${workspaceFolder}"],
       "disabled": false
     },
     "github": {

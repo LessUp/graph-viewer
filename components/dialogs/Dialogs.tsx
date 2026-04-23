@@ -92,9 +92,7 @@ export function ConfirmDialog({
           <button
             onClick={onConfirm}
             className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition ${
-              variant === 'danger'
-                ? 'bg-rose-600 hover:bg-rose-700'
-                : 'bg-sky-600 hover:bg-sky-700'
+              variant === 'danger' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-sky-600 hover:bg-sky-700'
             }`}
           >
             {confirmText}
@@ -258,21 +256,14 @@ export function Toast({
   }, [onClose]);
 
   const bgColor =
-    type === 'success'
-      ? 'bg-emerald-600'
-      : type === 'error'
-        ? 'bg-rose-600'
-        : 'bg-slate-800';
+    type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800';
 
   return (
     <div
       className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg ${bgColor} px-4 py-3 text-sm font-medium text-white shadow-lg`}
     >
       {message}
-      <button
-        onClick={onClose}
-        className="ml-2 rounded-full p-0.5 transition hover:bg-white/20"
-      >
+      <button onClick={onClose} className="ml-2 rounded-full p-0.5 transition hover:bg-white/20">
         <X className="h-4 w-4" />
       </button>
     </div>

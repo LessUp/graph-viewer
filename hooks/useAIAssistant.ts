@@ -281,7 +281,10 @@ export function useAIAssistant(engine: Engine) {
 
         let result: AIAnalysisResult;
         try {
-          const cleanResponse = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          const cleanResponse = response
+            .replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
+            .trim();
           result = JSON.parse(cleanResponse);
         } catch {
           result = {

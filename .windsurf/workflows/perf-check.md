@@ -40,10 +40,10 @@ npx depcheck --ignores="@types/*,autoprefixer,postcss,eslint-*,prettier-*"
 npm run dev
 ```
 
-   - Type rapidly in the editor — preview should stay responsive
-   - Switch engines — first render should complete in < 2s
-   - Render a large diagram (>50 nodes) — should not freeze the UI
-   - Export PNG — should complete in < 5s
+- Type rapidly in the editor — preview should stay responsive
+- Switch engines — first render should complete in < 2s
+- Render a large diagram (>50 nodes) — should not freeze the UI
+- Export PNG — should complete in < 5s
 
 7. Review results and identify optimization targets:
    - Bundle size regressions > 10KB need justification
