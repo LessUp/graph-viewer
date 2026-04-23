@@ -5,9 +5,8 @@ import { isEngine, isFormat } from '@/lib/diagramConfig';
 import type { DiagramDoc } from '@/lib/types';
 import { isPersistedWorkspace, type PersistedWorkspaceData } from '@/lib/typeGuards';
 import { logger } from '@/lib/logger';
-
-const LOCAL_STORAGE_KEY = 'graphviewer:state:v1';
-const STORAGE_WRITE_DEBOUNCE_MS = 250;
+import { loadFromStorage, saveToStorage } from '@/lib/storage';
+import { APP_CONFIG } from '@/lib/config';
 
 type DiagramState = {
   engine: Engine;
@@ -31,21 +30,42 @@ type DiagramStateControls = {
   importWorkspace: (payload: { diagrams: Record<string, unknown>[]; currentId?: string }) => void;
 };
 
-type PersistedWorkspace = PersistedWorkspaceData;
-
 function generateDiagramId(): string {
   return `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function createDefaultDiagram(): DiagramDoc {
+  return {
+    id: generateDiagramId(),
+    name: '未命名图 1',
+    engine: 'mermaid',
+    format: 'svg',
+    code: '',
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 export function useDiagramState(initialCode: string): DiagramState & DiagramStateControls {
-  const [engine, setEngine] = useState<Engine>('mermaid');
-  const [format, setFormat] = useState<Format>('svg');
-  const [code, setCode] = useState<string>(initialCode);
-  const [linkError, setLinkError] = useState<string>('');
+  // === 单一数据源：diagrams 和 currentId ===
   const [diagrams, setDiagrams] = useState<DiagramDoc[]>([]);
   const [currentId, setCurrentId] = useState<string>('');
+  const [linkError, setLinkError] = useState<string>('');
   const [hasHydrated, setHasHydrated] = useState<boolean>(false);
 
+  // === 派生状态：从 diagrams 派生 engine/format/code ===
+  const currentDiagram = useMemo(() => diagrams.find((d) => d.id === currentId), [diagrams, currentId]);
+
+  const engine = currentDiagram?.engine ?? 'mermaid';
+  const format = currentDiagram?.format ?? 'svg';
+  const code = currentDiagram?.code ?? initialCode;
+
+  const codeStats = useMemo(() => {
+    const lines = code.split('\n').length;
+    const chars = code.length;
+    return { lines, chars };
+  }, [code]);
+
+  // === 水合：从 URL 或 localStorage 初始化 ===
   useEffect(() => {
     if (typeof window === 'undefined') {
       setHasHydrated(true);
@@ -60,9 +80,14 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       const qsEncoded = params.get('encoded');
       let appliedFromQuery = false;
 
+      // 处理 URL 参数
+      let queryEngine: Engine | undefined;
+      let queryFormat: Format | undefined;
+      let queryCode: string | undefined;
+
       if (qsEngine) {
         if (isEngine(qsEngine)) {
-          setEngine(qsEngine);
+          queryEngine = qsEngine;
           appliedFromQuery = true;
         } else {
           setLinkError('分享链接中的引擎参数无效，已使用默认引擎。');
@@ -70,7 +95,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       }
       if (qsFormat) {
         if (isFormat(qsFormat)) {
-          setFormat(qsFormat);
+          queryFormat = qsFormat;
           appliedFromQuery = true;
         } else {
           setLinkError((prev: string) => prev || '分享链接中的格式参数无效，已使用默认格式。');
@@ -78,140 +103,151 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       }
       if (qsCode !== null) {
         if (qsEncoded === '1') {
-          let codeFromQuery = qsCode;
           try {
             const decompressed = decompressFromEncodedURIComponent(qsCode);
             if (typeof decompressed === 'string' && decompressed.length > 0) {
-              codeFromQuery = decompressed;
+              queryCode = decompressed;
             } else {
               setLinkError(
                 (prev: string) => prev || '分享链接中的代码解压后为空，已使用原始内容。',
               );
+              queryCode = qsCode;
             }
           } catch {
             setLinkError((prev: string) => prev || '分享链接中的代码解压失败，已使用原始内容。');
+            queryCode = qsCode;
           }
-          setCode(codeFromQuery);
         } else {
-          setCode(qsCode);
+          queryCode = qsCode;
         }
         appliedFromQuery = true;
       }
 
-      const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (!raw) return;
+      // 从 localStorage 加载
+      const persisted = loadFromStorage<PersistedWorkspaceData | null>(
+        APP_CONFIG.storage.stateKey,
+        null,
+      );
 
-      const parsed = JSON.parse(raw);
-      if (!isPersistedWorkspace(parsed)) {
-        logger.warn('hydrate-state', { message: 'Invalid persisted workspace data' });
-        return;
-      }
-
-      if (parsed.diagrams.length > 0) {
-        setDiagrams(parsed.diagrams);
+      if (persisted && isPersistedWorkspace(persisted) && persisted.diagrams.length > 0) {
+        setDiagrams(persisted.diagrams);
         const nextId =
-          parsed.currentId && parsed.diagrams.some((d: DiagramDoc) => d.id === parsed.currentId)
-            ? parsed.currentId
-            : (parsed.diagrams[0]?.id ?? '');
+          persisted.currentId && persisted.diagrams.some((d) => d.id === persisted.currentId)
+            ? persisted.currentId
+            : (persisted.diagrams[0]?.id ?? '');
         setCurrentId(nextId);
 
-        if (!appliedFromQuery) {
-          const currentDiagram =
-            parsed.diagrams.find((d: DiagramDoc) => d.id === nextId) ?? parsed.diagrams[0];
-          if (currentDiagram) {
-            setEngine(currentDiagram.engine);
-            setFormat(currentDiagram.format);
-            setCode(currentDiagram.code);
-          }
+        // 如果 URL 有参数，覆盖当前图表
+        if (appliedFromQuery && nextId) {
+          setDiagrams((prev) => {
+            const idx = prev.findIndex((d) => d.id === nextId);
+            if (idx === -1) return prev;
+            const current = prev[idx];
+            if (!current) return prev;
+            const updated = { ...current };
+            if (queryEngine) updated.engine = queryEngine;
+            if (queryFormat) updated.format = queryFormat;
+            if (queryCode !== undefined) updated.code = queryCode;
+            updated.updatedAt = new Date().toISOString();
+            const next = prev.slice();
+            next[idx] = updated;
+            return next;
+          });
         }
-        return;
+      } else if (appliedFromQuery) {
+        // 只有 URL 参数，创建新图表
+        const doc: DiagramDoc = {
+          id: generateDiagramId(),
+          name: '未命名图 1',
+          engine: queryEngine ?? 'mermaid',
+          format: queryFormat ?? 'svg',
+          code: queryCode ?? '',
+          updatedAt: new Date().toISOString(),
+        };
+        setDiagrams([doc]);
+        setCurrentId(doc.id);
+      } else {
+        // 无数据，创建默认图表
+        const doc = createDefaultDiagram();
+        if (initialCode) {
+          doc.code = initialCode;
+        }
+        setDiagrams([doc]);
+        setCurrentId(doc.id);
       }
     } catch (e: unknown) {
       logger.warn('hydrate-state', { error: e instanceof Error ? e.message : 'Unknown error' });
+      // 创建默认图表
+      const doc = createDefaultDiagram();
+      setDiagrams([doc]);
+      setCurrentId(doc.id);
     } finally {
       setHasHydrated(true);
     }
-  }, []);
+  }, [initialCode]);
 
-  // 同步当前编辑状态到 diagrams，避免顶层状态和工作区文档重复漂移
+  // === 持久化：debounce 写入 localStorage ===
   useEffect(() => {
-    if (!hasHydrated) return;
-
-    setDiagrams((prev) => {
-      if (!prev.length && !currentId) {
-        const id = generateDiagramId();
-        const doc: DiagramDoc = {
-          id,
-          name: '未命名图 1',
-          engine,
-          format,
-          code,
-          updatedAt: new Date().toISOString(),
-        };
-        setCurrentId(id);
-        return [doc];
-      }
-
-      if (!currentId) {
-        if (prev.length > 0) {
-          const first = prev[0];
-          if (first) setCurrentId(first.id);
-        }
-        return prev;
-      }
-
-      const idx = prev.findIndex((d) => d.id === currentId);
-      if (idx === -1) {
-        const doc: DiagramDoc = {
-          id: currentId,
-          name: `未命名图 ${prev.length + 1}`,
-          engine,
-          format,
-          code,
-          updatedAt: new Date().toISOString(),
-        };
-        return [...prev, doc];
-      }
-
-      const current = prev[idx];
-      if (!current) return prev;
-
-      if (current.engine === engine && current.format === format && current.code === code) {
-        return prev;
-      }
-
-      const next = prev.slice();
-      next[idx] = { ...current, engine, format, code, updatedAt: new Date().toISOString() };
-      return next;
-    });
-  }, [engine, format, code, currentId, hasHydrated]);
-
-  // 仅持久化 diagrams/currentId，避免与顶层 engine/format/code 重复写入
-  useEffect(() => {
-    if (typeof window === 'undefined' || !hasHydrated) return;
+    if (typeof window === 'undefined' || !hasHydrated || !diagrams.length) return;
 
     const timer = window.setTimeout(() => {
-      try {
-        window.localStorage.setItem(
-          LOCAL_STORAGE_KEY,
-          JSON.stringify({
-            diagrams,
-            currentId,
-          }),
-        );
-      } catch (e: unknown) {
-        logger.warn('persist-state', { error: e instanceof Error ? e.message : 'Unknown error' });
-      }
-    }, STORAGE_WRITE_DEBOUNCE_MS);
+      saveToStorage(APP_CONFIG.storage.stateKey, {
+        diagrams,
+        currentId,
+      });
+    }, APP_CONFIG.state.storageWriteDebounceMs);
 
     return () => window.clearTimeout(timer);
   }, [diagrams, currentId, hasHydrated]);
 
-  const codeStats = useMemo(() => {
-    const lines = code.split('\n').length;
-    const chars = code.length;
-    return { lines, chars };
-  }, [code]);
+  // === 操作函数：直接修改 diagrams ===
+  const setEngine = useCallback(
+    (newEngine: Engine) => {
+      if (!currentId) return;
+      setDiagrams((prev) => {
+        const idx = prev.findIndex((d) => d.id === currentId);
+        if (idx === -1) return prev;
+        const current = prev[idx];
+        if (!current || current.engine === newEngine) return prev;
+        const next = prev.slice();
+        next[idx] = { ...current, engine: newEngine, updatedAt: new Date().toISOString() };
+        return next;
+      });
+    },
+    [currentId],
+  );
+
+  const setFormat = useCallback(
+    (newFormat: Format) => {
+      if (!currentId) return;
+      setDiagrams((prev) => {
+        const idx = prev.findIndex((d) => d.id === currentId);
+        if (idx === -1) return prev;
+        const current = prev[idx];
+        if (!current || current.format === newFormat) return prev;
+        const next = prev.slice();
+        next[idx] = { ...current, format: newFormat, updatedAt: new Date().toISOString() };
+        return next;
+      });
+    },
+    [currentId],
+  );
+
+  const setCode = useCallback(
+    (newCode: string) => {
+      if (!currentId) return;
+      setDiagrams((prev) => {
+        const idx = prev.findIndex((d) => d.id === currentId);
+        if (idx === -1) return prev;
+        const current = prev[idx];
+        if (!current || current.code === newCode) return prev;
+        const next = prev.slice();
+        next[idx] = { ...current, code: newCode, updatedAt: new Date().toISOString() };
+        return next;
+      });
+    },
+    [currentId],
+  );
 
   const handleSetCurrentId = useCallback((id: string) => {
     if (!id) return;
@@ -219,9 +255,6 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       const found = prev.find((d) => d.id === id);
       if (found) {
         setCurrentId(id);
-        setEngine(found.engine);
-        setFormat(found.format);
-        setCode(found.code);
       }
       return prev;
     });
@@ -234,6 +267,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       const newCode = defaultCode ?? '';
       const newEngine = engineOverride ?? engine;
       setDiagrams((prev) => {
+        // 在回调中计算名称，避免依赖 diagrams.length
         const diagramName = name ?? `未命名图 ${prev.length + 1}`;
         const doc: DiagramDoc = {
           id,
@@ -246,8 +280,6 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
         return [...prev, doc];
       });
       setCurrentId(id);
-      setEngine(newEngine);
-      setCode(newCode);
     },
     [engine, format],
   );
@@ -255,13 +287,13 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
   const renameDiagram = useCallback((id: string, name: string) => {
     if (!id) return;
     setDiagrams((prev) => {
-      const next = prev.slice();
-      const idx = next.findIndex((d) => d.id === id);
+      const idx = prev.findIndex((d) => d.id === id);
       if (idx === -1) return prev;
-      const existing = next[idx];
-      if (!existing) return prev;
-      const n = name && name.trim().length > 0 ? name.trim() : existing.name;
-      next[idx] = { ...existing, name: n, updatedAt: new Date().toISOString() };
+      const current = prev[idx];
+      if (!current) return prev;
+      const n = name && name.trim().length > 0 ? name.trim() : current.name;
+      const next = prev.slice();
+      next[idx] = { ...current, name: n, updatedAt: new Date().toISOString() };
       return next;
     });
   }, []);
@@ -290,12 +322,7 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
       setDiagrams(list);
       const hasCurrent = payload.currentId && list.some((d) => d.id === payload.currentId);
       const nextId = hasCurrent ? (payload.currentId as string) : (list[0]?.id ?? '');
-      const nextDoc = list.find((d) => d.id === nextId) ?? list[0];
-      if (!nextDoc) return;
-      setCurrentId(nextDoc.id);
-      setEngine(nextDoc.engine);
-      setFormat(nextDoc.format);
-      setCode(nextDoc.code);
+      setCurrentId(nextId);
     },
     [],
   );
@@ -313,30 +340,15 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
         }
 
         if (next.length === 0) {
-          const newId = generateDiagramId();
-          const now = new Date().toISOString();
-          const doc: DiagramDoc = {
-            id: newId,
-            name: '未命名图 1',
-            engine: 'mermaid',
-            format: 'svg',
-            code: '',
-            updatedAt: now,
-          };
-          setEngine('mermaid');
-          setFormat('svg');
-          setCode('');
-          setCurrentId(newId);
-          return [doc];
+          const newDoc = createDefaultDiagram();
+          setCurrentId(newDoc.id);
+          return [newDoc];
         }
 
         const fallbackIndex = idx - 1 >= 0 ? idx - 1 : 0;
         const fallback = next[fallbackIndex];
         if (!fallback) return next;
         setCurrentId(fallback.id);
-        setEngine(fallback.engine);
-        setFormat(fallback.format);
-        setCode(fallback.code);
         return next;
       });
     },
