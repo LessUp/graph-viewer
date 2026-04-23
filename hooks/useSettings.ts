@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { logger } from '@/lib/logger';
+import { loadFromStorage, saveToStorage, migrateStorageKey } from '@/lib/storage';
+import { APP_CONFIG } from '@/lib/config';
 
 export interface AppSettings {
   // 渲染服务器配置
@@ -22,8 +23,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   editorFontSize: 13,
 };
 
-const STORAGE_KEY = 'graphviewer-settings';
-
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -35,15 +34,15 @@ export function useSettings() {
   // 从 localStorage 加载设置
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
-      }
-    } catch (e: unknown) {
-      logger.error('load-settings', { error: e instanceof Error ? e.message : 'Unknown error' });
-    }
+
+    // 迁移旧版键名到新键名
+    migrateStorageKey(
+      APP_CONFIG.legacyStorageKeys.settingsKey,
+      APP_CONFIG.storage.settingsKey,
+    );
+
+    const stored = loadFromStorage<Partial<AppSettings>>(APP_CONFIG.storage.settingsKey, {});
+    setSettings({ ...DEFAULT_SETTINGS, ...stored });
     setIsLoaded(true);
   }, []);
 
@@ -51,15 +50,7 @@ export function useSettings() {
   const saveSettings = useCallback((newSettings: Partial<AppSettings>) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        } catch (e: unknown) {
-          logger.error('save-settings', {
-            error: e instanceof Error ? e.message : 'Unknown error',
-          });
-        }
-      }
+      saveToStorage(APP_CONFIG.storage.settingsKey, updated);
       return updated;
     });
   }, []);

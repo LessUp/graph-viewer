@@ -6,6 +6,8 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
 import { logger } from '@/lib/logger';
+import { loadFromStorage, saveToStorage } from '@/lib/storage';
+import { APP_CONFIG } from '@/lib/config';
 
 export type VersionRecord = {
   id: string;
@@ -17,11 +19,7 @@ export type VersionRecord = {
   autoSave: boolean;
 };
 
-const STORAGE_KEY = 'graphviewer:versions:v1';
-const MAX_VERSIONS_PER_DIAGRAM = 50;
-const AUTO_SAVE_INTERVAL = 30000;
 const MAX_AUTO_SAVE_PER_DIAGRAM = 10;
-const STORAGE_WRITE_DEBOUNCE_MS = 250;
 
 function generateVersionId(): string {
   return `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -42,14 +40,15 @@ function sortVersions(records: VersionRecord[]): VersionRecord[] {
 }
 
 function trimDiagramVersions(records: VersionRecord[]): VersionRecord[] {
-  if (records.length <= MAX_VERSIONS_PER_DIAGRAM) {
+  const { maxVersionsPerDiagram } = APP_CONFIG.versionHistory;
+  if (records.length <= maxVersionsPerDiagram) {
     return records;
   }
 
   const manualVersions = records.filter((v) => !v.autoSave);
   const autoVersions = records.filter((v) => v.autoSave).slice(0, MAX_AUTO_SAVE_PER_DIAGRAM);
 
-  return sortVersions([...manualVersions, ...autoVersions]).slice(0, MAX_VERSIONS_PER_DIAGRAM);
+  return sortVersions([...manualVersions, ...autoVersions]).slice(0, maxVersionsPerDiagram);
 }
 
 export function useVersionHistory(diagramId: string, currentCode: string, currentEngine: Engine) {
@@ -73,34 +72,18 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const allVersions: VersionRecord[] = JSON.parse(raw);
-        versionsRef.current = allVersions;
-        setVersions(allVersions);
-      }
-    } catch (e: unknown) {
-      logger.error('load-version-history', {
-        error: e instanceof Error ? e.message : 'Unknown error',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    const allVersions = loadFromStorage<VersionRecord[]>(APP_CONFIG.storage.versionsKey, []);
+    versionsRef.current = allVersions;
+    setVersions(allVersions);
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || isLoading) return;
 
     const timer = window.setTimeout(() => {
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
-      } catch (e: unknown) {
-        logger.error('save-version-history', {
-          error: e instanceof Error ? e.message : 'Unknown error',
-        });
-      }
-    }, STORAGE_WRITE_DEBOUNCE_MS);
+      saveToStorage(APP_CONFIG.storage.versionsKey, versions);
+    }, APP_CONFIG.state.storageWriteDebounceMs);
 
     return () => window.clearTimeout(timer);
   }, [versions, isLoading]);
@@ -179,7 +162,7 @@ export function useVersionHistory(diagramId: string, currentCode: string, curren
       if (codeRef.current.trim()) {
         createVersion(undefined, true);
       }
-    }, AUTO_SAVE_INTERVAL);
+    }, APP_CONFIG.versionHistory.autoSaveIntervalMs);
 
     return () => window.clearInterval(timer);
   }, [diagramId, createVersion]);

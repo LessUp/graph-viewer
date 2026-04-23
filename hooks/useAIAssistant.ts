@@ -6,6 +6,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
 import { logger } from '@/lib/logger';
+import { loadFromStorage, saveToStorage } from '@/lib/storage';
+import { APP_CONFIG } from '@/lib/config';
 
 export type AIProvider = 'openai' | 'anthropic' | 'local' | 'custom';
 
@@ -54,7 +56,6 @@ const ANALYSIS_JSON_SCHEMA = `请以 JSON 格式回复，包含以下字段：
 - suggestions: array - 改进建议列表
 - explanation: string - 总体解释`;
 
-const CONFIG_STORAGE_KEY = 'graphviewer:ai-config:v1';
 const isStaticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true';
 
 const AI_BOUNDARY_NOTICE = isStaticExport
@@ -124,25 +125,15 @@ export function normalizeAIConfig(config: AIConfig): AIConfig {
 
 function loadConfig(): AIConfig {
   if (typeof window === 'undefined') return DEFAULT_CONFIG;
-  try {
-    const raw = window.localStorage.getItem(CONFIG_STORAGE_KEY);
-    if (raw) {
-      return normalizeAIConfig({ ...DEFAULT_CONFIG, ...JSON.parse(raw) });
-    }
-  } catch (e: unknown) {
-    logger.error('load-ai-config', { error: e instanceof Error ? e.message : 'Unknown error' });
-  }
-  return DEFAULT_CONFIG;
+  const stored = loadFromStorage<Partial<AIConfig>>(APP_CONFIG.storage.aiConfigKey, {});
+  return normalizeAIConfig({ ...DEFAULT_CONFIG, ...stored });
 }
 
 function saveConfig(config: AIConfig) {
   if (typeof window === 'undefined') return;
-  try {
-    const { apiKey, ...rest } = config;
-    window.localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(rest));
-  } catch (e: unknown) {
-    logger.error('save-ai-config', { error: e instanceof Error ? e.message : 'Unknown error' });
-  }
+  // API Key 不写入 localStorage
+  const { apiKey, ...rest } = config;
+  saveToStorage(APP_CONFIG.storage.aiConfigKey, rest);
 }
 
 export function useAIAssistant(engine: Engine) {
