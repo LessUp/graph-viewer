@@ -11,6 +11,9 @@ on:
       - 'public/**'
       - 'package.json'
       - 'package-lock.json'
+      - 'next.config.*'
+      - 'lighthouse.config.js'
+      - 'scripts/build-static-export.mjs'
       - '.github/workflows/lighthouse.yml'
   pull_request:
     branches: [master, main]
