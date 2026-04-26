@@ -12,6 +12,8 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'next.config.*'
+      - 'scripts/build-static-export.mjs'
+      - 'scripts/generate-sitemap.mjs'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
     inputs:
@@ -32,8 +34,6 @@ concurrency:
 
 env:
   NODE_VERSION: '22'
-  GITHUB_PAGES: 'true'
-  GITHUB_REPOSITORY: ${{ github.repository }}
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -57,6 +57,9 @@ jobs:
     needs: [validate]
     if: always() && (needs.validate.result == 'success' || needs.validate.result == 'skipped')
     runs-on: ubuntu-latest
+    env:
+      GITHUB_PAGES: 'true'
+      GITHUB_REPOSITORY: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
       
@@ -82,9 +85,6 @@ jobs:
       
       - name: Build static export
         run: npm run build:static
-        env:
-          GITHUB_PAGES: 'true'
-          GITHUB_REPOSITORY: ${{ github.repository }}
       
       - name: Generate sitemap
         run: |
