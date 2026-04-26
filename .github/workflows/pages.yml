@@ -112,21 +112,21 @@ jobs:
             mkdir -p ./out/editor
             REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)
             cat > ./out/editor/index.html << INDEXEOF
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0;url=/${REPO_NAME}/">
-  <script>
-    var basePath = '/${REPO_NAME}';
-    window.location.href = basePath + '/?redirect=' + encodeURIComponent(window.location.pathname);
-  </script>
-</head>
-<body>
-  <p>Loading GraphViewer...</p>
-</body>
-</html>
-INDEXEOF
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta http-equiv="refresh" content="0;url=/${REPO_NAME}/">
+              <script>
+                var basePath = '/${REPO_NAME}';
+                window.location.href = basePath + '/?redirect=' + encodeURIComponent(window.location.pathname);
+              </script>
+            </head>
+            <body>
+              <p>Loading GraphViewer...</p>
+            </body>
+            </html>
+            INDEXEOF
             echo "✅ Created editor/index.html for SPA routing"
           fi
           
@@ -157,20 +157,20 @@ INDEXEOF
           # Add security headers for GitHub Pages
           # 为 GitHub Pages 添加安全响应头
           cat > ./out/_headers << 'EOF'
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
-/*.js
-  Cache-Control: public, max-age=31536000, immutable
-/*.css
-  Cache-Control: public, max-age=31536000, immutable
-/*.svg
-  Cache-Control: public, max-age=31536000, immutable
-/*.woff2
-  Cache-Control: public, max-age=31536000, immutable
-EOF
+          /*
+            X-Frame-Options: DENY
+            X-Content-Type-Options: nosniff
+            Referrer-Policy: strict-origin-when-cross-origin
+            Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
+          /*.js
+            Cache-Control: public, max-age=31536000, immutable
+          /*.css
+            Cache-Control: public, max-age=31536000, immutable
+          /*.svg
+            Cache-Control: public, max-age=31536000, immutable
+          /*.woff2
+            Cache-Control: public, max-age=31536000, immutable
+          EOF
           
           echo "✅ Created _headers configuration"
       
