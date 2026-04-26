@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -158,7 +158,7 @@ const CODE_EXAMPLES = [
   { name: 'Graphviz DOT', code: SAMPLES['graphviz'], lang: 'dot' },
 ];
 
-export default function LandingPage() {
+function LandingPageContent() {
   const [activeTab, setActiveTab] = useState(0);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -723,5 +723,13 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-b from-slate-50 to-white" />}>
+      <LandingPageContent />
+    </Suspense>
   );
 }
