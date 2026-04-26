@@ -120,6 +120,14 @@ async function verifyBuildOutput(outDir) {
   console.log('');
 }
 
+function resolveGitHubPagesEnv() {
+  if (process.env.GITHUB_PAGES !== undefined) {
+    return process.env.GITHUB_PAGES;
+  }
+
+  return process.env.LHCI === 'true' ? 'false' : 'true';
+}
+
 try {
   console.log(`🚀 Starting static export build...`);
   console.log(`📦 Repository: ${process.env.GITHUB_REPOSITORY || 'local'}`);
@@ -142,7 +150,7 @@ try {
   // 运行 Next.js 构建
   await run('npm', ['run', 'build'], workDir, {
     ...process.env,
-    GITHUB_PAGES: 'true',
+    GITHUB_PAGES: resolveGitHubPagesEnv(),
     GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
   });
 
