@@ -9,8 +9,9 @@ const isStaticExport =
   process.env.GITHUB_PAGES === 'true' || process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true';
 
 export const runtime = 'nodejs';
-// Use force-static for static export compatibility / 为静态导出兼容性使用 force-static
-export const dynamic = isStaticExport ? 'force-static' : 'force-dynamic';
+// API routes are removed during static export build, so always use force-dynamic
+// API 路由在静态导出构建期间会被移除，因此始终使用 force-dynamic
+export const dynamic = 'force-dynamic';
 
 // === 速率限制 ===
 type RateLimitEntry = { count: number; resetAt: number };
