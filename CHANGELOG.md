@@ -1,6 +1,17 @@
 # GraphViewer 变更日志
 
-所有重要变更按时间倒序记录。详细内容见 [`changelog/`](./changelog/) 目录。
+所有重要变更按时间倒序记录。详细内容见 [`changelog/archive/`](./changelog/archive/) 目录。
+
+## [2026-04-27] 项目重构与规范化
+
+全面清理项目结构，删除冗余目录和配置，精简 CI/CD 工作流：
+
+- **删除冗余目录**：`_bmad/`, `_bmad-output/`, `_output/`, `.windsurf/`
+- **精简 AI 指令**：删除 `QWEN.md`，精简 `copilot-instructions.md`
+- **精简 CI/CD**：`pages.yml` (337→108行), `lighthouse.yml` (180→53行)
+- **精简文档**：合并 `installation.md` 到 `quick-start.md`
+- **归档 changelog**：所有历史 changelog 移入 `archive/`
+- **清理分支**：关闭 9 个过时的 dependabot PRs
 
 ## [2026-04-23] OpenSpec 规范迁移
 
