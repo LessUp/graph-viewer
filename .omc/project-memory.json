@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1776969546701,
+  "lastScanned": 1777260760814,
   "projectRoot": "/home/shane/dev/graph-viewer",
   "techStack": {
     "languages": [
@@ -98,28 +98,28 @@
       "path": "_bmad",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1776969546657,
+      "lastAccessed": 1777260760686,
       "keyFiles": []
     },
     "_bmad-output": {
       "path": "_bmad-output",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1776969546679,
+      "lastAccessed": 1777260760692,
       "keyFiles": []
     },
     "_output": {
       "path": "_output",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1776969546686,
+      "lastAccessed": 1777260760745,
       "keyFiles": []
     },
     "app": {
       "path": "app",
       "purpose": "Application code",
       "fileCount": 3,
-      "lastAccessed": 1776969546688,
+      "lastAccessed": 1777260760766,
       "keyFiles": [
         "globals.css",
         "layout.tsx",
@@ -130,7 +130,7 @@
       "path": "changelog",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1776969546689,
+      "lastAccessed": 1777260760771,
       "keyFiles": [
         "2026-04-17-documentation-restructure.md",
         "2026-04-17-project-improvements.md",
@@ -143,14 +143,14 @@
       "path": "components",
       "purpose": "UI components",
       "fileCount": 0,
-      "lastAccessed": 1776969546689,
+      "lastAccessed": 1777260760782,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 2,
-      "lastAccessed": 1776969546690,
+      "lastAccessed": 1777260760783,
       "keyFiles": [
         "README.md",
         "index.md"
@@ -160,7 +160,7 @@
       "path": "hooks",
       "purpose": null,
       "fileCount": 10,
-      "lastAccessed": 1776969546691,
+      "lastAccessed": 1777260760787,
       "keyFiles": [
         "useAIActions.ts",
         "useAIAssistant.ts",
@@ -173,7 +173,7 @@
       "path": "lib",
       "purpose": "Library code",
       "fileCount": 11,
-      "lastAccessed": 1776969546692,
+      "lastAccessed": 1777260760787,
       "keyFiles": [
         "config.ts",
         "diagramConfig.ts",
@@ -186,7 +186,7 @@
       "path": "openspec",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1776969546693,
+      "lastAccessed": 1777260760788,
       "keyFiles": [
         "README.md",
         "config.yaml"
@@ -196,7 +196,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 4,
-      "lastAccessed": 1776969546695,
+      "lastAccessed": 1777260760788,
       "keyFiles": [
         "404.html",
         "favicon.svg",
@@ -208,7 +208,7 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 6,
-      "lastAccessed": 1776969546696,
+      "lastAccessed": 1777260760788,
       "keyFiles": [
         "bench.mjs",
         "build-optimized.mjs",
@@ -221,14 +221,14 @@
       "path": "app/api",
       "purpose": "API routes",
       "fileCount": 0,
-      "lastAccessed": 1776969546698,
+      "lastAccessed": 1777260760791,
       "keyFiles": []
     },
     "docs/assets": {
       "path": "docs/assets",
       "purpose": "Static assets",
       "fileCount": 1,
-      "lastAccessed": 1776969546700,
+      "lastAccessed": 1777260760798,
       "keyFiles": [
         "screenshot-main.png.placeholder"
       ]
@@ -237,7 +237,7 @@
       "path": "hooks/__tests__",
       "purpose": "Test files",
       "fileCount": 4,
-      "lastAccessed": 1776969546700,
+      "lastAccessed": 1777260760801,
       "keyFiles": [
         "useDiagramRender.test.tsx",
         "useDiagramState.test.tsx",
@@ -248,7 +248,7 @@
       "path": "lib/__tests__",
       "purpose": "Test files",
       "fileCount": 4,
-      "lastAccessed": 1776969546700,
+      "lastAccessed": 1777260760811,
       "keyFiles": [
         "diagramConfig.test.ts",
         "errorUtils.test.ts",
@@ -256,6 +256,139 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "CHANGELOG.md",
+      "accessCount": 3,
+      "lastAccessed": 1777262116138,
+      "type": "file"
+    },
+    {
+      "path": "docs/en/01-getting-started/01-quick-start.md",
+      "accessCount": 2,
+      "lastAccessed": 1777261609307,
+      "type": "file"
+    },
+    {
+      "path": "docs/zh-CN/01-getting-started/01-quick-start.md",
+      "accessCount": 2,
+      "lastAccessed": 1777261654570,
+      "type": "file"
+    },
+    {
+      "path": "openspec",
+      "accessCount": 1,
+      "lastAccessed": 1777260890275,
+      "type": "directory"
+    },
+    {
+      "path": "AGENTS.md",
+      "accessCount": 1,
+      "lastAccessed": 1777260902048,
+      "type": "file"
+    },
+    {
+      "path": "openspec/specs/README.md",
+      "accessCount": 1,
+      "lastAccessed": 1777260902093,
+      "type": "file"
+    },
+    {
+      "path": "openspec/specs/architecture/0001-core-architecture.md",
+      "accessCount": 1,
+      "lastAccessed": 1777260902183,
+      "type": "file"
+    },
+    {
+      "path": "docs",
+      "accessCount": 1,
+      "lastAccessed": 1777260911637,
+      "type": "directory"
+    },
+    {
+      "path": "changelog/2026-04-23-openspec-integration.md",
+      "accessCount": 1,
+      "lastAccessed": 1777260911820,
+      "type": "file"
+    },
+    {
+      "path": "changelog/2026-04-17-documentation-restructure.md",
+      "accessCount": 1,
+      "lastAccessed": 1777260911918,
+      "type": "file"
+    },
+    {
+      "path": ".windsurf",
+      "accessCount": 1,
+      "lastAccessed": 1777260912250,
+      "type": "directory"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1777260912335,
+      "type": "file"
+    },
+    {
+      "path": "QWEN.md",
+      "accessCount": 1,
+      "lastAccessed": 1777260920009,
+      "type": "file"
+    },
+    {
+      "path": "changelog",
+      "accessCount": 1,
+      "lastAccessed": 1777260920178,
+      "type": "directory"
+    },
+    {
+      "path": "openspec/config.yaml",
+      "accessCount": 1,
+      "lastAccessed": 1777260920267,
+      "type": "file"
+    },
+    {
+      "path": "openspec/specs/product/roadmap.md",
+      "accessCount": 1,
+      "lastAccessed": 1777261032865,
+      "type": "file"
+    },
+    {
+      "path": "openspec/specs/product/todo.md",
+      "accessCount": 1,
+      "lastAccessed": 1777261035879,
+      "type": "file"
+    },
+    {
+      "path": "docs/README.md",
+      "accessCount": 1,
+      "lastAccessed": 1777261036001,
+      "type": "file"
+    },
+    {
+      "path": ".windsurf/rules/graphviewer-project.md",
+      "accessCount": 1,
+      "lastAccessed": 1777261050472,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 1,
+      "lastAccessed": 1777261050586,
+      "type": "file"
+    },
+    {
+      "path": "docs/en/01-getting-started/02-installation.md",
+      "accessCount": 1,
+      "lastAccessed": 1777261573353,
+      "type": "file"
+    },
+    {
+      "path": "CLAUDE.md",
+      "accessCount": 1,
+      "lastAccessed": 1777261859562,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }
