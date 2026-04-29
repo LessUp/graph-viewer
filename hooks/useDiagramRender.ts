@@ -163,6 +163,7 @@ export type UseDiagramRenderResult = {
   error: string;
   canUseLocalRender: boolean;
   showPreview: boolean;
+  wasmLoadError: string;
   renderDiagram: (signal?: AbortSignal) => Promise<void>;
   downloadDiagram: () => Promise<void>;
   clearError: () => void;
@@ -180,6 +181,7 @@ export function useDiagramRender(
   const [output, setOutput] = useState<RenderOutputState>(EMPTY_OUTPUT);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setErrorState] = useState<string>('');
+  const [wasmLoadError, setWasmLoadError] = useState<string>('');
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
 
@@ -197,10 +199,18 @@ export function useDiagramRender(
 
   useEffect(() => {
     if (engine === 'mermaid' || engine === 'flowchart') {
-      loadMermaid().catch(() => undefined);
+      loadMermaid().catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        setWasmLoadError(`Mermaid 加载失败: ${msg}`);
+        logger.error('wasm-load', { engine: 'mermaid', error: msg });
+      });
     }
     if (engine === 'graphviz') {
-      loadGraphviz().catch(() => undefined);
+      loadGraphviz().catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        setWasmLoadError(`Graphviz WASM 加载失败: ${msg}。请检查网络连接。`);
+        logger.error('wasm-load', { engine: 'graphviz', error: msg });
+      });
     }
   }, [engine]);
 
@@ -369,6 +379,7 @@ export function useDiagramRender(
     error,
     canUseLocalRender,
     showPreview,
+    wasmLoadError,
     renderDiagram,
     downloadDiagram,
     clearError,

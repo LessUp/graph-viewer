@@ -104,6 +104,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // === 请求体大小限制 ===
+  const MAX_BODY_SIZE = 150_000; // 略大于 maxCodeLength (100KB)
+  const contentLength = req.headers.get('content-length');
+  if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
+    logger.warn('render', { message: 'Request body too large', contentLength });
+    return NextResponse.json(
+      { error: 'Request body too large', code: 'PAYLOAD_TOO_LARGE', maxLength: MAX_BODY_SIZE },
+      { status: 413 },
+    );
+  }
+
   // === 速率限制检查 ===
   const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   pruneRateLimitCache();

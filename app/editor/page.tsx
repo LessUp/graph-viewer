@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PreviewPanel } from '@/components/preview/PreviewPanel';
 import { SettingsModal } from '@/components/dialogs/SettingsModal';
@@ -72,6 +72,7 @@ export default function EditorPage() {
     error,
     canUseLocalRender,
     showPreview,
+    wasmLoadError,
     renderDiagram,
     clearError,
     setError,
@@ -88,6 +89,15 @@ export default function EditorPage() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('editor');
   const { toast, showToast } = useToast();
+
+  // WASM 加载错误提示（仅当错误变化时显示）
+  const lastWasmErrorRef = useRef<string>('');
+  useEffect(() => {
+    if (wasmLoadError && wasmLoadError !== lastWasmErrorRef.current) {
+      lastWasmErrorRef.current = wasmLoadError;
+      showToast(wasmLoadError, 'error');
+    }
+  }, [wasmLoadError, showToast]);
 
   // 对话框状态
   const [confirmDialog, setConfirmDialog] = useState<{

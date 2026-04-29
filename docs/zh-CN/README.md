@@ -7,7 +7,6 @@ GraphViewer 开发、部署和使用的完整指南。
 | 指南                                              | 说明         |
 | ------------------------------------------------- | ------------ |
 | [快速开始](01-getting-started/01-quick-start.md)  | 5 分钟上手   |
-| [安装指南](01-getting-started/02-installation.md) | 详细安装说明 |
 | [架构概览](01-getting-started/03-architecture.md) | 系统设计概述 |
 
 ## 开发指南
