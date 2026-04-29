@@ -1,7 +1,0 @@
-{
-  "tool_name": "Agent",
-  "tool_input_preview": "{\"description\":\"探索文档和代码质量\",\"prompt\":\"探索项目文档和代码质量现状：\\n\\n1. **文档目录分析**：\\n   - 检查 docs/ 目录内容和结构\\n   - 识别过时、冗余、低质量的文档\\n   - 检查 changelog/ 目录，分析changelog文件的质量和必要性\\n\\n2. **代码质量扫描**：\\n   - 检查 components/ 目录结...",
-  "error": "No assistant messages found",
-  "timestamp": "2026-04-27T03:34:36.925Z",
-  "retry_count": 3
-}

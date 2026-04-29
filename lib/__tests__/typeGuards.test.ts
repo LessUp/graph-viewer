@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  isDiagramDoc,
-  isDiagramDocArray,
-  isPersistedWorkspace,
-} from '../typeGuards';
+import { isDiagramDoc, isDiagramDocArray, isPersistedWorkspace } from '../typeGuards';
 import type { DiagramDoc } from '../types';
 
 describe('typeGuards', () => {

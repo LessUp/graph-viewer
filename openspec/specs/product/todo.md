@@ -1,109 +1,29 @@
-# Product TODO
+# GraphViewer 稳定收尾清单
 
-> Priority tags: `[P1]` High, `[P2]` Medium, `[P3]` Low
-> Module tags: `[frontend]`, `[backend]`, `[devops]`, `[docs]`
+> 本清单只记录当前稳定版必须保持的工程质量门禁和收尾事项。它不是开放式 backlog；不承诺新增功能。
 
----
+## 必须保持的完成定义
 
-## Editor & Preview
+- [x] 多图表工作区、版本历史、模板入口和本地持久化可用
+- [x] Mermaid、Graphviz、Flowchart.js 可在静态演示版本地渲染
+- [x] 完整服务版可通过 Kroki 渲染远程引擎和 PNG/PDF
+- [x] `/api/render` 有输入校验、超时、缓存、限流和错误响应
+- [x] SVG 输出在预览前经过净化
+- [x] `npm run lint`、`npm run typecheck`、`npm run test`、`npm run build` 可作为主线质量门禁
 
-### Editor ✅ Complete
+## 当前收尾事项
 
-- [x] [P1][frontend] Selected CodeMirror as editor
-- [x] [P1][frontend] Editor component implementation
-- [x] [P1][frontend] Syntax highlighting configuration
-- [x] [P1][frontend] Line numbers, indentation, bracket matching
-- [x] [P1][frontend] `Ctrl+Enter` triggers render
-- [x] [P2][frontend] `Ctrl+S` exports source code
+- [ ] 确认 GitHub Pages 首页、README、docs、OpenSpec 对“演示版 vs 完整版”的描述一致
+- [ ] 确认 AI 指令文件只保留项目必要规则，不复制通用模板
+- [ ] 确认 CI/CD 只服务主线质量门禁和 Pages 部署
+- [ ] 确认依赖升级不再自动生成长期维护分支
+- [ ] 确认最终分支和 worktree 状态干净
 
-### Preview Area ✅ Complete
+## 未来变更入口
 
-- [x] [P1][frontend] SVG preview zoom
-- [x] [P1][frontend] Mouse drag pan
-- [x] [P2][frontend] Fit to screen button
-- [x] [P2][frontend] PNG/PDF preview styling and error handling
+如需恢复新增功能开发，请按以下顺序处理：
 
-### Live Preview ✅ Complete
-
-- [x] [P2][frontend] Live preview toggle
-- [x] [P2][frontend] Debounced auto-render
-
-### Share Links ✅ Complete
-
-- [x] [P1][frontend] LZ-string compression
-- [x] [P2][frontend] Graceful decode error handling
-
----
-
-## Stability & Engineering
-
-### Testing
-
-- [x] [P1][backend] Vitest configuration
-- [x] [P1][backend] `lib/diagramConfig.ts` unit tests
-- [x] [P1][backend] `app/api/render/route.ts` unit tests
-- [x] [P2][backend] Hooks basic tests
-
-### Code Quality ✅ Complete
-
-- [x] [P1][devops] ESLint integration
-- [x] [P1][devops] Prettier integration
-- [x] [P1][devops] Lint scripts
-
-### Deployment ✅ Complete
-
-- [x] [P1][devops] Fixed deploy.sh health check port
-- [x] [P2][devops] Optimized Dockerfile
-- [x] [P2][devops] Node.js version unified to 22
-
----
-
-## Advanced Features
-
-### Multi-Diagram Management ✅ Complete
-
-- [x] [P1][frontend] Multi-diagram data structure
-- [x] [P1][frontend] Diagram list switching
-- [x] [P2][frontend] localStorage persistence
-
-### Template Library ✅ Complete
-
-- [x] [P2][frontend] Template configuration structure
-- [x] [P2][frontend] Common templates added
-- [x] [P2][frontend] "Create from template" entry point
-
-### Import/Export ✅ Complete
-
-- [x] [P2][frontend] Import source files
-- [x] [P2][frontend] Export source code files
-
----
-
-## Operations & Security
-
-### CI/CD ✅ Complete
-
-- [x] [P2][devops] GitHub Actions pipeline
-- [x] [P2][devops] CI smoke tests
-
-### Security ✅ Complete
-
-- [x] [P3][frontend] SVG sanitization (DOMPurify)
-- [x] [P3][docs] Security documentation
-
----
-
-## Pending Items
-
-### Feature Enhancements
-
-- [ ] [P3][backend] `/api/share` short-link sharing
-
-### Operations Enhancements
-
-- [ ] [P3][backend] Structured logging (JSON)
-- [ ] [P3][backend] Error tracking (Sentry)
-
-### Documentation
-
-- [ ] [P3][docs] Built-in template list with screenshots
+1. 在 `openspec/changes/<change-name>/` 创建 proposal/design/tasks/spec delta。
+2. 更新受影响的 `openspec/specs/` 文档。
+3. 按 `AGENTS.md` 和 `CLAUDE.md` 的引擎/API/导出 checklist 实施。
+4. 运行完整验证后再合并到主线。

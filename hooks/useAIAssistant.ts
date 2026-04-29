@@ -5,7 +5,6 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
-import { logger } from '@/lib/logger';
 import { loadFromStorage, saveToStorage } from '@/lib/storage';
 import { APP_CONFIG } from '@/lib/config';
 
@@ -132,7 +131,7 @@ function loadConfig(): AIConfig {
 function saveConfig(config: AIConfig) {
   if (typeof window === 'undefined') return;
   // API Key 不写入 localStorage
-  const { apiKey, ...rest } = config;
+  const { apiKey: _apiKey, ...rest } = config;
   saveToStorage(APP_CONFIG.storage.aiConfigKey, rest);
 }
 

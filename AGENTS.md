@@ -1,176 +1,88 @@
-# AGENTS.md — AI Agent Workflow Specification
+# AGENTS.md — GraphViewer AI 代理总章
 
-> This file defines the AI agent workflow for GraphViewer.
-> For project-specific coding conventions, see [CLAUDE.md](CLAUDE.md).
+> 本文件是所有 AI 代理进入 GraphViewer 仓库后的总入口。它定义“先读什么、能改什么、必须同步什么、绝不能做什么”。具体命令和代码 checklist 见 [`CLAUDE.md`](CLAUDE.md)。
 
-## Project Philosophy: Spec-Driven Development (SDD)
+## 项目一句话
 
-This project strictly follows the **Spec-Driven Development (SDD)** paradigm with **OpenSpec** for change management. All code implementations must use `openspec/specs/` as the Single Source of Truth.
+GraphViewer 是 Next.js 15 + React 19 构建的多引擎图表编辑器：静态演示版在浏览器本地渲染 Mermaid / Graphviz / Flowchart.js，完整服务版通过 `/api/render` 代理 Kroki 支持 PlantUML、D2、Vega 等 16+ 引擎和 PNG/PDF 导出。
 
-## Directory Context
+## 代理工作原则
 
-| Directory                      | Purpose                                     |
-| ------------------------------ | ------------------------------------------- |
-| `openspec/specs/product/`      | Product features, roadmap, TODO             |
-| `openspec/specs/architecture/` | Technical design documents (RFCs)           |
-| `openspec/specs/api/`          | API interface definitions (OpenAPI)         |
-| `openspec/specs/data/`         | Data model definitions                      |
-| `openspec/specs/testing/`      | BDD test specifications                     |
-| `openspec/changes/`            | Active change proposals                     |
-| `openspec/changes/archive/`    | Archived changes                            |
-| `docs/`                        | User documentation, tutorials, setup guides |
+1. **规格先行**：行为、API、架构或部署策略变化必须先读 `openspec/specs/`。新功能或设计影响较大的 bug 修复应创建 `openspec/changes/<change>/` 提案。
+2. **小修可直改**：拼写、链接、测试补强、无行为变化的重构可直接修改，但必须同步受影响文档和测试。
+3. **单一事实源**：引擎、格式、展示分组、Kroki 类型和本地渲染能力均来自 `lib/diagramConfig.ts`，业务代码禁止散落 magic string。
+4. **静态/完整双模式**：任何渲染、导出或路由改动都必须同时考虑 GitHub Pages 静态演示版和 Docker/Node 完整服务版。
+5. **测试保护行为**：修 bug 必须先写失败测试；改 API、hook、导出或配置必须运行相关测试。
+6. **不制造维护负担**：不得重新引入 `QWEN.md`、`.windsurf/`、Dependabot 自动分支策略或泛化 AI 模板目录。
 
-## OpenSpec Workflow
+## 必读规格
 
-### Quick Reference
+| 场景      | 必读                                                                  |
+| --------- | --------------------------------------------------------------------- |
+| 架构/部署 | `openspec/specs/architecture/0001-core-architecture.md`               |
+| API 响应  | `openspec/specs/api/openapi.yaml`                                     |
+| 数据结构  | `openspec/specs/data/schema-v1.dbml`                                  |
+| 测试行为  | `openspec/specs/testing/diagram-render.feature`                       |
+| 产品边界  | `openspec/specs/product/roadmap.md`, `openspec/specs/product/todo.md` |
 
-| Command         | Purpose                                                           |
-| --------------- | ----------------------------------------------------------------- |
-| `/opsx:explore` | Investigate codebase, clarify requirements                        |
-| `/opsx:propose` | Create change with all artifacts (proposal, specs, design, tasks) |
-| `/opsx:apply`   | Implement tasks from tasks.md                                     |
-| `/opsx:archive` | Finalize and merge delta specs                                    |
+## 高风险改动门禁
 
-### OpenSpec Directory Structure
+### 引擎或格式
 
-```
-openspec/
-├── config.yaml           # Project configuration (context, rules)
-├── specs/                # System behavior specs (source of truth)
-│   └── <domain>/
-│       └── spec.md
-├── changes/              # Proposed updates (one folder per change)
-│   └── <change-name>/
-│       ├── proposal.md   # Why & what
-│       ├── specs/        # Delta specs (ADDED/MODIFIED/REMOVED)
-│       ├── design.md     # How (technical approach)
-│       └── tasks.md      # Implementation checklist
-└── archive/              # Archived changes
-```
+同步检查：
 
-## AI Agent Workflow Instructions
+- `lib/diagramConfig.ts`
+- `lib/diagramSamples.ts`
+- `lib/syntaxHighlight.ts`
+- `lib/exportUtils.ts`
+- `hooks/useDiagramRender.ts`
+- `app/api/render/route.ts`
+- `components/editor/EditorPanel.tsx`
+- `components/preview/PreviewPanel.tsx`
+- `components/preview/PreviewToolbar.tsx`
+- `app/page.tsx`
+- `openspec/specs/api/openapi.yaml`
 
-When you (AI) are asked to implement a new feature, modify existing functionality, or fix a bug, **you MUST strictly follow this workflow without skipping any steps**:
+### 渲染链路
 
-### Step 1: Explore (探索)
+- 本地渲染：`hooks/useDiagramRender.ts` 动态加载 Mermaid / Graphviz WASM。
+- 实时预览：`hooks/useLivePreview.ts` 负责 debounce 和取消，必须防止旧请求覆盖新输出。
+- 远程渲染：`app/api/render/route.ts` 只做请求编排；缓存和限流在 `lib/server/`。
+- 静态导出：`scripts/build-static-export.mjs` 会移除 `app/api`，因此静态版不得依赖后端 API。
 
-```
-/opsx:explore
-```
+### 安全边界
 
-- Investigate the codebase to understand the problem
-- Read relevant specs in `openspec/specs/`
-- Clarify requirements with the user
-- Do NOT implement code in this phase
+- Kroki URL 必须规范化并受 allowlist 约束。
+- 输入长度、超时、rate limit、inflight 去重不可绕过。
+- SVG 进入预览前必须净化。
+- API Key 不得写入 localStorage；AI 面板只能浏览器直连供应商。
 
-### Step 2: Propose (提案)
+## Git 与工程策略
 
-```
-/opsx:propose <feature-name>
-```
+- 默认主线为 `master`；不要创建长期维护分支。
+- 依赖升级采用人工批量升级，不使用 Dependabot 自动分支。
+- worktree 只用于临时隔离；完成后必须移除，不能把会话状态提交进仓库。
+- `.omc/`、本地配置、构建产物和工具缓存不得进入提交。
 
-This creates:
-
-- `openspec/changes/<name>/proposal.md` — Intent, scope, approach
-- `openspec/changes/<name>/specs/` — Delta specs (ADDED/MODIFIED/REMOVED requirements)
-- `openspec/changes/<name>/design.md` — Technical design
-- `openspec/changes/<name>/tasks.md` — Implementation checklist
-
-**Wait for user confirmation** on the proposal before proceeding to implementation.
-
-### Step 3: Apply (实现)
-
-```
-/opsx:apply
-```
-
-- Work through tasks, checking them off as you go
-- Update artifacts if you discover design issues during implementation
-- When writing code, **100% comply with spec definitions**
-- **No Gold-Plating**: Do not add features not defined in the specs
-- Follow existing coding conventions defined in `CLAUDE.md`
-
-### Step 4: Archive (归档)
-
-```
-/opsx:archive
-```
-
-- Merges delta specs into main specs
-- Moves change to `openspec/changes/archive/`
-
-## When to Use OpenSpec vs Direct Edits
-
-| Scenario                   | Use                                                 |
-| -------------------------- | --------------------------------------------------- |
-| New feature development    | OpenSpec (`/opsx:propose`)                          |
-| Bug fix with design impact | OpenSpec (`/opsx:propose`)                          |
-| Quick typo/small fix       | Direct edit, update specs if needed                 |
-| API contract changes       | OpenSpec + update `openspec/specs/api/openapi.yaml` |
-| Architecture decision      | Create RFC in `openspec/specs/architecture/`        |
-
-## Code Generation Rules
-
-- Any externally exposed API changes **must** sync with `openspec/specs/api/openapi.yaml`.
-- If uncertain about technical details, consult `openspec/specs/architecture/` for architecture conventions. **Do not invent design patterns.**
-- For diagram engine or format changes, follow the Engine/Format Change Checklist in CLAUDE.md.
-
-## Why This Workflow?
-
-| Problem                      | Solution                                                                |
-| ---------------------------- | ----------------------------------------------------------------------- |
-| AI hallucination             | Forcing spec review first anchors AI thinking within defined boundaries |
-| Code-documentation drift     | "Update specs before code" ensures they stay synchronized               |
-| Inconsistent implementations | Spec definitions provide concrete contracts to follow                   |
-| Unclear acceptance criteria  | `openspec/specs/testing/` provides explicit test requirements           |
-| Lost context across sessions | OpenSpec preserves change history in `openspec/changes/`                |
-
-## Quick Reference
-
-### Commands
+## 验证命令
 
 ```bash
-# Development
-npm run dev              # Start dev server on port 3000
-npm run build            # Standard build (with API routes)
-npm run build:static     # Static export for GitHub Pages
-npm run start            # Production server
-
-# Testing
-npm run test             # Run unit tests (vitest)
-npm run test:watch       # Watch mode
-npm run test:smoke       # Smoke test (endpoint availability)
-npm run bench            # Performance benchmarks
-
-# Code Quality
-npm run lint             # ESLint check
-npm run lint:fix         # Auto-fix ESLint issues
-npm run format           # Prettier format
-npm run typecheck        # TypeScript type check (tsc --noEmit)
-
-# OpenSpec CLI
-openspec status          # Show change status
-openspec list            # List active changes
+npm run lint
+npm run format:check
+npm run typecheck
+npm run test
+npm run build
+npm run build:static
 ```
 
-### Architecture Overview
+生产服务器 smoke test 仅在 `npm run build` 后运行：
 
-**GraphViewer** is a Next.js 15 + React 19 app for visualizing 16+ diagram engines with hybrid rendering (local WASM + remote Kroki).
+```bash
+npm run test:smoke http://127.0.0.1:3000
+```
 
-For detailed architecture, see [RFC-0001: Core Architecture](openspec/specs/architecture/0001-core-architecture.md).
+## 输出语言
 
-### API Routes
-
-| Endpoint           | Description                                                           |
-| ------------------ | --------------------------------------------------------------------- |
-| `POST /api/render` | Kroki proxy with in-memory cache (TTL 120s), 100KB limit, 10s timeout |
-| `GET /api/healthz` | Health check for Docker/Netlify                                       |
-
-For full API specification, see [OpenAPI Specification](openspec/specs/api/openapi.yaml).
-
-## Related Documents
-
-- [CLAUDE.md](CLAUDE.md) — Claude Code specific instructions and coding conventions
-- [CONTRIBUTING.md](CONTRIBUTING.md) — Contribution guide for human contributors
-- [openspec/specs/README.md](openspec/specs/README.md) — Specifications directory index
-- [OpenSpec Docs](https://github.com/Fission-AI/OpenSpec) — OpenSpec documentation
+- 用户交互默认中文。
+- UI 文案保持中文。
+- 用户文档可按受众使用中文或中英双语；不要混入无项目上下文的 boilerplate。

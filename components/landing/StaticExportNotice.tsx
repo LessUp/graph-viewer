@@ -16,12 +16,17 @@ import {
   Cpu,
   Sparkles,
 } from 'lucide-react';
+import { ENGINE_CONFIGS, LOCAL_RENDER_ENGINES } from '@/lib/diagramConfig';
+
+const LOCAL_RENDER_ENGINE_LABELS = LOCAL_RENDER_ENGINES.map(
+  (engine) => ENGINE_CONFIGS[engine].label,
+);
 
 const LIMITATIONS = [
   {
     icon: Cpu,
-    title: '仅 3 个引擎可用',
-    desc: 'Mermaid、Graphviz、Flowchart.js（本地 WASM 渲染）',
+    title: `仅 ${LOCAL_RENDER_ENGINE_LABELS.length} 个引擎可用`,
+    desc: `${LOCAL_RENDER_ENGINE_LABELS.join('、')}（本地 WASM 渲染）`,
     available: true,
   },
   {
@@ -205,7 +210,7 @@ export function StaticExportNotice() {
         {!showDetails && (
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-amber-200/60 pt-3">
             <span className="text-xs font-medium text-amber-700">当前可用引擎：</span>
-            {['Mermaid', 'Graphviz', 'Flowchart.js'].map((engine) => (
+            {LOCAL_RENDER_ENGINE_LABELS.map((engine) => (
               <span
                 key={engine}
                 className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700"

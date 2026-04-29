@@ -36,10 +36,7 @@ export function useSettings() {
     if (typeof window === 'undefined') return;
 
     // 迁移旧版键名到新键名
-    migrateStorageKey(
-      APP_CONFIG.legacyStorageKeys.settingsKey,
-      APP_CONFIG.storage.settingsKey,
-    );
+    migrateStorageKey(APP_CONFIG.legacyStorageKeys.settingsKey, APP_CONFIG.storage.settingsKey);
 
     const stored = loadFromStorage<Partial<AppSettings>>(APP_CONFIG.storage.settingsKey, {});
     setSettings({ ...DEFAULT_SETTINGS, ...stored });

@@ -110,7 +110,7 @@ const nextConfig = {
   // ===========================================================================
   // Webpack Optimizations / Webpack 优化
   // ===========================================================================
-  webpack: (config, { dev, isServer, nextRuntime }) => {
+  webpack: (config, { dev, isServer, nextRuntime: _nextRuntime }) => {
     // Only apply optimizations for client-side production builds
     if (!dev && !isServer) {
       // Split chunks more aggressively
@@ -172,6 +172,7 @@ const nextConfig = {
 
       // Add resource hints for critical assets
       config.plugins.push(
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         new (require('webpack').DefinePlugin)({
           'process.env.GITHUB_PAGES': JSON.stringify(isGitHubPages),
         }),

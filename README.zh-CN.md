@@ -69,7 +69,7 @@
 ## 📸 界面截图
 
 <p align="center">
-  <img src="https://via.placeholder.com/800x500/1a1a2e/ffffff?text=GraphViewer+截图" alt="GraphViewer 主界面" width="800">
+  <img src="./public/screenshots/editor-preview.svg" alt="GraphViewer 编辑器与实时预览界面" width="800">
 </p>
 
 <p align="center">
@@ -197,7 +197,7 @@ docker compose --profile prod --profile kroki up -d
 npm run build:static
 ```
 
-详细说明请参见 [部署指南](docs/zh-CN/03-deployment/01-docker.md)。
+静态托管详见 [GitHub Pages 指南](docs/zh-CN/03-deployment/02-github-pages.md)，完整服务模式详见 [Docker 指南](docs/zh-CN/03-deployment/01-docker.md)。
 
 ## 🛠️ 开发
 
@@ -251,9 +251,7 @@ GraphViewer 实现多层安全防护：
 
 ## 🗺️ 路线图
 
-- **计划中**: 新增图表引擎（WireViz、Symbols）
-- **计划中**: 团队协作功能
-- **进行中**: 查看 [项目 Issues](https://github.com/LessUp/graph-viewer/issues)
+GraphViewer 当前处于稳定收尾阶段。优先级是可靠性、文档准确性和部署清晰度，而不是继续扩张大功能面。详见 [产品路线图](openspec/specs/product/roadmap.md)。
 
 ## 🤝 贡献
 

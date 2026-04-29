@@ -69,7 +69,7 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="https://via.placeholder.com/800x500/1a1a2e/ffffff?text=GraphViewer+Screenshot" alt="GraphViewer Main Interface" width="800">
+  <img src="./public/screenshots/editor-preview.svg" alt="GraphViewer editor and live preview interface" width="800">
 </p>
 
 <p align="center">
@@ -197,7 +197,7 @@ docker compose --profile prod --profile kroki up -d
 npm run build:static
 ```
 
-See [Deployment Guide](docs/en/03-deployment/01-docker.md) for detailed instructions.
+See the [GitHub Pages Guide](docs/en/03-deployment/02-github-pages.md) for static hosting and the [Docker Guide](docs/en/03-deployment/01-docker.md) for the full server mode.
 
 ## 🛠️ Development
 
@@ -251,9 +251,7 @@ See [Security Documentation](docs/en/05-reference/01-configuration.md) for detai
 
 ## 🗺️ Roadmap
 
-- **Planned**: Additional diagram engines (WireViz, Symbols)
-- **Planned**: Team collaboration features
-- **In Progress**: See [project issues](https://github.com/LessUp/graph-viewer/issues)
+GraphViewer is in a stable finalization phase. The priority is reliability, documentation accuracy, and deployment clarity rather than adding broad new feature surfaces. See [Product Roadmap](openspec/specs/product/roadmap.md).
 
 ## 🤝 Contributing
 

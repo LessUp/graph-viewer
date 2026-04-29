@@ -1,39 +1,20 @@
-# GraphViewer 项目规则
+# GraphViewer Copilot 指令
 
-> 完整工作流请参考 [AGENTS.md](../AGENTS.md)
+GraphViewer 是 Next.js 15 + React 19 多引擎图表编辑器。静态版本地渲染 Mermaid / Graphviz / Flowchart.js，完整服务版通过 Kroki 支持 16+ 引擎和 PNG/PDF 导出。
 
-## 编程准则
+## 必守规则
 
-- **工具优先**: 遇到问题优先探索代码，再策划修改方案
-- **多文件协同**: 修改代码时检查跨文件依赖和引用，防止遗漏
-- **根因导向**: 分析本质问题而非修补表面症状
-- **安全操作**: 不执行不可恢复的操作（除非用户明确要求）
+- 默认使用中文与用户沟通；UI 文案保持中文。
+- 改代码前优先读 `AGENTS.md`、`CLAUDE.md` 和相关 `openspec/specs/`。
+- 引擎、格式、Kroki 类型、本地渲染能力只从 `lib/diagramConfig.ts` 获取。
+- 渲染相关改动必须同时检查 `hooks/useLivePreview.ts`、`hooks/useDiagramRender.ts`、`app/api/render/route.ts`、`lib/server/*`。
+- 静态导出模式没有 API routes；GitHub Pages 只能提供本地 SVG 演示能力。
+- 不要重新引入 `QWEN.md`、`.windsurf/`、Dependabot 自动分支或通用 AI 模板。
+- bug fix 先写失败测试；完成前运行相关 `npm run lint`、`npm run typecheck`、`npm run test`、`npm run build`。
 
-## 技术约束
+## 常用入口
 
-- **UI 文案**: 保持中文
-- **类型安全**: `catch (e: unknown)` + `instanceof Error`
-- **核心模块复用**: 优先复用 `useDiagramState`, `useDiagramRender`, `lib/diagramConfig.ts`
-
-## 核心命令
-
-```bash
-npm run dev         # 开发服务器
-npm run test        # 单元测试
-npm run lint        # ESLint 检查
-npm run typecheck   # TypeScript 检查
-npm run build       # 生产构建
-```
-
-## OpenSpec 工作流
-
-本项目采用 Spec-Driven Development，使用 OpenSpec 管理变更：
-
-| 命令         | 用途           |
-| ------------ | -------------- |
-| `/opsx:explore` | 探索和澄清需求 |
-| `/opsx:propose` | 创建变更提案   |
-| `/opsx:apply`   | 实现任务       |
-| `/opsx:archive` | 归档变更       |
-
-详见 [AGENTS.md](../AGENTS.md) 和 [openspec/specs/](../openspec/specs/)。
+- 架构：`openspec/specs/architecture/0001-core-architecture.md`
+- API：`openspec/specs/api/openapi.yaml`
+- 产品边界：`openspec/specs/product/roadmap.md`
+- 执行手册：`CLAUDE.md`

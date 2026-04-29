@@ -2,6 +2,18 @@
 
 所有重要变更按时间倒序记录。详细内容见 [`changelog/archive/`](./changelog/archive/) 目录。
 
+## [2026-04-29] 最终收尾与工程加固
+
+围绕“稳定可归档”目标完成一轮工程收尾：
+
+- **修复核心渲染问题**：接通 live preview 外部取消信号，拆分 `/api/render` 缓存、inflight 与限流模块。
+- **优化 Git Pages 门户**：首页改为 server-first，补齐 OG 图与截图资产，移除 README 占位图。
+- **治理文档与 AI 指令**：重写 AGENTS/CLAUDE/Copilot 指令，收敛产品 roadmap/todo，修复部署文档混链。
+- **精简工程化**：删除 Dependabot 自动分支策略，Actions 收敛到 `master` 单主线，Lint 迁移到 ESLint CLI。
+- **净化 GitHub 仓库**：删除远端 Dependabot 分支，修复 About 描述和 topics。
+
+→ [详情](./changelog/archive/2026-04-29-finalization-hardening.md)
+
 ## [2026-04-27] 项目重构与规范化
 
 全面清理项目结构，删除冗余目录和配置，精简 CI/CD 工作流：
