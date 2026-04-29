@@ -47,6 +47,16 @@ export function PreviewPanel(props: PreviewPanelProps) {
     if (!svg) return '';
     return DOMPurify.sanitize(svg, {
       USE_PROFILES: { svg: true, svgFilters: true },
+      FORBID_ATTR: [
+        'onload',
+        'onerror',
+        'onclick',
+        'onmouseover',
+        'onmouseout',
+        'onmouseenter',
+        'onmouseleave',
+      ],
+      FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'link', 'style'],
     });
   }, [svg]);
 

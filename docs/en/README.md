@@ -4,11 +4,10 @@ Complete guide for GraphViewer development, deployment, and usage.
 
 ## Getting Started
 
-| Guide                                                 | Description                 |
-| ----------------------------------------------------- | --------------------------- |
-| [Quick Start](01-getting-started/01-quick-start.md)   | Get running in 5 minutes    |
-| [Installation](01-getting-started/02-installation.md) | Detailed setup instructions |
-| [Architecture](01-getting-started/03-architecture.md) | System design overview      |
+| Guide                                                 | Description              |
+| ----------------------------------------------------- | ------------------------ |
+| [Quick Start](01-getting-started/01-quick-start.md)   | Get running in 5 minutes |
+| [Architecture](01-getting-started/03-architecture.md) | System design overview   |
 
 ## Development
 

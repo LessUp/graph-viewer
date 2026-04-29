@@ -1,0 +1,8 @@
+# Build outputs
+.next/
+out/
+node_modules/
+
+# Generated files
+*.config.js
+*.config.mjs

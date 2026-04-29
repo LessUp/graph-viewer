@@ -9,5 +9,5 @@ export type DiagramDoc = {
   engine: Engine;
   format: Format;
   code: string;
-  updatedAt: string;
+  updatedAt?: string;
 };
