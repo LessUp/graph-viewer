@@ -198,19 +198,32 @@ export function useDiagramRender(
   }, [format, output]);
 
   useEffect(() => {
+    // 引擎切换时清除之前的 WASM 加载错误
+    setWasmLoadError('');
+
     if (engine === 'mermaid' || engine === 'flowchart') {
-      loadMermaid().catch((e: unknown) => {
-        const msg = e instanceof Error ? e.message : 'Unknown error';
-        setWasmLoadError(`Mermaid 加载失败: ${msg}`);
-        logger.error('wasm-load', { engine: 'mermaid', error: msg });
-      });
+      loadMermaid()
+        .then(() => {
+          // 成功加载时确保错误已清除
+          setWasmLoadError('');
+        })
+        .catch((e: unknown) => {
+          const msg = e instanceof Error ? e.message : 'Unknown error';
+          setWasmLoadError(`Mermaid 加载失败: ${msg}`);
+          logger.error('wasm-load', { engine: 'mermaid', error: msg });
+        });
     }
     if (engine === 'graphviz') {
-      loadGraphviz().catch((e: unknown) => {
-        const msg = e instanceof Error ? e.message : 'Unknown error';
-        setWasmLoadError(`Graphviz WASM 加载失败: ${msg}。请检查网络连接。`);
-        logger.error('wasm-load', { engine: 'graphviz', error: msg });
-      });
+      loadGraphviz()
+        .then(() => {
+          // 成功加载时确保错误已清除
+          setWasmLoadError('');
+        })
+        .catch((e: unknown) => {
+          const msg = e instanceof Error ? e.message : 'Unknown error';
+          setWasmLoadError(`Graphviz WASM 加载失败: ${msg}。请检查网络连接。`);
+          logger.error('wasm-load', { engine: 'graphviz', error: msg });
+        });
     }
   }, [engine]);
 

@@ -194,4 +194,31 @@ describe('useDiagramRender', () => {
     URL.createObjectURL = originalCreateObjectURL;
     URL.revokeObjectURL = originalRevokeObjectURL;
   });
+
+  describe('wasmLoadError', () => {
+    it('initializes with empty wasmLoadError', () => {
+      const { result } = renderHook(() => useDiagramRender('mermaid', 'svg', 'graph TD\nA-->B'));
+
+      expect(result.current.wasmLoadError).toBe('');
+    });
+
+    it('clears wasmLoadError when engine changes', async () => {
+      const { result, rerender } = renderHook(
+        ({ engine }: { engine: 'mermaid' | 'graphviz' }) =>
+          useDiagramRender(engine, 'svg', 'graph TD\nA-->B'),
+        { initialProps: { engine: 'mermaid' as 'mermaid' | 'graphviz' } },
+      );
+
+      // 初始状态为空
+      expect(result.current.wasmLoadError).toBe('');
+
+      // 切换引擎
+      rerender({ engine: 'graphviz' as 'mermaid' | 'graphviz' });
+
+      // wasmLoadError 应该被清除
+      await waitFor(() => {
+        expect(result.current.wasmLoadError).toBe('');
+      });
+    });
+  });
 });
