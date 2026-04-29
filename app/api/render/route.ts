@@ -107,12 +107,23 @@ export async function POST(req: NextRequest) {
   // === 请求体大小限制 ===
   const MAX_BODY_SIZE = 150_000; // 略大于 maxCodeLength (100KB)
   const contentLength = req.headers.get('content-length');
+  const transferEncoding = req.headers.get('transfer-encoding');
+
+  // 检查 Content-Length（对于有明确长度的请求）
   if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
     logger.warn('render', { message: 'Request body too large', contentLength });
     return NextResponse.json(
       { error: 'Request body too large', code: 'PAYLOAD_TOO_LARGE', maxLength: MAX_BODY_SIZE },
       { status: 413 },
     );
+  }
+
+  // 检查 Transfer-Encoding: chunked（流式请求）
+  // Next.js 默认有内置限制，但我们记录警告以便监控
+  if (transferEncoding?.toLowerCase().includes('chunked')) {
+    logger.info('render', {
+      message: 'Chunked transfer encoding detected, relying on Next.js body limit',
+    });
   }
 
   // === 速率限制检查 ===
