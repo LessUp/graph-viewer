@@ -1,136 +1,93 @@
-# CLAUDE.md
+# CLAUDE.md — GraphViewer 执行手册
 
-> This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-> For AI agent workflow, see [AGENTS.md](AGENTS.md).
+> AI 流程总章见 [`AGENTS.md`](AGENTS.md)。本文件面向实际编码执行：命令、边界、文件地图和高风险 checklist。
 
-## Project Philosophy: Spec-Driven Development (SDD)
-
-This project follows the **Spec-Driven Development (SDD)** paradigm with **OpenSpec**. All code implementations must use `openspec/specs/` as the Single Source of Truth.
-
-**Core Principle**: Before coding, read specs. For new features, use `/opsx:propose` first. Code must 100% comply with specs.
-
-See [AGENTS.md](AGENTS.md) for the complete OpenSpec workflow specification.
-
-## OpenSpec CLI
+## 核心命令
 
 ```bash
-# Verify installation
-openspec --version
-
-# Check project status
-openspec status
-
-# List active changes
-openspec list
+npm run dev              # 开发服务器，端口 3000
+npm run lint             # ESLint CLI
+npm run lint:fix         # 自动修复可修复 lint 问题
+npm run format:check     # Prettier 检查
+npm run format           # Prettier 格式化
+npm run typecheck        # tsc --noEmit
+npm run test             # Vitest 单元测试
+npx vitest run path.ts   # 单文件测试
+npm run build            # 完整服务版构建，含 API routes
+npm run build:static     # GitHub Pages 静态导出
+npm run test:smoke       # 生产服务 smoke test
 ```
 
-## Commands
+## 代码约束
 
-```bash
-# Development
-npm run dev              # Start dev server on port 3000
-npm run build            # Standard build (with API routes)
-npm run build:static     # Static export build for GitHub Pages
-npm run start            # Production server
+- UI 文案保持中文。
+- `lib/` 下纯逻辑文件不要添加 `'use client'`。
+- `catch` 使用 `catch (e: unknown)`，再用 `e instanceof Error` 收窄。
+- 不使用 `any`；需要未知输入时用 `unknown`、类型守卫或现有工具函数。
+- 修改 hook 返回值时检查 `app/editor/page.tsx` 等所有消费者。
+- 不吞错误：按现有 Toast、logger 或 API error payload 模式显式暴露。
 
-# Testing
-npm run test             # Run unit tests (vitest)
-npm run test:watch       # Watch mode
-npm run test:smoke       # Smoke test (endpoint availability)
-npm run bench            # Performance benchmarks
+## 关键文件地图
 
-# Code Quality
-npm run lint             # ESLint check
-npm run lint:fix         # Auto-fix ESLint issues
-npm run format           # Prettier format
-npm run typecheck        # TypeScript type check (tsc --noEmit)
-```
+| 责任                   | 文件                                                   |
+| ---------------------- | ------------------------------------------------------ |
+| 引擎/格式/展示分组     | `lib/diagramConfig.ts`                                 |
+| 示例代码               | `lib/diagramSamples.ts`                                |
+| 图表文档类型           | `lib/types.ts`                                         |
+| 本地存储               | `lib/storage.ts`                                       |
+| 工作区状态             | `hooks/useDiagramState.ts`                             |
+| 实时预览 debounce/取消 | `hooks/useLivePreview.ts`                              |
+| 本地/远程渲染          | `hooks/useDiagramRender.ts`                            |
+| Kroki API route        | `app/api/render/route.ts`                              |
+| API 缓存/限流          | `lib/server/renderCache.ts`, `lib/server/rateLimit.ts` |
+| 编辑器 UI              | `components/editor/EditorPanel.tsx`                    |
+| 预览 UI                | `components/preview/PreviewPanel.tsx`                  |
+| 导出工具栏             | `components/preview/PreviewToolbar.tsx`                |
+| GitHub Pages 门户      | `app/page.tsx`, `components/landing/*`                 |
+| 静态导出               | `scripts/build-static-export.mjs`, `next.config.js`    |
 
-To run a single test file: `npx vitest run path/to/file.test.ts`
+## 引擎/格式变更 Checklist
 
-## Coding Conventions
+任何新增、删除或改名必须同步：
 
-### TypeScript / React
+1. `lib/diagramConfig.ts`：类型、labels、categories、Kroki type、本地能力。
+2. `lib/diagramSamples.ts`：默认示例。
+3. `lib/syntaxHighlight.ts`：CodeMirror 语言映射。
+4. `lib/exportUtils.ts`：导出扩展名和 markdown fence。
+5. `hooks/useDiagramRender.ts`：本地/远程分流。
+6. `app/api/render/route.ts` 与 `openspec/specs/api/openapi.yaml`：API 白名单。
+7. `components/editor/EditorPanel.tsx`：选择器。
+8. `components/preview/*`：预览和导出入口。
+9. `app/page.tsx` / `components/landing/*`：门户展示能力。
+10. `lib/__tests__/diagramConfig.test.ts` 与相关渲染测试。
 
-- **UI text**: Chinese (consistent with existing interface)
-- **Client components**: Use `'use client'` only when necessary (hooks, event handlers, browser APIs like `window`, `document`, `localStorage`)
-- **Pure logic**: Files in `lib/` should NOT have `'use client'`
+## 静态演示版约束
 
-### Error Handling
+GitHub Pages 只提供静态演示版：
 
-```typescript
-// Correct
-catch (e: unknown) {
-  if (e instanceof Error) {
-    console.error(e.message);
-  }
-}
+- 可用：Mermaid、Graphviz、Flowchart.js 的本地 SVG 渲染。
+- 不可用：`/api/render`、远程 Kroki 引擎、PNG/PDF 远程导出、服务端 AI。
+- `scripts/build-static-export.mjs` 会复制工作区到临时目录并移除 `app/api`。
+- 改 Pages 时必须运行 `npm run build:static`。
 
-// Wrong
-catch (e: any) {
-  console.error(e.message);
-}
-```
+## API 约束
 
-### Code Organization
+`POST /api/render` 必须保持：
 
-- **Small incremental changes**: Prefer modifying existing components over creating new top-level pages or global state layers
-- **Hook consumers**: When modifying a hook's return type, check all consumers (`page.tsx` is the primary consumer)
-- **File changes**: When deleting/renaming/moving files, update:
-  - Tests
-  - README (both English and Chinese)
-  - Specs in `openspec/specs/`
-  - References in other files
+- 最大输入长度来自 `APP_CONFIG.render.maxCodeLength`。
+- Kroki 请求超时来自 `APP_CONFIG.render.timeoutMs`。
+- 自定义 Kroki URL 必须通过规范化和 allowlist。
+- 错误响应使用稳定 `code`，不得随意改名。
+- 缓存和限流逻辑在 `lib/server/`，route 不放顶层 `setInterval`。
 
-## Key Architecture Points
+## AI 工具链边界
 
-For detailed architecture, see [RFC-0001: Core Architecture](openspec/specs/architecture/0001-core-architecture.md).
+- `AGENTS.md` 是跨代理总章。
+- `CLAUDE.md` 是执行手册。
+- `.github/copilot-instructions.md` 是极简 Copilot 上下文。
+- 不维护 `QWEN.md`、`.windsurf/` 或大段通用模板。
+- MCP 适合 GitHub/浏览器/外部文档等外部上下文；重复流程优先用 CLI skills。
 
-### Engine/Format Values
+## 变更记录
 
-- Must come from `lib/diagramConfig.ts` — no magic strings in business code
-- `DiagramDoc` structure: `{ id, name, engine, format, code, updatedAt }`
-
-### Engine/Format Change Checklist
-
-When modifying diagram engines, formats, or export capabilities, sync all affected files:
-
-1. `lib/diagramConfig.ts` — type definitions, `ENGINE_CATEGORIES`, `getKrokiType`
-2. `lib/diagramSamples.ts` — sample code
-3. `lib/syntaxHighlight.ts` — CodeMirror language mapping
-4. `lib/exportUtils.ts` — export format mapping
-5. `hooks/useDiagramRender.ts` — local/remote render logic
-6. `app/api/render/route.ts` — Kroki proxy, engine whitelist
-7. `components/EditorPanel.tsx` — engine/format selector UI
-8. `components/PreviewPanel.tsx` — preview rendering
-9. `components/PreviewToolbar.tsx` — export entry points
-10. `app/page.tsx` — top-level composition
-
-### API Routes
-
-| Endpoint           | Description                                                       |
-| ------------------ | ----------------------------------------------------------------- |
-| `POST /api/render` | Kroki proxy, in-memory cache (TTL 120s), 100KB limit, 10s timeout |
-| `GET /api/healthz` | Health check for Docker/Netlify                                   |
-
-For full API specification, see [OpenAPI Specification](openspec/specs/api/openapi.yaml).
-
-## Changelog Requirement
-
-Every change must have a changelog entry:
-
-1. Create file: `changelog/YYYY-MM-DD-<short-slug>.md`
-2. Update summary in root `CHANGELOG.md`
-
-## Quick Links
-
-| Document                                                                                                       | Purpose                         |
-| -------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| [AGENTS.md](AGENTS.md)                                                                                         | AI agent workflow specification |
-| [openspec/specs/README.md](openspec/specs/README.md)                                                           | Specifications index            |
-| [openspec/specs/architecture/0001-core-architecture.md](openspec/specs/architecture/0001-core-architecture.md) | Core architecture               |
-| [openspec/specs/api/openapi.yaml](openspec/specs/api/openapi.yaml)                                             | API specification               |
-| [openspec/specs/data/schema-v1.dbml](openspec/specs/data/schema-v1.dbml)                                       | Data models                     |
-| [openspec/specs/testing/diagram-render.feature](openspec/specs/testing/diagram-render.feature)                 | Test specifications             |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                                                                             | Contribution guide              |
-| [OpenSpec Docs](https://github.com/Fission-AI/OpenSpec)                                                        | OpenSpec documentation          |
+影响用户可见行为、部署、AI 指令或工程流程的变更需要更新 `CHANGELOG.md`，必要时在 `changelog/archive/` 保留详细历史。

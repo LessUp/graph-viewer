@@ -27,7 +27,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [master, main]
+    branches: [master]
     paths:
       - 'app/**'
       - 'components/**'

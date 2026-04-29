@@ -19,6 +19,7 @@ const siteUrl = isGitHubPages
   ? `https://lessup.github.io${basePath}/`
   : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000/';
 const iconUrl = isGitHubPages ? `${basePath}/favicon.svg` : '/favicon.svg';
+const ogImageUrl = isGitHubPages ? `${basePath}/og-image.svg` : '/og-image.svg';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
   creator: 'GraphViewer Team',
   publisher: 'GraphViewer',
   alternates: {
-    canonical: '/',
+    canonical: siteUrl,
   },
   openGraph: {
     title: 'GraphViewer - 现代图表可视化工具',
@@ -59,11 +60,11 @@ export const metadata: Metadata = {
     locale: 'zh_CN',
     images: [
       {
-        url: isGitHubPages ? `${basePath}/og-image.png` : '/og-image.png',
+        url: ogImageUrl,
         width: 1200,
         height: 630,
         alt: 'GraphViewer - 图表可视化工具',
-        type: 'image/png',
+        type: 'image/svg+xml',
       },
     ],
   },
@@ -71,7 +72,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'GraphViewer - 现代图表可视化工具',
     description: '支持 16+ 种图表引擎的一体化图表可视化工具',
-    images: [isGitHubPages ? `${basePath}/og-image.png` : '/og-image.png'],
+    images: [ogImageUrl],
     creator: '@graphviewer',
   },
   robots: {

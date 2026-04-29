@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { getKrokiType, isEngine, isFormat } from '@/lib/diagramConfig';
 import { logger } from '@/lib/logger';
 import { APP_CONFIG } from '@/lib/config';
+import { checkRateLimit, pruneRateLimitCache } from '@/lib/server/rateLimit';
+import {
+  deleteInflightRender,
+  getCachedRender,
+  getInflightRender,
+  keyOfRender,
+  pruneRenderCache,
+  setCachedRender,
+  setInflightRender,
+  type RenderCacheEntry,
+} from '@/lib/server/renderCache';
 
 // Detect static export mode / 检测静态导出模式
 const isStaticExport =
@@ -12,78 +22,6 @@ export const runtime = 'nodejs';
 // API routes are removed during static export build, so always use force-dynamic
 // API 路由在静态导出构建期间会被移除，因此始终使用 force-dynamic
 export const dynamic = 'force-dynamic';
-
-// === 速率限制 ===
-type RateLimitEntry = { count: number; resetAt: number };
-const rateLimitCache = new Map<string, RateLimitEntry>();
-
-function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetAt: number } {
-  const now = Date.now();
-  const { windowMs, maxRequests } = APP_CONFIG.rateLimit;
-  const entry = rateLimitCache.get(ip);
-
-  if (!entry || entry.resetAt < now) {
-    const resetAt = now + windowMs;
-    rateLimitCache.set(ip, { count: 1, resetAt });
-    return { allowed: true, remaining: maxRequests - 1, resetAt };
-  }
-
-  if (entry.count >= maxRequests) {
-    return { allowed: false, remaining: 0, resetAt: entry.resetAt };
-  }
-
-  entry.count++;
-  return { allowed: true, remaining: maxRequests - entry.count, resetAt: entry.resetAt };
-}
-
-// 定期清理速率限制缓存
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of rateLimitCache) {
-    if (entry.resetAt < now) {
-      rateLimitCache.delete(ip);
-    }
-  }
-}, APP_CONFIG.cache.pruneIntervalMs);
-
-// === 缓存 ===
-type CacheEntry = { expires: number; contentType: string; svg?: string; base64?: string };
-const cache = new Map<string, CacheEntry>();
-let lastPruneAt = 0;
-
-const inflight = new Map<string, Promise<{ buffer: Buffer; cacheEntry: CacheEntry }>>();
-
-function pruneCache(now: number) {
-  const { maxEntries, pruneIntervalMs } = APP_CONFIG.cache;
-  if (cache.size <= maxEntries && now - lastPruneAt < pruneIntervalMs) {
-    return;
-  }
-  lastPruneAt = now;
-  for (const [key, entry] of cache) {
-    if (entry.expires <= now) {
-      cache.delete(key);
-    }
-  }
-  while (cache.size > maxEntries) {
-    const oldestKey = cache.keys().next().value as string | undefined;
-    if (!oldestKey) break;
-    cache.delete(oldestKey);
-  }
-}
-
-// LRU 淘汰：删除最旧的 inflight 条目
-function evictOldestInflight(): void {
-  const oldestKey = inflight.keys().next().value as string | undefined;
-  if (oldestKey) {
-    inflight.delete(oldestKey);
-    logger.debug('inflight-evict', { message: 'Evicted oldest inflight entry', remaining: inflight.size });
-  }
-}
-
-function keyOf(base: string, engine: string, format: string, code: string): string {
-  const h = crypto.createHash('sha256').update(code).digest('hex');
-  return `${base}|${engine}|${format}|${h}`;
-}
 
 function normalizeKrokiBaseUrl(value: string): string | null {
   try {
@@ -168,6 +106,7 @@ export async function POST(req: NextRequest) {
 
   // === 速率限制检查 ===
   const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  pruneRateLimitCache();
   const rateLimitResult = checkRateLimit(clientIp);
   if (!rateLimitResult.allowed) {
     logger.warn('render', { message: 'Rate limit exceeded', ip: clientIp });
@@ -290,10 +229,10 @@ export async function POST(req: NextRequest) {
       format === 'svg' ? 'image/svg+xml' : format === 'png' ? 'image/png' : 'application/pdf';
 
     const now = Date.now();
-    pruneCache(now);
+    pruneRenderCache(now);
 
-    const k = keyOf(base, engine, format, code);
-    const cached = cache.get(k);
+    const k = keyOfRender(base, engine, format, code);
+    const cached = getCachedRender(k);
     if (cached && cached.expires > now) {
       if (binary) {
         if (format === 'svg' && cached.svg) {
@@ -324,14 +263,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let task = inflight.get(k);
+    let task = getInflightRender(k);
     if (!task) {
-      // inflight Map 上限控制 - 使用 LRU 淘汰而非清空
-      if (inflight.size >= APP_CONFIG.inflight.maxEntries) {
-        logger.warn('render', { message: 'Inflight cache full, evicting oldest', size: inflight.size });
-        evictOldestInflight();
-      }
-
       task = (async () => {
         let krokiResp: Response;
         try {
@@ -403,7 +336,10 @@ export async function POST(req: NextRequest) {
           krokiResp.headers.get('content-type') ||
           (format === 'svg' ? 'image/svg+xml' : format === 'png' ? 'image/png' : 'application/pdf');
         const buffer = Buffer.from(arrayBuffer);
-        const cacheEntry: CacheEntry = { expires: Date.now() + APP_CONFIG.cache.ttlMs, contentType };
+        const cacheEntry: RenderCacheEntry = {
+          expires: Date.now() + APP_CONFIG.cache.ttlMs,
+          contentType,
+        };
 
         if (format === 'svg') {
           const svgText = new TextDecoder().decode(buffer);
@@ -413,14 +349,14 @@ export async function POST(req: NextRequest) {
           cacheEntry.base64 = base64;
         }
 
-        cache.set(k, cacheEntry);
-        pruneCache(Date.now());
+        setCachedRender(k, cacheEntry);
+        pruneRenderCache(Date.now());
 
         return { buffer, cacheEntry };
       })().finally(() => {
-        inflight.delete(k);
+        deleteInflightRender(k);
       });
-      inflight.set(k, task);
+      setInflightRender(k, task);
     }
 
     const { buffer, cacheEntry } = await task;
@@ -435,16 +371,10 @@ export async function POST(req: NextRequest) {
     if (!binary) {
       if (format === 'svg') {
         const svgText = cacheEntry.svg ?? new TextDecoder().decode(buffer);
-        return NextResponse.json(
-          { contentType, svg: svgText },
-          { headers: rateLimitHeaders },
-        );
+        return NextResponse.json({ contentType, svg: svgText }, { headers: rateLimitHeaders });
       }
       const base64 = cacheEntry.base64 ?? buffer.toString('base64');
-      return NextResponse.json(
-        { contentType, base64 },
-        { headers: rateLimitHeaders },
-      );
+      return NextResponse.json({ contentType, base64 }, { headers: rateLimitHeaders });
     }
 
     return new NextResponse(toArrayBuffer(buffer), {

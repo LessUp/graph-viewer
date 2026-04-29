@@ -8,6 +8,8 @@ import {
   isFormat,
   getKrokiType,
   canUseLocalRender,
+  LANDING_ENGINE_CATEGORIES,
+  LOCAL_RENDER_ENGINES,
 } from '@/lib/diagramConfig';
 
 describe('diagramConfig', () => {
@@ -37,5 +39,18 @@ describe('diagramConfig', () => {
     expect(canUseLocalRender('graphviz', 'svg')).toBe(true);
     expect(canUseLocalRender('mermaid', 'png')).toBe(false);
     expect(canUseLocalRender('plantuml', 'svg')).toBe(false);
+  });
+
+  it('exports landing engine groups from the central engine config', () => {
+    expect(LOCAL_RENDER_ENGINES).toEqual(['mermaid', 'flowchart', 'graphviz']);
+    const groupedEngines = new Set(
+      LANDING_ENGINE_CATEGORIES.flatMap((category) => category.engines),
+    );
+
+    expect(groupedEngines.has('mermaid')).toBe(true);
+    expect(groupedEngines.has('plantuml')).toBe(true);
+    expect(groupedEngines.has('graphviz')).toBe(true);
+    expect(groupedEngines.has('d2')).toBe(true);
+    expect([...groupedEngines].every((engine) => ENGINES.includes(engine))).toBe(true);
   });
 });

@@ -53,7 +53,10 @@ export function useDiagramState(initialCode: string): DiagramState & DiagramStat
   const [hasHydrated, setHasHydrated] = useState<boolean>(false);
 
   // === 派生状态：从 diagrams 派生 engine/format/code ===
-  const currentDiagram = useMemo(() => diagrams.find((d) => d.id === currentId), [diagrams, currentId]);
+  const currentDiagram = useMemo(
+    () => diagrams.find((d) => d.id === currentId),
+    [diagrams, currentId],
+  );
 
   const engine = currentDiagram?.engine ?? 'mermaid';
   const format = currentDiagram?.format ?? 'svg';

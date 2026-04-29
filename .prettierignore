@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+coverage/
+dist/
+
+# Local agent/plugin state is not product source.
+.claude/
+.omc/
+
+# Tool and deployment caches.
+.netlify/
+.vercel/
+.npm/
+.vitest/

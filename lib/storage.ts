@@ -91,14 +91,22 @@ export function migrateStorageKey(legacyKey: string, newKey: string): boolean {
     if (newData !== null) {
       // 新键名已有数据，删除旧数据
       window.localStorage.removeItem(legacyKey);
-      logger.info('storage-migrate', { message: 'Legacy key removed, new key exists', legacyKey, newKey });
+      logger.info('storage-migrate', {
+        message: 'Legacy key removed, new key exists',
+        legacyKey,
+        newKey,
+      });
       return true;
     }
 
     // 迁移数据
     window.localStorage.setItem(newKey, legacyData);
     window.localStorage.removeItem(legacyKey);
-    logger.info('storage-migrate', { message: 'Migrated legacy key to new key', legacyKey, newKey });
+    logger.info('storage-migrate', {
+      message: 'Migrated legacy key to new key',
+      legacyKey,
+      newKey,
+    });
     return true;
   } catch (e: unknown) {
     logger.warn('storage-migrate', {

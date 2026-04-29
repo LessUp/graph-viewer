@@ -77,6 +77,28 @@ describe('useDiagramRender', () => {
     expect(result.current.contentType).toBe('image/png');
   });
 
+  it('uses an external abort signal for live preview remote rendering', async () => {
+    const controller = new AbortController();
+    let capturedSignal: AbortSignal | undefined;
+    fetchMock.mockImplementationOnce((_url: string, init?: RequestInit) => {
+      capturedSignal = init?.signal ?? undefined;
+      return Promise.resolve(
+        new Response(JSON.stringify({ contentType: 'image/png', base64: 'abc123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    });
+
+    const { result } = renderHook(() => useDiagramRender('mermaid', 'png', 'graph TD\nA-->B'));
+
+    await act(async () => {
+      await result.current.renderDiagram(controller.signal);
+    });
+
+    expect(capturedSignal).toBe(controller.signal);
+  });
+
   it('reports remote render errors with a user-friendly message', async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ code: 'KROKI_ERROR', status: 400, details: 'syntax error' }), {

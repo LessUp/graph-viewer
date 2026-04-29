@@ -69,6 +69,37 @@ export const ENGINE_CATEGORIES: Record<string, Engine[]> = {
   数据建模: ['erd'],
 };
 
+export const LOCAL_RENDER_ENGINES: Engine[] = ['mermaid', 'flowchart', 'graphviz'];
+
+export type EngineDisplayCategory = {
+  name: string;
+  engines: Engine[];
+  description: string;
+};
+
+export const LANDING_ENGINE_CATEGORIES: EngineDisplayCategory[] = [
+  {
+    name: '常用图表',
+    engines: ['mermaid', 'plantuml', 'graphviz', 'd2'],
+    description: '最流行的图表引擎，覆盖大部分使用场景',
+  },
+  {
+    name: '流程图系列',
+    engines: ['flowchart', 'blockdiag', 'actdiag'],
+    description: '专注于流程图和活动图',
+  },
+  {
+    name: '数据可视化',
+    engines: ['vega', 'vegalite', 'wavedrom'],
+    description: '数据驱动的可视化方案',
+  },
+  {
+    name: '其他专业工具',
+    engines: ['nomnoml', 'ditaa', 'svgbob', 'erd'],
+    description: '特定领域的专业图表工具',
+  },
+];
+
 export const FORMAT_LABELS: Record<Format, string> = {
   svg: 'SVG',
   png: 'PNG',

@@ -1,10 +1,6 @@
 name: Lighthouse CI
 
 on:
-  push:
-    branches: [master, main]
-  pull_request:
-    branches: [master, main]
   workflow_dispatch:
 
 permissions:
@@ -12,7 +8,6 @@ permissions:
 
 env:
   NODE_VERSION: '22'
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   lhci:
@@ -20,8 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -34,9 +27,7 @@ jobs:
           LHCI: 'true'
 
       - name: Run Lighthouse CI
-        run: |
-          npm install -g @lhci/cli@0.14.x
-          lhci autorun --config=lighthouse.config.js
+        run: npx --yes @lhci/cli@0.14.x autorun --config=lighthouse.config.js
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
           LHCI_TOKEN: ${{ secrets.LHCI_TOKEN }}

@@ -5,7 +5,6 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
-import { logger } from '@/lib/logger';
 import { loadFromStorage, saveToStorage } from '@/lib/storage';
 import { APP_CONFIG } from '@/lib/config';
 

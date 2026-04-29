@@ -53,5 +53,4 @@ CLAUDE.local.md
 # _bmad-output/
 
 # OMC session state (temporary)
-.omc/state/
-.omc/*.tmp*
+.omc/
