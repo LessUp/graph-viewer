@@ -13,6 +13,7 @@ import {
   setInflightRender,
   type RenderCacheEntry,
 } from '@/lib/server/renderCache';
+import { ApiError, ErrorCode } from '@/lib/errors';
 
 // Detect static export mode / 检测静态导出模式
 const isStaticExport =
@@ -69,27 +70,6 @@ async function fetchWithTimeout(
   }
 }
 
-type RenderErrorPayload = {
-  error: string;
-  code: string;
-  status?: number;
-  krokiUrl?: string;
-  details?: string;
-  message?: string;
-  maxLength?: number;
-};
-
-class RenderError extends Error {
-  status: number;
-  payload: RenderErrorPayload;
-
-  constructor(status: number, payload: RenderErrorPayload) {
-    super(payload.error);
-    this.status = status;
-    this.payload = payload;
-  }
-}
-
 export async function POST(req: NextRequest) {
   // NOTE: This code path is effectively unreachable in static export builds
   // because scripts/build-static-export.mjs removes the app/api directory.
@@ -112,10 +92,8 @@ export async function POST(req: NextRequest) {
   // 检查 Content-Length（对于有明确长度的请求）
   if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
     logger.warn('render', { message: 'Request body too large', contentLength });
-    return NextResponse.json(
-      { error: 'Request body too large', code: 'PAYLOAD_TOO_LARGE', maxLength: MAX_BODY_SIZE },
-      { status: 413 },
-    );
+    const error = new ApiError(ErrorCode.PAYLOAD_TOO_LARGE, { maxLength: MAX_BODY_SIZE });
+    return NextResponse.json(error.toJSON(), { status: 413 });
   }
 
   // 检查 Transfer-Encoding: chunked（流式请求）
@@ -132,30 +110,22 @@ export async function POST(req: NextRequest) {
   const rateLimitResult = checkRateLimit(clientIp);
   if (!rateLimitResult.allowed) {
     logger.warn('render', { message: 'Rate limit exceeded', ip: clientIp });
-    return NextResponse.json(
-      {
-        error: 'Too many requests',
-        code: 'RATE_LIMIT_EXCEEDED',
-        retryAfter: Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000),
+    const error = new ApiError(ErrorCode.RATE_LIMIT_EXCEEDED);
+    return NextResponse.json(error.toJSON(), {
+      status: 429,
+      headers: {
+        'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': String(Math.ceil(rateLimitResult.resetAt / 1000)),
       },
-      {
-        status: 429,
-        headers: {
-          'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
-          'X-RateLimit-Remaining': '0',
-          'X-RateLimit-Reset': String(Math.ceil(rateLimitResult.resetAt / 1000)),
-        },
-      },
-    );
+    });
   }
 
   try {
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
-      return NextResponse.json(
-        { error: 'Invalid request body', code: 'INVALID_BODY' },
-        { status: 400 },
-      );
+      const error = new ApiError(ErrorCode.INVALID_BODY);
+      return NextResponse.json(error.toJSON(), { status: 400 });
     }
 
     const { engine, format, code, binary, krokiBaseUrl } = body as {
@@ -167,37 +137,27 @@ export async function POST(req: NextRequest) {
     };
 
     if (!engine || !format || typeof code !== 'string') {
-      return NextResponse.json(
-        { error: 'Missing required fields', code: 'MISSING_FIELDS' },
-        { status: 400 },
-      );
+      const error = new ApiError(ErrorCode.MISSING_FIELDS);
+      return NextResponse.json(error.toJSON(), { status: 400 });
     }
 
     if (!isEngine(engine)) {
       logger.warn('render', { message: 'Unsupported engine', engine });
-      return NextResponse.json(
-        { error: 'Unsupported engine', code: 'UNSUPPORTED_ENGINE' },
-        { status: 400 },
-      );
+      const error = new ApiError(ErrorCode.UNSUPPORTED_ENGINE);
+      return NextResponse.json(error.toJSON(), { status: 400 });
     }
     if (!isFormat(format)) {
       logger.warn('render', { message: 'Unsupported format', format });
-      return NextResponse.json(
-        { error: 'Unsupported format', code: 'UNSUPPORTED_FORMAT' },
-        { status: 400 },
-      );
+      const error = new ApiError(ErrorCode.UNSUPPORTED_FORMAT);
+      return NextResponse.json(error.toJSON(), { status: 400 });
     }
 
     if (code.length > APP_CONFIG.render.maxCodeLength) {
       logger.error('render', { message: 'Code too long', engine, format, length: code.length });
-      return NextResponse.json(
-        {
-          error: 'Code too long',
-          code: 'PAYLOAD_TOO_LARGE',
-          maxLength: APP_CONFIG.render.maxCodeLength,
-        },
-        { status: 413 },
-      );
+      const error = new ApiError(ErrorCode.PAYLOAD_TOO_LARGE, {
+        maxLength: APP_CONFIG.render.maxCodeLength,
+      });
+      return NextResponse.json(error.toJSON(), { status: 413 });
     }
 
     const type = getKrokiType(engine);
@@ -205,7 +165,7 @@ export async function POST(req: NextRequest) {
     const envBaseRaw = process.env.KROKI_BASE_URL || 'https://kroki.io';
     const envBase = normalizeKrokiBaseUrl(envBaseRaw);
     if (!envBase) {
-      throw new RenderError(500, { error: 'Invalid KROKI_BASE_URL', code: 'INVALID_KROKI_CONFIG' });
+      throw new ApiError(ErrorCode.INVALID_KROKI_CONFIG);
     }
 
     let base = envBase;
@@ -213,10 +173,7 @@ export async function POST(req: NextRequest) {
     if (requestedBaseRaw) {
       const requested = normalizeKrokiBaseUrl(requestedBaseRaw);
       if (!requested) {
-        throw new RenderError(400, {
-          error: 'Invalid krokiBaseUrl',
-          code: 'INVALID_KROKI_BASE_URL',
-        });
+        throw new ApiError(ErrorCode.INVALID_KROKI_BASE_URL);
       }
 
       // 安全策略：
@@ -238,11 +195,7 @@ export async function POST(req: NextRequest) {
         base = requested;
       } else {
         // 拒绝其他 URL
-        throw new RenderError(400, {
-          error:
-            'krokiBaseUrl not allowed. Configure KROKI_CLIENT_BASE_URL_ALLOWLIST to allow custom URLs.',
-          code: 'KROKI_BASE_URL_NOT_ALLOWED',
-        });
+        throw new ApiError(ErrorCode.KROKI_BASE_URL_NOT_ALLOWED);
       }
     }
 
@@ -313,11 +266,7 @@ export async function POST(req: NextRequest) {
               timeoutMs: APP_CONFIG.render.timeoutMs,
               length: code.length,
             });
-            throw new RenderError(504, {
-              error: 'Kroki timeout',
-              code: 'KROKI_TIMEOUT',
-              krokiUrl: url,
-            });
+            throw new ApiError(ErrorCode.KROKI_TIMEOUT, { krokiUrl: url });
           }
           const errMsg = error instanceof Error ? error.message : '';
           logger.error('render', {
@@ -327,11 +276,9 @@ export async function POST(req: NextRequest) {
             length: code.length,
             error: errMsg,
           });
-          throw new RenderError(502, {
-            error: 'Kroki request failed',
-            code: 'KROKI_NETWORK_ERROR',
-            message: errMsg,
+          throw new ApiError(ErrorCode.KROKI_NETWORK_ERROR, {
             krokiUrl: url,
+            originalMessage: errMsg,
           });
         }
 
@@ -344,11 +291,10 @@ export async function POST(req: NextRequest) {
             status: krokiResp.status,
             length: code.length,
           });
-          throw new RenderError(502, {
-            error: 'Kroki render error',
-            status: krokiResp.status,
+          throw new ApiError(ErrorCode.KROKI_ERROR, {
+            httpStatus: 502,
+            krokiStatus: krokiResp.status,
             krokiUrl: url,
-            code: 'KROKI_ERROR',
             details: text.slice(0, 2000),
           });
         }
@@ -408,8 +354,35 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (e: unknown) {
-    if (e instanceof RenderError) {
-      return NextResponse.json(e.payload, { status: e.status });
+    if (e instanceof ApiError) {
+      let statusCode = 500;
+      
+      // 根据错误码映射 HTTP 状态码
+      switch (e.code) {
+        case ErrorCode.KROKI_TIMEOUT:
+          statusCode = 504;
+          break;
+        case ErrorCode.KROKI_NETWORK_ERROR:
+        case ErrorCode.KROKI_ERROR:
+          statusCode = 502;
+          break;
+        case ErrorCode.PAYLOAD_TOO_LARGE:
+          statusCode = 413;
+          break;
+        case ErrorCode.RATE_LIMIT_EXCEEDED:
+          statusCode = 429;
+          break;
+        case ErrorCode.INVALID_BODY:
+        case ErrorCode.MISSING_FIELDS:
+        case ErrorCode.UNSUPPORTED_ENGINE:
+        case ErrorCode.UNSUPPORTED_FORMAT:
+        case ErrorCode.INVALID_KROKI_BASE_URL:
+        case ErrorCode.KROKI_BASE_URL_NOT_ALLOWED:
+          statusCode = 400;
+          break;
+      }
+      
+      return NextResponse.json(e.toJSON(), { status: statusCode });
     }
     const errMsg = e instanceof Error ? e.message : '';
     logger.error('render', { message: 'Unexpected server error', error: errMsg });
