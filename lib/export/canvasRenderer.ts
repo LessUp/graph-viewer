@@ -8,7 +8,7 @@ import html2canvas from 'html2canvas';
 import { logger } from '@/lib/logger';
 import type { ExportOptions } from './types';
 import { DEFAULT_EXPORT_OPTIONS } from './types';
-import { preprocessSvg } from './svgProcessor';
+import { svgPreprocessor } from './SvgPreprocessor';
 
 /**
  * 在 Canvas 上绘制水印
@@ -42,7 +42,7 @@ async function svgToCanvasUsingHtml2Canvas(
   options: ExportOptions = {},
 ): Promise<HTMLCanvasElement> {
   const opts = { ...DEFAULT_EXPORT_OPTIONS, ...options };
-  const { content: processedSvg, width, height } = preprocessSvg(svgContent, opts);
+  const { content: processedSvg, width, height } = svgPreprocessor.preprocess(svgContent, opts);
 
   const container = document.createElement('div');
   container.style.position = 'fixed';
@@ -86,7 +86,7 @@ async function svgToCanvasUsingImage(
   options: ExportOptions = {},
 ): Promise<HTMLCanvasElement> {
   const opts = { ...DEFAULT_EXPORT_OPTIONS, ...options };
-  const { content: processedSvg, width, height } = preprocessSvg(svgContent, opts);
+  const { content: processedSvg, width, height } = svgPreprocessor.preprocess(svgContent, opts);
   const scale = opts.scale || 2;
 
   return new Promise((resolve, reject) => {

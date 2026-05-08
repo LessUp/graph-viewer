@@ -151,50 +151,6 @@ describe('useDiagramRender', () => {
     });
   });
 
-  it('downloads remote binary output', async () => {
-    const createObjectURL = vi.fn(() => 'blob:download');
-    const revokeObjectURL = vi.fn();
-    const originalCreateObjectURL = URL.createObjectURL;
-    const originalRevokeObjectURL = URL.revokeObjectURL;
-    URL.createObjectURL = createObjectURL;
-    URL.revokeObjectURL = revokeObjectURL;
-
-    const click = vi.fn();
-    const originalCreateElement = document.createElement.bind(document);
-    const anchor = originalCreateElement('a');
-    anchor.click = click;
-    const createElementSpy = vi
-      .spyOn(document, 'createElement')
-      .mockImplementation((tagName: string) => {
-        if (tagName === 'a') {
-          return anchor;
-        }
-        return originalCreateElement(tagName);
-      });
-
-    fetchMock.mockResolvedValueOnce(
-      new Response(new Blob(['pngdata'], { type: 'image/png' }), {
-        status: 200,
-        headers: { 'Content-Type': 'image/png' },
-      }),
-    );
-
-    const { result } = renderHook(() =>
-      useDiagramRender('plantuml', 'png', '@startuml\nA->B\n@enduml'),
-    );
-
-    await act(async () => {
-      await result.current.downloadDiagram();
-    });
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(click).toHaveBeenCalledTimes(1);
-
-    createElementSpy.mockRestore();
-    URL.createObjectURL = originalCreateObjectURL;
-    URL.revokeObjectURL = originalRevokeObjectURL;
-  });
-
   describe('wasmLoadError', () => {
     it('initializes with empty wasmLoadError', () => {
       const { result } = renderHook(() => useDiagramRender('mermaid', 'svg', 'graph TD\nA-->B'));

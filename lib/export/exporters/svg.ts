@@ -3,7 +3,7 @@
  */
 
 import { downloadBlob } from '../fileDownloader';
-import { preprocessSvg } from '../svgProcessor';
+import { svgPreprocessor } from '../SvgPreprocessor';
 import type { ExportOptions } from '../types';
 
 /**
@@ -14,7 +14,7 @@ import type { ExportOptions } from '../types';
  * @param options 导出选项
  */
 export function exportSvg(svgContent: string, filename: string, options: ExportOptions = {}): void {
-  const { content: processedSvg } = preprocessSvg(svgContent, options);
+  const { content: processedSvg } = svgPreprocessor.preprocess(svgContent, options);
   downloadBlob(
     new Blob([processedSvg], { type: 'image/svg+xml;charset=utf-8' }),
     `${filename}.svg`,

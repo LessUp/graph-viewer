@@ -2,14 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { compressToEncodedURIComponent } from 'lz-string';
-import {
-  exportSvg,
-  exportPng,
-  copyPngToClipboard,
-  exportHtml,
-  exportMarkdown,
-  exportSourceCode,
-} from '@/lib/exportUtils';
+import { exportService } from '@/lib/export';
+import { ExportException } from '@/lib/export/types';
 import type { Engine } from '@/lib/diagramConfig';
 import { logger } from '@/lib/logger';
 import {
@@ -82,24 +76,51 @@ export function PreviewToolbar({
     setIsMenuOpen(false);
 
     try {
-      if (type === 'svg') {
-        exportSvg(svgContent!, filename);
-      } else if (type === 'png') {
-        await exportPng(svgContent!, filename, pngScale);
-      } else if (type === 'copy') {
-        await copyPngToClipboard(svgContent!, pngScale);
+      if (type === 'copy') {
+        await exportService.copyToClipboard({
+          content: svgContent!,
+          format: 'png',
+          options: { scale: pngScale },
+        });
         showCopySuccess();
-      } else if (type === 'html') {
-        exportHtml(svgContent!, filename, filename);
-      } else if (type === 'md') {
-        exportMarkdown(code, engine, filename);
-      } else if (type === 'source') {
-        exportSourceCode(code, engine, filename);
+        return;
       }
+
+      if (type === 'md') {
+        await exportService.exportDiagram({
+          content: code,
+          filename,
+          format: 'md',
+          type: 'source',
+          engine,
+        });
+        return;
+      }
+
+      if (type === 'source') {
+        await exportService.exportDiagram({
+          content: code,
+          filename,
+          format: 'svg',
+          type: 'source',
+          engine,
+        });
+        return;
+      }
+
+      await exportService.exportDiagram({
+        content: svgContent!,
+        filename,
+        format: type,
+        type: 'diagram',
+        options: { scale: pngScale },
+      });
     } catch (e: unknown) {
       logger.error('export', { error: e instanceof Error ? e.message : 'Unknown error' });
+      const message =
+        e instanceof ExportException ? e.message : '导出失败，请重试';
       if (onExportError) {
-        onExportError('导出失败，请重试');
+        onExportError(message);
       }
     } finally {
       setIsExporting(false);

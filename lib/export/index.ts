@@ -10,7 +10,10 @@
 export type { ExportFormat, ExportOptions, ProcessedSvg, ExportError } from './types';
 export { DEFAULT_EXPORT_OPTIONS, ExportException } from './types';
 
-// 导出纯函数（可独立测试）
+// 导出 SVG 预处理器（推荐使用）
+export { SvgPreprocessor, svgPreprocessor } from './SvgPreprocessor';
+
+// 导出纯函数（向后兼容）
 export {
   ensureNamespaces,
   wrapStyleWithCdata,
@@ -28,11 +31,15 @@ export { downloadFile, downloadBlob } from './fileDownloader';
 // 导出 Canvas 渲染工具
 export { svgToCanvas, svgToDataUrl } from './canvasRenderer';
 
-// 导出各格式导出器
+// 导出各格式导出器（向后兼容）
 export { exportSvg } from './exporters/svg';
 export { exportPng, copyPngToClipboard } from './exporters/png';
 export { exportHtml } from './exporters/html';
 export { exportMarkdown, exportSourceCode } from './exporters/markdown';
+
+// 导出统一服务（推荐使用）
+export { ExportService, exportService } from './ExportService';
+export type { ExportDiagramOptions, ExportContentType, CopyOptions } from './ExportService';
 
 // 重新导出 Engine 相关类型（方便使用）
 export type { Engine } from '@/lib/diagramConfig';
