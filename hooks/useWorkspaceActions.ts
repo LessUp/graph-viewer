@@ -3,7 +3,7 @@ import type { Engine } from '@/lib/diagramConfig';
 import type { DiagramDoc } from '@/lib/types';
 import { SAMPLES } from '@/lib/diagramSamples';
 import type { DiagramTemplate } from '@/lib/diagramTemplates';
-import { exportSourceCode } from '@/lib/exportUtils';
+import { exportService } from '@/lib/export';
 
 type WorkspaceActionsDeps = {
   engine: Engine;
@@ -139,10 +139,15 @@ export function useWorkspaceActions(deps: WorkspaceActionsDeps) {
     [deleteDiagram, showConfirm],
   );
 
-  const handleExportSourceCode = useCallback(() => {
+  const handleExportSourceCode = useCallback(async () => {
     try {
       if (!code.trim()) return;
-      exportSourceCode(code, engine, 'diagram');
+      await exportService.exportDiagram({
+        content: code,
+        filename: 'diagram',
+        type: 'source',
+        engine,
+      });
       showToast('源码文件已导出');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : '导出源码失败';
