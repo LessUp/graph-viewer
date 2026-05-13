@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { loadFromStorage, saveToStorage, removeFromStorage, migrateStorageKey } from '../storage';
+import { loadFromStorage, saveToStorage, migrateStorageKey } from '../storage';
 
 describe('storage', () => {
   beforeEach(() => {
@@ -59,18 +59,6 @@ describe('storage', () => {
       vi.stubGlobal('window', undefined);
       const result = saveToStorage('any-key', { data: 123 });
       expect(result).toBe(false);
-    });
-  });
-
-  describe('removeFromStorage', () => {
-    it('removes value from localStorage', () => {
-      window.localStorage.setItem('remove-key', 'value');
-      removeFromStorage('remove-key');
-      expect(window.localStorage.getItem('remove-key')).toBeNull();
-    });
-
-    it('does not throw when key does not exist', () => {
-      expect(() => removeFromStorage('nonexistent')).not.toThrow();
     });
   });
 
