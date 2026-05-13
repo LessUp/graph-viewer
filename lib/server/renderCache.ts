@@ -1,6 +1,18 @@
+/**
+ * 渲染缓存模块
+ *
+ * 为 Kroki 渲染结果提供缓存和请求去重功能。
+ * 使用 TTLCache 实现 TTL 过期和 LRU 淘汰。
+ */
+
 import crypto from 'crypto';
 import { APP_CONFIG } from '@/lib/config';
 import { logger } from '@/lib/logger';
+import { TTLCache } from './TTLCache';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 export type RenderCacheEntry = {
   expires: number;
@@ -11,14 +23,30 @@ export type RenderCacheEntry = {
 
 export type RenderTask = Promise<{ buffer: Buffer; cacheEntry: RenderCacheEntry }>;
 
-const cache = new Map<string, RenderCacheEntry>();
+// ============================================================================
+// Cache Instances
+// ============================================================================
+
+const cache = new TTLCache<string, RenderCacheEntry>({
+  maxEntries: APP_CONFIG.cache.maxEntries,
+  defaultTtlMs: APP_CONFIG.cache.ttlMs,
+  pruneIntervalMs: APP_CONFIG.cache.pruneIntervalMs,
+});
+
 const inflight = new Map<string, RenderTask>();
-let lastPruneAt = 0;
+
+// ============================================================================
+// Cache Key
+// ============================================================================
 
 export function keyOfRender(base: string, engine: string, format: string, code: string): string {
   const h = crypto.createHash('sha256').update(code).digest('hex');
   return `${base}|${engine}|${format}|${h}`;
 }
+
+// ============================================================================
+// Render Cache Operations
+// ============================================================================
 
 export function getCachedRender(key: string): RenderCacheEntry | undefined {
   return cache.get(key);
@@ -29,25 +57,12 @@ export function setCachedRender(key: string, entry: RenderCacheEntry): void {
 }
 
 export function pruneRenderCache(now = Date.now()): void {
-  const { maxEntries, pruneIntervalMs } = APP_CONFIG.cache;
-  for (const [key, entry] of cache) {
-    if (entry.expires <= now) {
-      cache.delete(key);
-    }
-  }
-
-  if (cache.size <= maxEntries && now - lastPruneAt < pruneIntervalMs) {
-    return;
-  }
-
-  lastPruneAt = now;
-
-  while (cache.size > maxEntries) {
-    const oldestKey = cache.keys().next().value as string | undefined;
-    if (!oldestKey) break;
-    cache.delete(oldestKey);
-  }
+  cache.prune(now);
 }
+
+// ============================================================================
+// Inflight Request Deduplication
+// ============================================================================
 
 export function getInflightRender(key: string): RenderTask | undefined {
   return inflight.get(key);
@@ -71,8 +86,11 @@ export function deleteInflightRender(key: string): void {
   inflight.delete(key);
 }
 
+// ============================================================================
+// Test Utilities
+// ============================================================================
+
 export function resetRenderCacheForTests(): void {
   cache.clear();
   inflight.clear();
-  lastPruneAt = 0;
 }

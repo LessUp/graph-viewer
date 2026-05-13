@@ -1,9 +1,8 @@
 'use client';
 
-import type { EditorPanelProps } from '@/components/editor/EditorPanel';
-import type { AIAssistantPanelProps } from '@/components/ai/AIAssistantPanel';
-import type { VersionHistoryPanelProps } from '@/components/version/VersionHistoryPanel';
+import type { Engine } from '@/lib/diagramConfig';
 import type { VersionRecord } from '@/hooks/useVersionHistory';
+import type { AIConfig, AIAnalysisResult } from '@/hooks/useAIAssistant';
 import { EditorPanel } from '@/components/editor/EditorPanel';
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
 import { VersionHistoryPanel } from '@/components/version/VersionHistoryPanel';
@@ -11,13 +10,50 @@ import { Code2, Zap, Clock } from 'lucide-react';
 
 export type SidebarTab = 'editor' | 'ai' | 'history';
 
+/**
+ * SidebarTabs Props
+ *
+ * 重构后只接收控制属性和跨 Context 组合的回调：
+ * - activeTab/onTabChange: Tab 切换控制
+ * - versions: 版本历史数据（用于显示数量徽章）
+ * - EditorPanel 回调：需要跨 Context 组合的操作
+ * - AIAssistantPanel 回调：需要跨 Context 组合的操作
+ * - VersionHistoryPanel 回调：需要跨 Context 组合的操作
+ */
 export type SidebarTabsProps = {
   activeTab: SidebarTab;
   onTabChange: (tab: SidebarTab) => void;
-  editorProps: EditorPanelProps;
-  aiProps: AIAssistantPanelProps;
-  historyProps: VersionHistoryPanelProps;
   versions: VersionRecord[];
+  // EditorPanel 回调（跨 Context 组合）
+  onEngineChange: (engine: Engine, loadSample?: boolean) => void;
+  onCopyCode: () => Promise<void>;
+  onClearCode: () => void;
+  onExportSourceCode: () => Promise<void>;
+  onLivePreviewChange: (enabled: boolean) => void;
+  livePreviewEnabled: boolean;
+  limitEngines?: readonly Engine[];
+  // AIAssistantPanel 回调（跨 Context 组合）
+  aiConfig: AIConfig;
+  isAIConfigured: boolean;
+  isAIAnalyzing: boolean;
+  isAIGenerating: boolean;
+  lastAIAnalysis: AIAnalysisResult | null;
+  aiError: string | null;
+  aiBoundaryNotice: string;
+  onUpdateAIConfig: (config: Partial<AIConfig>) => void;
+  onAIAnalyze: () => void;
+  onAIFix: () => void;
+  onAIGenerate: (description: string) => void;
+  onApplyAICode: (code: string) => void;
+  onClearAIError: () => void;
+  onClearAIAnalysis: () => void;
+  // VersionHistoryPanel 回调（跨 Context 组合）
+  isVersionsLoading: boolean;
+  onRestoreVersion: (version: VersionRecord) => void;
+  onDeleteVersion: (versionId: string) => void;
+  onRenameVersion: (versionId: string, newLabel: string) => void;
+  onCreateSnapshot: () => void;
+  onClearAllVersions: () => void;
 };
 
 const TAB_ITEMS: Array<{
@@ -47,7 +83,41 @@ const TAB_ITEMS: Array<{
 ];
 
 export function SidebarTabs(props: SidebarTabsProps) {
-  const { activeTab, onTabChange, editorProps, aiProps, historyProps, versions } = props;
+  const {
+    activeTab,
+    onTabChange,
+    versions,
+    // EditorPanel
+    onEngineChange,
+    onCopyCode,
+    onClearCode,
+    onExportSourceCode,
+    onLivePreviewChange,
+    livePreviewEnabled,
+    limitEngines,
+    // AIAssistantPanel
+    aiConfig,
+    isAIConfigured,
+    isAIAnalyzing,
+    isAIGenerating,
+    lastAIAnalysis,
+    aiError,
+    aiBoundaryNotice,
+    onUpdateAIConfig,
+    onAIAnalyze,
+    onAIFix,
+    onAIGenerate,
+    onApplyAICode,
+    onClearAIError,
+    onClearAIAnalysis,
+    // VersionHistoryPanel
+    isVersionsLoading,
+    onRestoreVersion,
+    onDeleteVersion,
+    onRenameVersion,
+    onCreateSnapshot,
+    onClearAllVersions,
+  } = props;
 
   return (
     <>
@@ -78,15 +148,48 @@ export function SidebarTabs(props: SidebarTabsProps) {
 
       {/* Tab 内容区 */}
       <div className="min-h-[360px] flex-1 lg:min-h-0">
-        {activeTab === 'editor' && <EditorPanel {...editorProps} />}
+        {activeTab === 'editor' && (
+          <EditorPanel
+            onEngineChange={onEngineChange}
+            onCopyCode={onCopyCode}
+            onClearCode={onClearCode}
+            onExportSourceCode={onExportSourceCode}
+            onLivePreviewChange={onLivePreviewChange}
+            livePreviewEnabled={livePreviewEnabled}
+            limitEngines={limitEngines}
+          />
+        )}
         {activeTab === 'ai' && (
           <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">
-            <AIAssistantPanel {...aiProps} />
+            <AIAssistantPanel
+              config={aiConfig}
+              isConfigured={isAIConfigured}
+              isAnalyzing={isAIAnalyzing}
+              isGenerating={isAIGenerating}
+              lastAnalysis={lastAIAnalysis}
+              error={aiError}
+              boundaryNotice={aiBoundaryNotice}
+              onUpdateConfig={onUpdateAIConfig}
+              onAnalyze={onAIAnalyze}
+              onFix={onAIFix}
+              onGenerate={onAIGenerate}
+              onApplyCode={onApplyAICode}
+              onClearError={onClearAIError}
+              onClearAnalysis={onClearAIAnalysis}
+            />
           </div>
         )}
         {activeTab === 'history' && (
           <div className="h-full overflow-hidden rounded-[24px] border border-white/70 bg-white/90 shadow-sm backdrop-blur">
-            <VersionHistoryPanel {...historyProps} />
+            <VersionHistoryPanel
+              versions={versions}
+              isLoading={isVersionsLoading}
+              onRestore={onRestoreVersion}
+              onDelete={onDeleteVersion}
+              onRename={onRenameVersion}
+              onCreateSnapshot={onCreateSnapshot}
+              onClearAll={onClearAllVersions}
+            />
           </div>
         )}
       </div>

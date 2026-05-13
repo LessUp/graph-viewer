@@ -42,7 +42,7 @@ export class RendererStrategy implements Renderer {
           if (error instanceof RenderError && error.code === ErrorCode.ABORTED) {
             throw error;
           }
-          
+
           // 如果本地渲染失败，继续尝试下一个渲染器
           // 如果远程渲染失败或不可用，抛出错误
           if (renderer === this.renderers[this.renderers.length - 1]) {
@@ -56,9 +56,7 @@ export class RendererStrategy implements Renderer {
   }
 
   getAvailableRenderers(engine: Engine, format: Format): string[] {
-    return this.renderers
-      .filter((r) => r.canRender(engine, format))
-      .map((r) => r.constructor.name);
+    return this.renderers.filter((r) => r.canRender(engine, format)).map((r) => r.constructor.name);
   }
 }
 

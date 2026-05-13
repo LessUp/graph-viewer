@@ -28,5 +28,6 @@ export function downloadFile(href: string, filename: string): void {
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   downloadFile(url, filename);
-  URL.revokeObjectURL(url);
+  // 延迟释放 URL，确保浏览器有足够时间处理下载
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }

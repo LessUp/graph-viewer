@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { getErrorMessage, isAbortError, isNetworkError } from '../errorUtils';
+import { getErrorMessage, isAbortError, isNetworkError } from '../errors';
 
-describe('errorUtils', () => {
+describe('error utilities', () => {
   describe('getErrorMessage', () => {
     it('extracts message from Error instance', () => {
       const error = new Error('test error message');

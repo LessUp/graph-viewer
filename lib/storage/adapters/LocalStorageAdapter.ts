@@ -82,8 +82,7 @@ export class LocalStorageAdapter implements StoragePort {
       // 检测配额超限
       const isQuotaExceeded =
         e instanceof DOMException &&
-        (e.name === 'QuotaExceededError' ||
-          e.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+        (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED');
 
       const error = isQuotaExceeded
         ? this.createError('QUOTA_EXCEEDED', '存储空间已满')
@@ -164,9 +163,7 @@ export class LocalStorageAdapter implements StoragePort {
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
       if (k && (!this.keyPrefix || k.startsWith(this.keyPrefix + ':'))) {
-        allKeys.push(
-          this.keyPrefix ? k.slice(this.keyPrefix.length + 1) : k
-        );
+        allKeys.push(this.keyPrefix ? k.slice(this.keyPrefix.length + 1) : k);
       }
     }
     return allKeys;

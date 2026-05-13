@@ -2,6 +2,11 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import {
+  DiagramProvider,
+  useDiagramStateContext,
+  useDiagramRenderContext,
+} from '@/contexts/DiagramContext';
 import { PreviewPanel } from '@/components/preview/PreviewPanel';
 import { SettingsModal } from '@/components/dialogs/SettingsModal';
 import { TemplateModal } from '@/components/dialogs/TemplateModal';
@@ -13,17 +18,15 @@ import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { SidebarTabs, type SidebarTab } from '@/components/sidebar/SidebarTabs';
 import { ConfirmDialog, PromptDialog, AlertDialog } from '@/components/dialogs/Dialogs';
 import { StaticExportNotice } from '@/components/landing/StaticExportNotice';
-import { useDiagramState } from '@/hooks/useDiagramState';
-import { useDiagramRender } from '@/hooks/useDiagramRender';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/hooks/useToast';
 import { getAIBoundaryNotice, useAIAssistant } from '@/hooks/useAIAssistant';
 import { useVersionHistory } from '@/hooks/useVersionHistory';
-import { useWorkspaceActions } from '@/hooks/useWorkspaceActions';
 import { useLivePreview } from '@/hooks/useLivePreview';
-import { useAIActions } from '@/hooks/useAIActions';
-import { useVersionActions } from '@/hooks/useVersionActions';
 import { SAMPLES } from '@/lib/diagramSamples';
+import { exportService } from '@/lib/export';
+import type { DiagramTemplate } from '@/lib/diagramTemplates';
+import type { VersionRecord } from '@/hooks/useVersionHistory';
 import { Loader2, ArrowLeft } from 'lucide-react';
 
 const isStaticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true';
@@ -39,58 +42,54 @@ function LoadingScreen() {
   );
 }
 
-export default function EditorPage() {
+/**
+ * EditorPageContent - 编辑器页面内容
+ *
+ * 在 DiagramProvider 内部，可以直接访问 Context
+ */
+function EditorPageContent() {
+  // 从 Context 获取图表状态
   const {
     engine,
-    format,
     code,
-    codeStats,
-    linkError,
     diagrams,
     currentId,
     hasHydrated,
+    linkError,
     setEngine,
-    setFormat,
     setCode,
     setCurrentId,
     createDiagram,
     renameDiagram,
     deleteDiagram,
     importWorkspace,
-  } = useDiagramState(SAMPLES['mermaid']);
+  } = useDiagramStateContext();
 
-  const { settings, isLoaded: settingsLoaded, saveSettings, toggleSidebar } = useSettings();
-
-  // 在静态导出模式下禁用远程渲染
-  const remoteRenderingEnabled = !isStaticExport;
-
+  // 从 Context 获取渲染状态
   const {
     svg,
     base64,
     contentType,
     loading,
-    error,
-    canUseLocalRender,
+    error: renderError,
     showPreview,
     wasmLoadError,
     renderDiagram,
     clearError,
     setError,
     resetOutput,
-  } = useDiagramRender(
-    engine,
-    format,
-    code,
-    settings.useCustomServer ? settings.renderServerUrl : undefined,
-    remoteRenderingEnabled,
-  );
+  } = useDiagramRenderContext();
 
+  // 独立 hooks
+  const { settings, isLoaded: settingsLoaded, saveSettings, toggleSidebar } = useSettings();
+  const { toast, showToast } = useToast();
+
+  // 页面状态
   const [showSettings, setShowSettings] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('editor');
-  const { toast, showToast } = useToast();
 
-  // WASM 加载错误提示（仅当错误变化时显示）
+  // WASM 加载错误提示
   const lastWasmErrorRef = useRef<string>('');
   useEffect(() => {
     if (wasmLoadError && wasmLoadError !== lastWasmErrorRef.current) {
@@ -144,7 +143,7 @@ export default function EditorPage() {
     setAlertDialog({ isOpen: true, options });
   }, []);
 
-  const pageError = error || linkError;
+  const pageError = renderError || linkError;
 
   // --- 组合 hooks ---
 
@@ -154,36 +153,6 @@ export default function EditorPage() {
     debounceMs: settings.debounceMs,
     renderDiagram,
     resetOutput,
-  });
-
-  const {
-    handleCopyCode,
-    handleClearCode,
-    handleSelectDiagram,
-    handleCreateDiagram,
-    handleRenameDiagram,
-    handleDeleteDiagram,
-    handleExportWorkspace,
-    handleExportSourceCode,
-    handleEngineChange,
-    handleCreateFromTemplate,
-  } = useWorkspaceActions({
-    engine,
-    code,
-    currentId,
-    diagrams,
-    setCode,
-    setEngine,
-    resetOutput,
-    createDiagram,
-    renameDiagram,
-    deleteDiagram,
-    setCurrentId,
-    clearError,
-    setError,
-    showToast,
-    showPrompt,
-    showConfirm,
   });
 
   const {
@@ -198,17 +167,6 @@ export default function EditorPage() {
     fixCode,
   } = useAIAssistant(engine);
 
-  const { handleAIAnalyze, handleAIFix, handleAIGenerate, handleAIApplyCode } = useAIActions({
-    code,
-    combinedError: pageError,
-    analyzeCode,
-    fixCode,
-    generateCode,
-    setCode,
-    setSidebarTab,
-    showToast,
-  });
-
   const {
     versions,
     isLoading: isVersionsLoading,
@@ -218,129 +176,284 @@ export default function EditorPage() {
     clearDiagramVersions,
   } = useVersionHistory(currentId, code, engine);
 
-  const { handleCreateSnapshot, handleRestoreVersion, handleClearVersions } = useVersionActions({
-    createVersion,
-    clearDiagramVersions,
-    setCode,
-    setEngine,
-    showToast,
-    showConfirm,
-  });
+  // --- 内联 Actions 函数（原 useWorkspaceActions）---
+
+  const handleCopyCode = useCallback(async () => {
+    clearError();
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(code);
+        showToast('代码已复制到剪贴板');
+      } else {
+        if (showPrompt) {
+          await showPrompt({
+            title: '手动复制代码',
+            message: '请选择并复制以下代码：',
+            defaultValue: code,
+          });
+        } else {
+          window.prompt('请手动复制以下代码', code);
+        }
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '复制代码失败';
+      setError(msg);
+    }
+  }, [code, clearError, setError, showToast, showPrompt]);
+
+  const handleClearCode = useCallback(() => {
+    setCode('');
+    resetOutput();
+  }, [setCode, resetOutput]);
+
+  const handleSelectDiagram = useCallback(
+    (id: string) => {
+      if (id && id !== currentId) setCurrentId(id);
+    },
+    [currentId, setCurrentId],
+  );
+
+  const handleCreateDiagram = useCallback(() => {
+    createDiagram(SAMPLES[engine] || '');
+  }, [engine, createDiagram]);
+
+  const handleRenameDiagram = useCallback(
+    async (id: string, currentName: string) => {
+      if (typeof window === 'undefined') return;
+
+      let trimmed: string | undefined;
+      if (showPrompt) {
+        const result = await showPrompt({
+          title: '重命名图',
+          message: '请输入新的图名称：',
+          defaultValue: currentName || '',
+        });
+        trimmed = result?.trim();
+      } else {
+        const next = window.prompt('请输入新的图名称', currentName || '');
+        trimmed = next?.trim();
+      }
+
+      if (trimmed) renameDiagram(id, trimmed);
+    },
+    [renameDiagram, showPrompt],
+  );
+
+  const handleDeleteDiagram = useCallback(
+    async (id: string, name: string) => {
+      if (typeof window === 'undefined') return;
+
+      const label = name?.trim() || '未命名图';
+      let confirmed: boolean;
+
+      if (showConfirm) {
+        confirmed = await showConfirm({
+          title: '删除确认',
+          message: `确定要删除图「${label}」吗？此操作不可撤销。`,
+          variant: 'danger',
+        });
+      } else {
+        confirmed = window.confirm(`确定要删除图「${label}」吗？此操作不可撤销。`);
+      }
+
+      if (confirmed) {
+        deleteDiagram(id);
+      }
+    },
+    [deleteDiagram, showConfirm],
+  );
+
+  const handleExportSourceCode = useCallback(async () => {
+    try {
+      if (!code.trim()) return;
+      await exportService.exportDiagram({
+        content: code,
+        filename: 'diagram',
+        type: 'source',
+        engine,
+      });
+      showToast('源码文件已导出');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '导出源码失败';
+      setError(msg);
+    }
+  }, [code, engine, setError, showToast]);
+
+  const handleExportWorkspace = useCallback(() => {
+    try {
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        currentId,
+        diagrams,
+      };
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `graphviewer-workspace-${ts}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '导出项目集失败';
+      setError(msg);
+    }
+  }, [currentId, diagrams, setError]);
+
+  const handleEngineChange = useCallback(
+    (newEngine: typeof engine, loadSample?: boolean) => {
+      setEngine(newEngine);
+      if (loadSample) {
+        setCode(SAMPLES[newEngine] || '');
+        resetOutput();
+      }
+    },
+    [setEngine, setCode, resetOutput],
+  );
+
+  const handleCreateFromTemplate = useCallback(
+    (template: DiagramTemplate) => {
+      createDiagram(template.code, template.name, template.engine);
+      showToast(`已从模板「${template.name}」创建`);
+    },
+    [createDiagram, showToast],
+  );
+
+  // --- 内联 AI Actions 函数（原 useAIActions）---
+
+  const handleAIAnalyze = useCallback(() => {
+    if (!code.trim()) return;
+    analyzeCode(code);
+  }, [code, analyzeCode]);
+
+  const handleAIFix = useCallback(async () => {
+    if (!code.trim()) return;
+    const fixed = await fixCode(code, pageError || undefined);
+    if (fixed) {
+      setCode(fixed);
+      showToast('AI 已修复代码', 'success');
+    }
+  }, [code, pageError, fixCode, setCode, showToast]);
+
+  const handleAIGenerate = useCallback(
+    async (description: string) => {
+      const generated = await generateCode(description);
+      if (generated) {
+        setCode(generated);
+        setSidebarTab('editor');
+        showToast('代码已生成', 'success');
+      }
+    },
+    [generateCode, setCode, setSidebarTab, showToast],
+  );
+
+  const handleAIApplyCode = useCallback(
+    (newCode: string) => {
+      setCode(newCode);
+      setSidebarTab('editor');
+      showToast('已应用修改', 'success');
+    },
+    [setCode, setSidebarTab, showToast],
+  );
+
+  // --- 内联版本 Actions 函数（原 useVersionActions）---
+
+  const handleCreateSnapshot = useCallback(() => {
+    const v = createVersion('手动快照');
+    if (v) {
+      showToast('快照已创建', 'success');
+    } else {
+      showToast('代码无变化，无需创建快照', 'info');
+    }
+  }, [createVersion, showToast]);
+
+  const handleRestoreVersion = useCallback(
+    (version: VersionRecord) => {
+      setCode(version.code);
+      setEngine(version.engine);
+      showToast('已恢复到该版本', 'success');
+    },
+    [setCode, setEngine, showToast],
+  );
+
+  const handleClearVersions = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+
+    let confirmed: boolean;
+    if (showConfirm) {
+      confirmed = await showConfirm({
+        title: '清空版本历史',
+        message: '确定要清空所有版本历史吗？此操作不可撤销。',
+        variant: 'danger',
+      });
+    } else {
+      confirmed = window.confirm('确定要清空所有版本历史吗？此操作不可撤销。');
+    }
+
+    if (confirmed) {
+      clearDiagramVersions();
+      showToast('版本历史已清空', 'info');
+    }
+  }, [clearDiagramVersions, showToast, showConfirm]);
 
   // 水合加载状态
   if (!hasHydrated || !settingsLoaded) {
     return <LoadingScreen />;
   }
 
-  const editorProps = {
-    engine,
-    format,
-    code,
-    codeStats,
-    loading,
-    error: pageError,
-    canUseLocalRender,
-    livePreviewEnabled: livePreview,
-    onLivePreviewChange: setLivePreview,
-    onEngineChange: handleEngineChange,
-    onFormatChange: setFormat,
-    onCodeChange: setCode,
-    onRender: renderDiagram,
-    onCopyCode: handleCopyCode,
-    onClearCode: handleClearCode,
-    onExportSourceCode: handleExportSourceCode,
-    editorFontSize: settings.editorFontSize,
-    // 静态导出模式下限制引擎选择
-    limitEngines: isStaticExport ? (['mermaid', 'graphviz', 'flowchart'] as const) : undefined,
-  };
-
-  const aiProps = {
-    config: aiConfig,
-    isConfigured: isAIConfigured,
-    isAnalyzing: aiState.isAnalyzing,
-    isGenerating: aiState.isGenerating,
-    lastAnalysis: aiState.lastAnalysis,
-    error: aiState.error,
-    boundaryNotice: getAIBoundaryNotice(),
-    onUpdateConfig: updateAIConfig,
-    onAnalyze: handleAIAnalyze,
-    onFix: handleAIFix,
-    onGenerate: handleAIGenerate,
-    onApplyCode: handleAIApplyCode,
-    onClearError: clearAIError,
-    onClearAnalysis: clearAIAnalysis,
-  };
-
-  const historyProps = {
-    versions,
-    isLoading: isVersionsLoading,
-    onRestore: handleRestoreVersion,
-    onDelete: deleteVersion,
-    onRename: renameVersion,
-    onCreateSnapshot: handleCreateSnapshot,
-    onClearAll: handleClearVersions,
-  };
-
-  const previewProps = {
-    svg,
-    base64,
-    contentType,
-    loading,
-    showPreview,
-    format,
-    error: pageError,
-    code,
-    engine,
-    onExportError: (message: string) => showAlertDialog({ title: '导出失败', message }),
-  };
-
-  const settingsModalProps = {
-    isOpen: showSettings,
-    onClose: () => setShowSettings(false),
-    settings,
-    onSave: saveSettings,
-    remoteRenderingEnabled,
-    isStaticExport,
-  };
-
-  const headerProps = {
-    onImportWorkspace: importWorkspace,
-    onExportWorkspace: handleExportWorkspace,
-    onOpenSettings: () => setShowSettings(true),
-    onError: setError,
-  };
-
-  const diagramListProps = {
-    diagrams,
-    currentId,
-    onSelect: handleSelectDiagram,
-    onCreate: handleCreateDiagram,
-    onRename: handleRenameDiagram,
-    onDelete: handleDeleteDiagram,
-    onCollapseSidebar: toggleSidebar,
-    onOpenTemplateModal: () => setShowTemplateModal(true),
-  };
-
-  const collapsedSidebarProps = {
-    diagramCount: diagrams.length,
-    onExpand: toggleSidebar,
-    onCreate: handleCreateDiagram,
-  };
-
+  // 构建 SidebarTabs props
   const sidebarTabsProps = {
     activeTab: sidebarTab,
     onTabChange: setSidebarTab,
     versions,
-    editorProps,
-    aiProps,
-    historyProps,
+    // EditorPanel
+    onEngineChange: handleEngineChange,
+    onCopyCode: handleCopyCode,
+    onClearCode: handleClearCode,
+    onExportSourceCode: handleExportSourceCode,
+    onLivePreviewChange: setLivePreview,
+    livePreviewEnabled: livePreview,
+    limitEngines: isStaticExport ? (['mermaid', 'graphviz', 'flowchart'] as const) : undefined,
+    // AIAssistantPanel
+    aiConfig,
+    isAIConfigured,
+    isAIAnalyzing: aiState.isAnalyzing,
+    isAIGenerating: aiState.isGenerating,
+    lastAIAnalysis: aiState.lastAnalysis,
+    aiError: aiState.error,
+    aiBoundaryNotice: getAIBoundaryNotice(),
+    onUpdateAIConfig: updateAIConfig,
+    onAIAnalyze: handleAIAnalyze,
+    onAIFix: handleAIFix,
+    onAIGenerate: handleAIGenerate,
+    onApplyAICode: handleAIApplyCode,
+    onClearAIError: clearAIError,
+    onClearAIAnalysis: clearAIAnalysis,
+    // VersionHistoryPanel
+    isVersionsLoading,
+    onRestoreVersion: handleRestoreVersion,
+    onDeleteVersion: deleteVersion,
+    onRenameVersion: renameVersion,
+    onCreateSnapshot: handleCreateSnapshot,
+    onClearAllVersions: handleClearVersions,
   };
 
   return (
     <ErrorBoundary>
       <main className="relative isolate mx-auto flex min-h-screen w-full max-w-[1920px] flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:gap-4 lg:py-5">
         <Toast toast={toast} />
-        <SettingsModal {...settingsModalProps} />
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          settings={settings}
+          onSave={saveSettings}
+          remoteRenderingEnabled={!isStaticExport}
+          isStaticExport={isStaticExport}
+        />
         <TemplateModal
           isOpen={showTemplateModal}
           onClose={() => setShowTemplateModal(false)}
@@ -397,7 +510,12 @@ export default function EditorPage() {
           </div>
         )}
 
-        <AppHeader {...headerProps} />
+        <AppHeader
+          onImportWorkspace={importWorkspace}
+          onExportWorkspace={handleExportWorkspace}
+          onOpenSettings={() => setShowSettings(true)}
+          onError={setError}
+        />
 
         {/* Workspace Section */}
         <div className="flex flex-col gap-4 lg:h-[calc(100vh-150px)] lg:flex-row lg:items-stretch lg:gap-5">
@@ -408,10 +526,23 @@ export default function EditorPage() {
             }`}
           >
             {settings.sidebarCollapsed ? (
-              <CollapsedSidebar {...collapsedSidebarProps} />
+              <CollapsedSidebar
+                diagramCount={diagrams.length}
+                onExpand={toggleSidebar}
+                onCreate={handleCreateDiagram}
+              />
             ) : (
               <>
-                <DiagramList {...diagramListProps} />
+                <DiagramList
+                  diagrams={diagrams}
+                  currentId={currentId}
+                  onSelect={handleSelectDiagram}
+                  onCreate={handleCreateDiagram}
+                  onRename={handleRenameDiagram}
+                  onDelete={handleDeleteDiagram}
+                  onCollapseSidebar={toggleSidebar}
+                  onOpenTemplateModal={() => setShowTemplateModal(true)}
+                />
 
                 <SidebarTabs {...sidebarTabsProps} />
               </>
@@ -420,10 +551,34 @@ export default function EditorPage() {
 
           {/* Right: Preview */}
           <div className="min-h-[420px] flex-1 lg:h-full lg:min-h-0">
-            <PreviewPanel {...previewProps} />
+            <PreviewPanel
+              svg={svg}
+              base64={base64}
+              contentType={contentType}
+              loading={loading}
+              showPreview={showPreview}
+              format={settings.useCustomServer ? 'svg' : 'svg'}
+              error={pageError}
+              code={code}
+              engine={engine}
+              onExportError={(message: string) => showAlertDialog({ title: '导出失败', message })}
+            />
           </div>
         </div>
       </main>
     </ErrorBoundary>
+  );
+}
+
+/**
+ * EditorPage - 编辑器页面入口
+ *
+ * 提供 DiagramProvider 包装
+ */
+export default function EditorPage() {
+  return (
+    <DiagramProvider remoteRenderingEnabled={!isStaticExport} customServerUrl={undefined}>
+      <EditorPageContent />
+    </DiagramProvider>
   );
 }
