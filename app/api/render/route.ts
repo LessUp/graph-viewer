@@ -356,7 +356,7 @@ export async function POST(req: NextRequest) {
   } catch (e: unknown) {
     if (e instanceof ApiError) {
       let statusCode = 500;
-      
+
       // 根据错误码映射 HTTP 状态码
       switch (e.code) {
         case ErrorCode.KROKI_TIMEOUT:
@@ -381,7 +381,7 @@ export async function POST(req: NextRequest) {
           statusCode = 400;
           break;
       }
-      
+
       return NextResponse.json(e.toJSON(), { status: statusCode });
     }
     const errMsg = e instanceof Error ? e.message : '';

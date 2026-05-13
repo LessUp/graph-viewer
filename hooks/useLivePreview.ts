@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Engine } from '@/lib/diagramConfig';
-import { isAbortError } from '@/lib/errorUtils';
+import { isAbortError } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 
 type LivePreviewDeps = {

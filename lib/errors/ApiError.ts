@@ -55,7 +55,8 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
 
   [ErrorCode.LOCAL_RENDER_FAILED]: '本地渲染失败',
   [ErrorCode.REMOTE_RENDER_FAILED]: '远程渲染失败',
-  [ErrorCode.REMOTE_DISABLED]: '当前静态部署模式下不可用该渲染方式，请切换到 SVG 本地渲染或使用完整服务部署。',
+  [ErrorCode.REMOTE_DISABLED]:
+    '当前静态部署模式下不可用该渲染方式，请切换到 SVG 本地渲染或使用完整服务部署。',
   [ErrorCode.KROKI_TIMEOUT]: '远程渲染服务超时，请稍后重试或检查网络连接。',
   [ErrorCode.KROKI_NETWORK_ERROR]: '无法连接远程渲染服务，可能是网络问题或访问被拦截。',
   [ErrorCode.KROKI_ERROR]: '远程渲染服务渲染失败，可能是图形代码有误。',
@@ -65,10 +66,7 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.UNKNOWN]: '未知错误',
 };
 
-export function buildErrorMessage(
-  code: ErrorCode,
-  context: ApiErrorContext = {},
-): string {
+export function buildErrorMessage(code: ErrorCode, context: ApiErrorContext = {}): string {
   let message = ERROR_MESSAGES[code];
 
   if (code === ErrorCode.PAYLOAD_TOO_LARGE && context.maxLength) {

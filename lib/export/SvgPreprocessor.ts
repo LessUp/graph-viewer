@@ -34,13 +34,13 @@ export class SvgPreprocessor {
 
     this.ensureNamespaces(svgElement, svgContent);
     this.processStyleElements(svgElement);
-    
+
     if (typeof window !== 'undefined') {
       this.inlineComputedStyles(svgElement);
     }
-    
+
     this.ensureDimensions(svgElement);
-    
+
     if (opts.padding > 0) {
       this.applyPadding(svgElement, opts.padding);
     }

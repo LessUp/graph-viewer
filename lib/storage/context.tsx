@@ -34,11 +34,7 @@ export function StorageProvider({ children, storage }: StorageProviderProps) {
   const defaultStorage = useMemo(() => new LocalStorageAdapter(), []);
   const value = storage ?? defaultStorage;
 
-  return (
-    <StorageContext.Provider value={value}>
-      {children}
-    </StorageContext.Provider>
-  );
+  return <StorageContext.Provider value={value}>{children}</StorageContext.Provider>;
 }
 
 /**

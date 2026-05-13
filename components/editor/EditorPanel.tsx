@@ -9,52 +9,52 @@ import {
   FORMAT_LABELS,
 } from '@/lib/diagramConfig';
 import { SAMPLES } from '@/lib/diagramSamples';
+import { useDiagramStateContext, useDiagramRenderContext } from '@/contexts/DiagramContext';
+import { useSettings } from '@/hooks/useSettings';
 import { CodeEditor } from './CodeEditor';
 import { PlayCircle, Loader2, Copy, AlertCircle } from 'lucide-react';
 
+/**
+ * EditorPanel Props
+ *
+ * 重构后只保留需要跨 Context 组合的回调函数：
+ * - onEngineChange: 切换引擎时需要 setEngine + setCode + resetOutput
+ * - onCopyCode: 复制代码需要 code + showToast
+ * - onClearCode: 清空代码需要 setCode + resetOutput
+ * - onExportSourceCode: 导出源码需要 code + engine + showToast
+ * - onLivePreviewChange: 实时预览切换 (由 useLivePreview 管理)
+ */
 export type EditorPanelProps = {
-  engine: Engine;
-  format: Format;
-  code: string;
-  codeStats: { lines: number; chars: number };
-  loading: boolean;
-  error: string;
-  canUseLocalRender: boolean;
-  livePreviewEnabled: boolean;
-  onLivePreviewChange: (enabled: boolean) => void;
   onEngineChange: (engine: Engine, loadSample?: boolean) => void;
-  onFormatChange: (format: Format) => void;
-  onCodeChange: (code: string) => void;
-  onRender: () => Promise<void> | void;
-  onCopyCode: () => Promise<void> | void;
+  onCopyCode: () => Promise<void>;
   onClearCode: () => void;
-  onExportSourceCode: () => Promise<void> | void;
-  editorFontSize?: number;
+  onExportSourceCode: () => Promise<void>;
+  onLivePreviewChange: (enabled: boolean) => void;
+  livePreviewEnabled: boolean;
   /** 限制可选择的引擎列表（用于静态导出模式） */
   limitEngines?: readonly Engine[];
 };
 
 function EditorPanelComponent(props: EditorPanelProps) {
   const {
-    engine,
-    format,
-    code,
-    codeStats,
-    loading,
-    error,
-    canUseLocalRender,
-    livePreviewEnabled,
-    onLivePreviewChange,
     onEngineChange,
-    onFormatChange,
-    onCodeChange,
-    onRender,
     onCopyCode,
     onClearCode,
     onExportSourceCode,
-    editorFontSize = 13,
+    onLivePreviewChange,
+    livePreviewEnabled,
     limitEngines,
   } = props;
+
+  // 从 Context 获取图表状态
+  const { engine, format, code, codeStats, setFormat, setCode } = useDiagramStateContext();
+
+  // 从 Context 获取渲染状态
+  const { loading, error, canUseLocalRender, renderDiagram } = useDiagramRenderContext();
+
+  // 从独立 hook 获取设置
+  const { settings } = useSettings();
+  const editorFontSize = settings.editorFontSize;
 
   // 切换引擎时自动加载示例代码
   const handleEngineChange = (newEngine: Engine) => {
@@ -98,7 +98,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
           </select>
           <select
             value={format}
-            onChange={(e) => onFormatChange(e.target.value as Format)}
+            onChange={(e) => setFormat(e.target.value as Format)}
             className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
           >
             {Object.entries(FORMAT_LABELS).map(([value, label]) => (
@@ -131,7 +131,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <button
           type="button"
-          onClick={onRender}
+          onClick={() => void renderDiagram()}
           disabled={loading || !code.trim()}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
         >
@@ -177,7 +177,7 @@ function EditorPanelComponent(props: EditorPanelProps) {
           </div>
           <div className="flex gap-3 text-[11px]">
             <button
-              onClick={() => onCodeChange(SAMPLES[engine])}
+              onClick={() => setCode(SAMPLES[engine])}
               className="transition hover:text-sky-600"
             >
               加载示例
@@ -195,14 +195,14 @@ function EditorPanelComponent(props: EditorPanelProps) {
         <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
           <CodeEditor
             value={code}
-            onChange={onCodeChange}
+            onChange={setCode}
             disabled={loading}
             engine={engine}
             minHeight="100%"
             fontSize={editorFontSize}
             onCtrlEnter={() => {
               if (!loading && code.trim()) {
-                void onRender();
+                void renderDiagram();
               }
             }}
             onCtrlS={() => {

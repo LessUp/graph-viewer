@@ -29,10 +29,7 @@ export interface Renderer extends RendererCapabilities {
 }
 
 export class RenderError extends ApiError {
-  constructor(
-    code: ErrorCode,
-    context: Record<string, unknown> = {},
-  ) {
+  constructor(code: ErrorCode, context: Record<string, unknown> = {}) {
     super(code, context);
     this.name = 'RenderError';
   }

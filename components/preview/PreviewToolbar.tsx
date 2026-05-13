@@ -117,8 +117,7 @@ export function PreviewToolbar({
       });
     } catch (e: unknown) {
       logger.error('export', { error: e instanceof Error ? e.message : 'Unknown error' });
-      const message =
-        e instanceof ExportException ? e.message : '导出失败，请重试';
+      const message = e instanceof ExportException ? e.message : '导出失败，请重试';
       if (onExportError) {
         onExportError(message);
       }

@@ -8,9 +8,7 @@
  * 存储操作结果
  * 使用 discriminated union 模式，便于类型收窄
  */
-export type StorageResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: StorageError };
+export type StorageResult<T> = { ok: true; value: T } | { ok: false; error: StorageError };
 
 /**
  * 存储错误类型

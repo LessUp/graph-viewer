@@ -64,11 +64,13 @@ export function useDiagramRender(
   );
 
   useEffect(() => {
+    let cancelled = false;
     setWasmLoadError('');
 
     if (engine === 'mermaid' || engine === 'flowchart') {
       import('mermaid')
         .then((module) => {
+          if (cancelled) return;
           const mermaid = module?.default ?? module;
           if (mermaid?.initialize) {
             mermaid.initialize({
@@ -80,6 +82,7 @@ export function useDiagramRender(
           setWasmLoadError('');
         })
         .catch((e: unknown) => {
+          if (cancelled) return;
           const msg = e instanceof Error ? e.message : 'Unknown error';
           setWasmLoadError(`Mermaid 加载失败: ${msg}`);
           logger.error('wasm-load', { engine: 'mermaid', error: msg });
@@ -91,6 +94,7 @@ export function useDiagramRender(
         'https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist';
       import('@hpcc-js/wasm')
         .then(async (module) => {
+          if (cancelled) return;
           const Graphviz = module.Graphviz as {
             wasmFolder?: (url: string) => void;
             load?: () => Promise<void>;
@@ -104,11 +108,16 @@ export function useDiagramRender(
           setWasmLoadError('');
         })
         .catch((e: unknown) => {
+          if (cancelled) return;
           const msg = e instanceof Error ? e.message : 'Unknown error';
           setWasmLoadError(`Graphviz WASM 加载失败: ${msg}。请检查网络连接。`);
           logger.error('wasm-load', { engine: 'graphviz', error: msg });
         });
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [engine]);
 
   useEffect(() => {
@@ -186,15 +195,7 @@ export function useDiagramRender(
         }
       }
     },
-    [
-      applyOutputIfLatest,
-      code,
-      engine,
-      format,
-      krokiBaseUrl,
-      rendererStrategy,
-      resetOutput,
-    ],
+    [applyOutputIfLatest, code, engine, format, krokiBaseUrl, rendererStrategy, resetOutput],
   );
 
   return {
