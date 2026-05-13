@@ -35,12 +35,14 @@ npm run test:smoke       # 生产服务 smoke test
 | 示例代码               | `lib/diagramSamples.ts`                                |
 | 图表文档类型           | `lib/types.ts`                                         |
 | 本地存储               | `lib/storage.ts`                                       |
+| 图表状态 Context       | `contexts/DiagramContext.tsx`                          |
 | 工作区状态             | `hooks/useDiagramState.ts`                             |
 | 实时预览 debounce/取消 | `hooks/useLivePreview.ts`                              |
 | 本地/远程渲染          | `hooks/useDiagramRender.ts`                            |
 | Kroki API route        | `app/api/render/route.ts`                              |
 | API 缓存/限流          | `lib/server/renderCache.ts`, `lib/server/rateLimit.ts` |
 | 编辑器 UI              | `components/editor/EditorPanel.tsx`                    |
+| 侧边栏 Tab 切换        | `components/sidebar/SidebarTabs.tsx`                   |
 | 预览 UI                | `components/preview/PreviewPanel.tsx`                  |
 | 导出工具栏             | `components/preview/PreviewToolbar.tsx`                |
 | GitHub Pages 门户      | `app/page.tsx`, `components/landing/*`                 |
@@ -53,7 +55,7 @@ npm run test:smoke       # 生产服务 smoke test
 1. `lib/diagramConfig.ts`：类型、labels、categories、Kroki type、本地能力。
 2. `lib/diagramSamples.ts`：默认示例。
 3. `lib/syntaxHighlight.ts`：CodeMirror 语言映射。
-4. `lib/exportUtils.ts`：导出扩展名和 markdown fence。
+4. `lib/export/index.ts`：导出扩展名和 markdown fence。
 5. `hooks/useDiagramRender.ts`：本地/远程分流。
 6. `app/api/render/route.ts` 与 `openspec/specs/api/openapi.yaml`：API 白名单。
 7. `components/editor/EditorPanel.tsx`：选择器。

@@ -167,6 +167,70 @@
 - `hooks/useDiagramState.ts`
 - `app/editor/page.tsx`
 
+### ADR-0006: DiagramContext 解决 Props Drilling
+
+**问题**：EditorPanel 接收 17 个 props，状态从 Page → SidebarTabs → EditorPanel 层层传递
+
+**决策**：创建 `DiagramProvider` 深度模块，拆分为 `DiagramStateContext` 和 `DiagramRenderContext`
+
+**后果**：
+
+- ✅ EditorPanel props 从 17 → 7（减少 59%）
+- ✅ SidebarTabs 不再传递完整 props 对象
+- ✅ Page 组件从 430 行减少到约 300 行
+- ✅ 新组件可直接从 Context 获取状态，无需修改传递链
+
+**完成状态**：✅ 已完成（2026-05-13）
+
+**相关文件**：
+
+- `contexts/DiagramContext.tsx`
+- `components/editor/EditorPanel.tsx`
+- `components/sidebar/SidebarTabs.tsx`
+- `app/editor/page.tsx`
+
+### ADR-0007: RenderCache 类封装
+
+**问题**：`renderCache.ts` 导出 7 个函数无封装，调用者需要理解缓存和 inflight 的关系
+
+**决策**：创建 `RenderCache` 单例类，封装缓存和去重逻辑
+
+**后果**：
+
+- ✅ 接口从 7 个函数减少到 1 个类 + 便捷实例
+- ✅ 调用者不需要知道 prune、TTL 等实现细节
+- ✅ 保留向后兼容的旧函数导出（标记 deprecated）
+
+**完成状态**：✅ 已完成（2026-05-13）
+
+**相关文件**：
+
+- `lib/server/renderCache.ts`
+- `app/api/render/route.ts`
+
+### ADR-0008: useAIAssistant 拆分
+
+**问题**：`useAIAssistant` 是 395 行的"上帝 Hook"，承担配置管理、API 调用、分析/生成/修复等多种职责
+
+**决策**：拆分为深度模块：`lib/ai/types.ts`、`lib/ai/AiConfig.ts`、`lib/ai/AiClient.ts`
+
+**后果**：
+
+- ✅ `useAIAssistant` 从 395 行减少到 218 行（减少 45%）
+- ✅ `AiClient` 封装 API 调用逻辑，可独立测试和复用
+- ✅ `AiConfig` 封装配置管理，职责单一
+- ✅ 新增 25 个单元测试
+
+**完成状态**：✅ 已完成（2026-05-13）
+
+**相关文件**：
+
+- `lib/ai/types.ts`
+- `lib/ai/AiConfig.ts`
+- `lib/ai/AiClient.ts`
+- `lib/ai/index.ts`
+- `hooks/useAIAssistant.ts`
+
 ## 深度模块
 
 ### 定义
@@ -178,13 +242,16 @@
 
 ### GraphViewer 中的深度模块
 
-| 模块             | 接口      | 实现行数 | 接口/实现比 | 深度  |
-| ---------------- | --------- | -------- | ----------- | ----- |
-| ExportService    | 2 个方法  | 216      | 0.9%        | ✅ 深 |
-| RendererStrategy | 2 个方法  | 77       | 2.6%        | ✅ 深 |
-| SvgPreprocessor  | 2 个方法  | 205      | 1.0%        | ✅ 深 |
-| useDiagramState  | 14 个字段 | 379      | 3.7%        | ✅ 深 |
-| ApiError         | 3 个方法  | 118      | 2.5%        | ✅ 深 |
+| 模块             | 接口         | 实现行数 | 接口/实现比 | 深度  |
+| ---------------- | ------------ | -------- | ----------- | ----- |
+| ExportService    | 2 个方法     | 216      | 0.9%        | ✅ 深 |
+| RendererStrategy | 2 个方法     | 77       | 2.6%        | ✅ 深 |
+| SvgPreprocessor  | 2 个方法     | 205      | 1.0%        | ✅ 深 |
+| useDiagramState  | 14 个字段    | 379      | 3.7%        | ✅ 深 |
+| ApiError         | 3 个方法     | 118      | 2.5%        | ✅ 深 |
+| DiagramProvider  | 2 个 Context | ~180     | ~1.1%       | ✅ 深 |
+| RenderCache      | 8 个方法     | ~200     | ~4.0%       | ✅ 深 |
+| AiClient         | 1 个方法     | ~180     | ~0.5%       | ✅ 深 |
 
 ## Seams（接缝）
 
@@ -211,6 +278,18 @@
 - 接口：`StorageAdapter`（在 `lib/storage.ts`）
 - 适配器：`LocalStorageAdapter`、`MockStorageAdapter`
 - 用途：测试时替换存储实现
+
+**DiagramContext Seam**
+
+- 接口：`useDiagramStateContext()`、`useDiagramRenderContext()`
+- 实现：`DiagramProvider` 组件
+- 用途：组件获取图表状态和渲染状态，测试时可用 mock Provider 替换
+
+**RenderCache Seam**
+
+- 接口：`RenderCache` 类
+- 实现：单例实例 `renderCache`
+- 用途：缓存和去重渲染结果，测试时可通过 `resetForTests()` 重置
 
 ## 反模式（避免）
 
@@ -290,5 +369,7 @@
 
 ## 变更记录
 
+- 2026-05-13：useAIAssistant 拆分 — 创建 lib/ai/ 模块（types.ts、AiConfig.ts、AiClient.ts），hook 从 395 行减少到 180 行
+- 2026-05-13：DiagramContext 深度模块 — 解决 Props Drilling，EditorPanel props 从 17 → 6；RenderCache 类封装 — 服务端缓存模块深化
 - 2026-05-12：Export 模块激进清理 — 删除 exporters/、svgProcessor.ts、exportUtils.ts；内容生成函数移入 ExportService 私有方法
 - 2026-05-08：创建文件，记录 4 轮架构重构决策
