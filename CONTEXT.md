@@ -231,6 +231,29 @@
 - `lib/ai/index.ts`
 - `hooks/useAIAssistant.ts`
 
+### ADR-0009: Storage 模块简化
+
+**问题**：Storage 抽象过度工程化，`lib/storage/` 目录包含 835 行代码，但实际功能只是包装 `localStorage.getItem/setItem`。存在大量未使用的抽象：
+
+- `StorageProvider`、`useStorage`、`useStorageOptional` — 从未被使用
+- `MockStorageAdapter` — 只在自己的测试文件中使用
+- `StoragePort`、`StorageResult`、`StorageError` 类型 — 内部使用，外部无导入
+- `removeFromStorage` — 定义但从未被消费者使用
+
+**决策**：删除所有抽象，保留 3 个直接函数（`loadFromStorage`、`saveToStorage`、`migrateStorageKey`）
+
+**后果**：
+
+- ✅ 代码从 835 行减少到 ~90 行（减少 ~90%）
+- ✅ 删除未使用的 `StorageProvider`、`MockStorageAdapter`、`StorageResult` 类型
+- ✅ 测试简化：直接 mock localStorage，无需 `StorageProvider`
+
+**完成状态**：✅ 已完成（2026-05-14）
+
+**相关文件**：
+
+- `lib/storage.ts`
+
 ## 深度模块
 
 ### 定义
@@ -369,6 +392,7 @@
 
 ## 变更记录
 
+- 2026-05-14：Storage 模块简化 — 删除 lib/storage/ 目录，创建 lib/storage.ts 单文件（~90 行），代码减少 ~90%
 - 2026-05-13：useAIAssistant 拆分 — 创建 lib/ai/ 模块（types.ts、AiConfig.ts、AiClient.ts），hook 从 395 行减少到 180 行
 - 2026-05-13：DiagramContext 深度模块 — 解决 Props Drilling，EditorPanel props 从 17 → 6；RenderCache 类封装 — 服务端缓存模块深化
 - 2026-05-12：Export 模块激进清理 — 删除 exporters/、svgProcessor.ts、exportUtils.ts；内容生成函数移入 ExportService 私有方法
