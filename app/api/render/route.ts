@@ -3,16 +3,7 @@ import { getKrokiType, isEngine, isFormat } from '@/lib/diagramConfig';
 import { logger } from '@/lib/logger';
 import { APP_CONFIG } from '@/lib/config';
 import { checkRateLimit, pruneRateLimitCache } from '@/lib/server/rateLimit';
-import {
-  deleteInflightRender,
-  getCachedRender,
-  getInflightRender,
-  keyOfRender,
-  pruneRenderCache,
-  setCachedRender,
-  setInflightRender,
-  type RenderCacheEntry,
-} from '@/lib/server/renderCache';
+import { renderCache, type RenderCacheEntry } from '@/lib/server/renderCache';
 import { ApiError, ErrorCode } from '@/lib/errors';
 
 // Detect static export mode / 检测静态导出模式
@@ -204,11 +195,11 @@ export async function POST(req: NextRequest) {
       format === 'svg' ? 'image/svg+xml' : format === 'png' ? 'image/png' : 'application/pdf';
 
     const now = Date.now();
-    pruneRenderCache(now);
+    renderCache.prune(now);
 
-    const k = keyOfRender(base, engine, format, code);
-    const cached = getCachedRender(k);
-    if (cached && cached.expires > now) {
+    const k = renderCache.createKey(base, engine, format, code);
+    const cached = renderCache.get(k);
+    if (cached && !renderCache.isExpired(cached, now)) {
       if (binary) {
         if (format === 'svg' && cached.svg) {
           return new NextResponse(toArrayBuffer(Buffer.from(cached.svg)), {
@@ -238,7 +229,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let task = getInflightRender(k);
+    let task = renderCache.getInflight(k);
     if (!task) {
       task = (async () => {
         let krokiResp: Response;
@@ -317,14 +308,14 @@ export async function POST(req: NextRequest) {
           cacheEntry.base64 = base64;
         }
 
-        setCachedRender(k, cacheEntry);
-        pruneRenderCache(Date.now());
+        renderCache.set(k, cacheEntry);
+        renderCache.prune(Date.now());
 
         return { buffer, cacheEntry };
       })().finally(() => {
-        deleteInflightRender(k);
+        renderCache.deleteInflight(k);
       });
-      setInflightRender(k, task);
+      renderCache.setInflight(k, task);
     }
 
     const { buffer, cacheEntry } = await task;
