@@ -80,14 +80,14 @@
 
 ```mermaid
 graph TD
-    A[Write Diagram Code] --> B{Choose Engine}
-    B -->|Mermaid| C[Local WASM Render]
-    B -->|PlantUML| D[Kroki Remote Render]
+    A[Write Code] --> B{Engine}
+    B -->|Mermaid| C[Local WASM]
+    B -->|PlantUML| D[Kroki Remote]
     B -->|Graphviz| C
-    C --> E[Instant SVG Preview]
+    C --> E[SVG Preview]
     D --> E
-    E --> F[Export PNG/PDF/HTML]
-    E --> G[Share via URL]
+    E --> F[Export]
+    E --> G[Share URL]
 ```
 
 ## ✨ Key Features
